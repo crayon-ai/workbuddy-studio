@@ -1,0 +1,30 @@
+# macOS
+.DS_Store
+
+# Claude Code 本地设置（个人配置，不入库）
+.claude/settings.local.json
+
+# Node（预留）
+node_modules/
+
+# 常见编辑器
+.vscode/
+.idea/
+
+# 后端：API key（敏感，绝不入库）、build 产物、测试临时文件
+server/.env
+server/.env.*
+server/dist
+server/tmp*
+.env
+.env.*
+
+# 拆解产物（用户数据，每人不同，不入库）
+data/teardowns/
+# 笔记复盘录入的原文（用户数据）
+data/notes/
+# 今日灵感抓取产物（用户数据）
+data/inspirations/
+
+# 本地 worktree 工作区，不入库
+.claude/worktrees/
