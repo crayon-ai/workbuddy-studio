@@ -22,8 +22,10 @@ async function main(): Promise<void> {
   });
 
   // GET / 返回前端（项目根无 index.html，前端文件名为中文）
+  // no-cache：允许缓存但每次需向服务端 revalidate，避免改版后浏览器拿旧页面
   app.get("/", async (_req, reply) => {
     const html = readFileSync(path.join(projectRoot, "自媒体工作台.html"));
+    reply.header("Cache-Control", "no-cache");
     reply.type("text/html; charset=utf-8").send(html);
   });
 

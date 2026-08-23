@@ -405,7 +405,8 @@ button{font-family:inherit;border:none;background:none;cursor:pointer;color:inhe
 .cal-month span{font-size:13px;color:var(--ink-3);font-weight:600;margin-left:8px;font-family:var(--sans)}
 .cal-nav{display:flex;gap:6px}
 .cal-nav button{width:32px;height:32px;border-radius:9px;border:1px solid var(--line);background:var(--paper);color:var(--ink-2);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .18s var(--ease)}
-.cal-nav button:hover{background:var(--cream-2)}
+.cal-nav button:hover:not(:disabled){background:var(--cream-2)}
+.cal-nav button:disabled{opacity:.35;cursor:not-allowed}
 .cal-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:7px}
 .cal-dow{font-size:11px;color:var(--ink-3);font-weight:700;text-align:center;padding-bottom:6px}
 .cal-dow.we{color:var(--coral-d)}
@@ -491,14 +492,26 @@ button{font-family:inherit;border:none;background:none;cursor:pointer;color:inhe
 .rev-sum{font-size:11px;color:var(--ink-2);line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .sec-count{font-size:13px;color:var(--coral-d);font-weight:800;margin-left:4px;font-family:var(--serif)}
 .sec-tip{font-size:11.5px;color:var(--ink-3);font-weight:600;margin-left:auto}
-.rv-data{display:grid;grid-template-columns:92px 1fr;gap:14px;margin-bottom:10px}
-.rv-cover{width:92px;height:92px;border-radius:11px;object-fit:cover;object-position:top center}
-.rv-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
-.rv-stat{background:var(--cream-2);border-radius:9px;padding:8px 4px;text-align:center}
-.rv-stat b{display:block;font-size:15px;font-weight:800;font-family:var(--serif);color:var(--ink);line-height:1.1}
-.rv-stat span{font-size:9.5px;color:var(--ink-3);font-weight:600}
-.rv-rates{display:flex;gap:14px;margin-top:9px;font-size:11.5px;color:var(--ink-2);font-weight:600;flex-wrap:wrap}
-.rv-rates b{color:var(--coral-d);font-weight:800;margin:0 2px}
+.rv-data{margin-bottom:10px}
+.rv-stats{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:9px}
+.rv-stat{border-radius:13px;padding:11px 6px 9px;text-align:center;border:1px solid transparent;transition:transform .18s var(--ease)}
+.rv-stat:hover{transform:translateY(-2px)}
+.rv-stat .rs-ic{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 6px;font-size:13px}
+.rv-stat .rs-ic svg{width:13px;height:13px}
+.rv-stat b{display:block;font-size:17px;font-weight:800;font-family:var(--serif);color:var(--ink);line-height:1.1;white-space:nowrap}
+.rv-stat b.long{font-size:14.5px}
+.rv-stat span{font-size:10px;color:var(--ink-2);font-weight:600}
+.rv-stat.like{background:var(--coral-bg);border-color:rgba(240,137,90,.25)}
+.rv-stat.like .rs-ic{background:#fff;color:var(--coral-d)}
+.rv-stat.fav{background:var(--honey-bg);border-color:rgba(216,148,31,.25)}
+.rv-stat.fav .rs-ic{background:#fff;color:var(--honey)}
+.rv-stat.cmt{background:var(--lav-bg);border-color:rgba(132,116,190,.22)}
+.rv-stat.cmt .rs-ic{background:#fff;color:var(--lav-d)}
+.rv-stat.shr{background:var(--sky-bg);border-color:rgba(101,146,168,.25)}
+.rv-stat.shr .rs-ic{background:#fff;color:var(--sky)}
+.rv-rates{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.rv-rate-pill{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:5px 12px;border-radius:var(--pill);background:var(--cream-2);color:var(--ink-2)}
+.rv-rate-pill b{color:var(--coral-d);font-weight:800;font-family:var(--serif);font-size:12.5px}
 .rv-insight{background:var(--coral-bg);border-radius:10px;padding:10px 12px;font-size:11.5px;color:var(--coral-d);line-height:1.6;margin-bottom:14px;display:flex;gap:7px}
 .rv-insight svg{width:15px;height:15px;flex-shrink:0;margin-top:1px}
 .stars{display:flex;align-items:center;gap:6px;padding:2px 0}
@@ -515,8 +528,8 @@ button{font-family:inherit;border:none;background:none;cursor:pointer;color:inhe
 .lesson-from .lf-star{color:var(--honey);font-size:10px;letter-spacing:1px}
 
 @media(max-width:1024px){.rev-grid{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:860px){.lesson-grid{grid-template-columns:1fr}.rv-data{grid-template-columns:74px 1fr}.rv-cover{width:74px;height:74px}}
-@media(max-width:680px){.rev-grid{grid-template-columns:1fr}.rv-stats{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:860px){.lesson-grid{grid-template-columns:1fr}}
+@media(max-width:680px){.rev-grid{grid-template-columns:1fr}.rv-stats{grid-auto-flow:row;grid-template-columns:repeat(2,1fr);grid-auto-columns:auto}.rv-rate-pill{font-size:10.5px;padding:4px 10px}}
 /* 今日待办 */
 .todo-list{display:flex;flex-direction:column;gap:11px;margin-bottom:26px}
 .todo-card{display:flex;align-items:center;gap:14px;background:var(--paper);border:1px solid var(--line);border-left:5px solid var(--coral);border-radius:var(--radius);padding:14px 16px;box-shadow:var(--shadow-s);transition:all .2s var(--ease)}
@@ -527,12 +540,19 @@ button{font-family:inherit;border:none;background:none;cursor:pointer;color:inhe
 .todo-check:hover{border-color:var(--coral);background:var(--coral-bg)}
 .todo-list.dim .todo-check{background:var(--matcha);border-color:var(--matcha)}
 .todo-check svg{width:15px;height:15px;stroke-width:3.5}
+.todo-stage-ic{flex-shrink:0;width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:21px;background:var(--cream-2);box-shadow:0 2px 8px rgba(122,90,50,.1)}
+.todo-done-btn{flex-shrink:0;height:34px;padding:0 17px;border-radius:var(--pill);font-size:12.5px;font-weight:800;letter-spacing:.02em;background:linear-gradient(135deg,#F6A56B,#EF7E4C);color:#fff;box-shadow:0 4px 12px rgba(239,126,76,.3);transition:all .18s var(--ease);display:inline-flex;align-items:center;gap:6px}
+.todo-done-btn svg{width:14px;height:14px}
+.todo-done-btn:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(239,126,76,.4)}
+.todo-done-btn.done{background:var(--matcha-bg);color:var(--matcha-d);box-shadow:none;border:1px solid rgba(106,154,74,.32)}
+.todo-done-btn.done:hover{transform:none;box-shadow:none}
+.todo-confirm-card{display:flex;align-items:center;gap:13px;background:var(--cream-2);border:1px solid var(--line);border-radius:var(--radius);padding:13px 15px}
 .todo-main{flex:1;min-width:0}
-.todo-top{display:flex;flex-direction:column;gap:6px;margin-bottom:6px}
+.todo-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px}
 .todo-top-l{display:flex;align-items:center;gap:8px}
 .todo-top .tp-type{font-size:10px}
 .todo-of{font-size:10px;color:var(--ink-3);font-weight:700;margin-left:auto}
-.todo-stage-pill{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;color:var(--coral-d);background:var(--coral-bg);padding:2px 8px 2px 3px;border-radius:var(--pill);border:1px solid rgba(240,137,90,.28);align-self:flex-start;line-height:1.3;font-family:var(--serif)}
+.todo-stage-pill{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;color:var(--coral-d);background:var(--coral-bg);padding:2px 8px 2px 3px;border-radius:var(--pill);border:1px solid rgba(240,137,90,.28);line-height:1.3;font-family:var(--serif)}
 .todo-stage-pill::before{content:"阶段";font-size:8px;font-weight:800;color:#fff;background:var(--coral);padding:1px 4px;border-radius:5px;letter-spacing:.5px;font-family:var(--sans)}
 .todo-list.dim .todo-stage-pill{color:var(--matcha-d);background:var(--matcha-bg);border-color:rgba(106,154,74,.32)}
 .todo-list.dim .todo-stage-pill::before{background:var(--matcha)}
@@ -709,7 +729,7 @@ button{font-family:inherit;border:none;background:none;cursor:pointer;color:inhe
               <div class="ph-sub">基于你 32 篇历史爆款与当前关键词，自动抓取可溯源热点，并直接生成可转化的创作选题。</div>
             </div>
             <div class="ph-actions">
-              <div class="date-chip"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg><span class="d-num">08.05</span><span>周三</span></div>
+              <div class="date-chip"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg><span class="d-num" id="dateChipNum">--.--</span><span id="dateChipWeek">--</span></div>
               <button class="btn btn-coral" disabled style="opacity:.5;cursor:not-allowed" title="个性化推荐（二期实现）"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 11-2.64-6.36M21 3v6h-6"/></svg>刷新灵感</button>
             </div>
           </div>
@@ -733,8 +753,9 @@ button{font-family:inherit;border:none;background:none;cursor:pointer;color:inhe
         <div class="mode-grid">
           <div class="mode-card">
             <div class="mc-head"><div class="mc-icon coral"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg></div><div class="mc-title">按我的笔记刷新</div><span class="mc-tag">每日自动</span></div>
-            <div class="mc-desc">系统基于你的过往爆款、当前选题、素材标签和创作风格，自动抓取匹配热点。</div>
-            <button class="btn btn-coral" disabled style="opacity:.5;cursor:not-allowed;align-self:flex-start;height:38px;padding:0 16px;font-size:13px" title="个性化推荐（二期实现）"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 11-2.64-6.36M21 3v6h-6"/></svg>刷新个性化灵感</button>
+            <div class="mc-desc">录入你的小红书主页链接，AI 分析你的近期笔记（近期权重更高），识别赛道与选题偏好后，自动抓取匹配你的灵感。</div>
+            <div class="kw-row"><input class="kw-input" id="profileUrlInput" placeholder="https://www.xiaohongshu.com/user/profile/…" oninput="saveProfileUrl(this.value)"><button class="btn btn-coral" style="height:42px" onclick="refreshPersonalizedInspiration(this)">刷新个性化灵感</button></div>
+            <div class="kw-hint" style="font-size:11px;color:var(--ink-3);margin-top:6px">只支持小红书主页 · 链接本地保存，下次直接用</div>
           </div>
           <div class="mode-card">
             <div class="mc-head"><div class="mc-icon lav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg></div><div class="mc-title">输入关键词主动抓取</div><span class="mc-tag alt">主动探索</span></div>
@@ -813,7 +834,7 @@ button{font-family:inherit;border:none;background:none;cursor:pointer;color:inhe
             </div>
             <div style="display:flex;flex-direction:column;gap:6px">
               <div style="font-size:12px;font-weight:700;color:var(--ink-2)">昵称</div>
-              <input id="profileNameInput" type="text" placeholder="如：Crayon" maxlength="16" style="height:42px;border:1px solid var(--line);border-radius:var(--pill);padding:0 14px;font-size:14px;font-family:inherit;background:var(--paper)">
+              <input id="profileNameInput" type="text" placeholder="给自己起个昵称" maxlength="16" style="height:42px;border:1px solid var(--line);border-radius:var(--pill);padding:0 14px;font-size:14px;font-family:inherit;background:var(--paper)">
             </div>
             <button class="btn btn-coral" onclick="saveProfile()" style="height:44px;margin-top:8px">保存</button>
           </div>
@@ -832,10 +853,8 @@ button{font-family:inherit;border:none;background:none;cursor:pointer;color:inhe
           <div class="modal-sub" id="rvMeta">—</div>
           <div class="modal-body">
             <div class="rv-data">
-              <div>
-                <div class="rv-stats" id="rvStats"></div>
-                <div class="rv-rates" id="rvRates"></div>
-              </div>
+              <div class="rv-stats" id="rvStats"></div>
+              <div class="rv-rates" id="rvRates"></div>
             </div>
             <div class="rv-insight" id="rvInsight"></div>
             <div class="tf-field">
@@ -1028,7 +1047,7 @@ button{font-family:inherit;border:none;background:none;cursor:pointer;color:inhe
           </div>
         </div>
 
-        <div class="section-h"><h2><span class="dotbar"></span>今日待办 <span class="sec-count" id="todoPendingN">0</span></h2><span class="sec-tip">勾选方框即完成 → 移到下方</span></div>
+        <div class="section-h"><h2><span class="dotbar"></span>今日待办 <span class="sec-count" id="todoPendingN">0</span></h2><span class="sec-tip">点「完成」并确认 → 移到下方</span></div>
         <div class="todo-list" id="todoPending"></div>
 
         <div class="section-h"><h2><span class="dotbar" style="background:var(--matcha)"></span>今日已办 <span class="sec-count" id="todoDoneN" style="color:var(--matcha-d)">0</span></h2><span class="sec-tip">点击任务可恢复为待办</span></div>
@@ -1047,7 +1066,7 @@ button{font-family:inherit;border:none;background:none;cursor:pointer;color:inhe
               <div class="ph-sub">把发布节奏可视化：已发、计划、草稿一目了然，保持稳定更新是涨粉的基本盘。</div>
             </div>
             <div class="ph-actions">
-              <button class="btn btn-coral" onclick="toast('已添加发布计划')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>添加计划</button>
+              <button class="btn btn-coral" onclick="openPlanForm()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>添加计划</button>
             </div>
           </div>
         </div>
@@ -1063,8 +1082,8 @@ button{font-family:inherit;border:none;background:none;cursor:pointer;color:inhe
         <div class="cal-pool" id="calPool"></div>
         <div class="cal-wrap">
           <div class="cal-head">
-            <div class="cal-month">2026 年 8 月 <span>周三 · 08.05</span></div>
-            <div class="cal-nav"><button><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 6l-6 6 6 6"/></svg></button><button><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg></button></div>
+            <div class="cal-month" id="calMonth">— <span id="calTodayChip"></span></div>
+            <div class="cal-nav"><button id="calPrev" onclick="calShift(-1)" title="上一个月"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 6l-6 6 6 6"/></svg></button><button id="calNext" onclick="calShift(1)" title="下一个月"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg></button></div>
           </div>
           <div class="cal-grid" id="calGrid"></div>
           <div class="cal-legend">
@@ -1172,6 +1191,36 @@ button{font-family:inherit;border:none;background:none;cursor:pointer;color:inhe
   </div>
 </div>
 <!-- 今日待办添加弹窗 -->
+<div class="modal-mask" id="planFormModal" onclick="closePlanForm(event)">
+  <div class="modal" onclick="event.stopPropagation()" style="max-width:500px">
+    <div class="modal-head">
+      <div>
+        <div class="modal-eyebrow">📅 添加发布计划</div>
+        <div class="modal-title">选选题、阶段和日期</div>
+      </div>
+      <button class="modal-close" onclick="closePlanForm()" aria-label="关闭"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    </div>
+    <div class="modal-sub">排到今天的任务会自动出现在「今日待办」</div>
+    <div class="modal-body">
+      <div class="tf-field">
+        <div class="tf-lbl">选题 <span class="req">*</span></div>
+        <select class="tf-input" id="planTopic" onchange="updatePlanStages()"></select>
+      </div>
+      <div class="tf-field">
+        <div class="tf-lbl">阶段 <span class="req">*</span></div>
+        <select class="tf-input" id="planStage"></select>
+      </div>
+      <div class="tf-field">
+        <div class="tf-lbl">日期 <span class="req">*</span></div>
+        <input type="date" class="tf-input" id="planDate">
+      </div>
+      <div class="tf-foot">
+        <button class="btn" onclick="closePlanForm()">取消</button>
+        <button class="btn btn-coral" onclick="submitPlan()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12l5 5L20 7"/></svg>排期</button>
+      </div>
+    </div>
+  </div>
+</div>
 <div class="modal-mask" id="todoFormModal" onclick="closeTodoForm(event)">
   <div class="modal" onclick="event.stopPropagation()" style="max-width:500px">
     <div class="modal-head">
@@ -1181,7 +1230,7 @@ button{font-family:inherit;border:none;background:none;cursor:pointer;color:inhe
       </div>
       <button class="modal-close" onclick="closeTodoForm()" aria-label="关闭"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
     </div>
-    <div class="modal-sub">会同步到发布日历的今天（8 月 5 号）</div>
+    <div class="modal-sub" id="todoFormSub">会同步到发布日历的今天</div>
     <div class="modal-body">
       <div class="tf-field">
         <div class="tf-lbl">选题 <span class="req">*</span></div>
@@ -1194,6 +1243,31 @@ button{font-family:inherit;border:none;background:none;cursor:pointer;color:inhe
       <div class="tf-foot">
         <button class="btn" onclick="closeTodoForm()">取消</button>
         <button class="btn btn-coral" onclick="submitTodo()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12l5 5L20 7"/></svg>加入今日待办</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal-mask" id="todoConfirmModal" onclick="closeTodoConfirm(event)">
+  <div class="modal" onclick="event.stopPropagation()" style="max-width:400px">
+    <div class="modal-head">
+      <div>
+        <div class="modal-eyebrow">✅ 确认完成</div>
+        <div class="modal-title">确定完成这项待办吗？</div>
+      </div>
+      <button class="modal-close" onclick="closeTodoConfirm()" aria-label="关闭"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="todoConfirmTk">
+      <div class="todo-confirm-card">
+        <div class="todo-stage-ic" id="todoConfirmIcon" style="width:42px;height:42px;font-size:19px">💡</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13.5px;font-weight:700;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" id="todoConfirmTitle">—</div>
+          <div style="font-size:11px;color:var(--ink-3);font-weight:600;margin-top:3px">「<span id="todoConfirmStage">—</span>」阶段 · <span id="todoConfirmType">图文</span></div>
+        </div>
+      </div>
+      <div class="tf-foot">
+        <button class="btn" onclick="closeTodoConfirm()">再等等</button>
+        <button class="btn btn-coral" onclick="submitTodoDone()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M20 6L9 17l-5-5"/></svg>确认完成</button>
       </div>
     </div>
   </div>
@@ -1509,6 +1583,26 @@ function updateInspStats(){
 }
 function loadRunningInspTask(){try{return JSON.parse(localStorage.getItem('wb_running_insp_task')||'null')}catch(e){return null}}
 function saveRunningInspTask(){try{localStorage.setItem('wb_running_insp_task',_runningInspTask?JSON.stringify(_runningInspTask):'')}catch(e){}}
+/* ===== 个性化灵感（按我的笔记刷新） ===== */
+function loadProfileUrl(){try{return localStorage.getItem('wb_profile_url')||''}catch(e){return ''}}
+function saveProfileUrl(v){try{localStorage.setItem('wb_profile_url',(v||'').trim())}catch(e){}}
+function initProfileUrl(){const i=$('#profileUrlInput');if(i)i.value=loadProfileUrl();}
+async function refreshPersonalizedInspiration(btn){
+  const input=$('#profileUrlInput');
+  const url=((input&&input.value)||loadProfileUrl()||'').trim();
+  if(!url){toast('请先填入你的小红书主页链接');return;}
+  if(!/^https?:\/\/(www\.)?xiaohongshu\.com\/user\/profile\//.test(url)){toast('暂只支持小红书主页链接');return;}
+  saveProfileUrl(url);
+  if(_runningInspTask){toast('已有灵感在抓取中，请等它完成');return;}
+  try{
+    const r=await fetch('/api/inspiration/personalized',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({profileUrl:url})});
+    const j=await r.json();
+    if(!j.success){toast(j.error||'提交失败');return;}
+    _runningInspTask={taskId:j.data.taskId,keywords:'博主主页 · '+url.split('/').pop(),startedAt:Date.now(),step:'已提交，准备抓取主页笔记…',detail:''};
+    saveRunningInspTask();renderInsp();
+    pollInspiration(j.data.taskId);
+  }catch(e){toast('网络错误：'+e.message);}
+}
 function renderInsp(f){
   if(f===undefined)f=renderInsp._f||'all';
   renderInsp._f=f;
@@ -1533,9 +1627,9 @@ function renderInsp(f){
   updateInspStats();
 }
 function runningInspCardHtml(esc){
-  const t=_runningInspTask;const elapsed=Math.floor((Date.now()-(t.startedAt||Date.now()))/1000);
+  const t=_runningInspTask;
   return `<article class="card" style="grid-column:1/-1;--cc:var(--coral);border:2px dashed var(--coral)">
-    <div class="c-title"><span style="margin-right:6px">⏳</span>正在抓取灵感…（已用 ${elapsed}s）</div>
+    <div class="c-title"><span style="margin-right:6px">⏳</span>正在抓取灵感…</div>
     <div style="font-size:12px;color:var(--ink-3);margin:6px 0">关键词：${esc(t.keywords||'')}</div>
     <div style="font-size:13.5px;color:var(--coral-d);font-weight:600;line-height:1.5">${esc(t.step||'处理中…')}</div>
     ${t.detail?`<div style="font-size:11px;color:var(--ink-3);margin-top:6px;font-family:monospace;background:var(--cream-2);padding:6px 8px;border-radius:8px;word-break:break-all">${esc(t.detail)}</div>`:''}
@@ -1585,10 +1679,11 @@ const FLOW={
 };
 const TOPICS=[];
 let CAL_TASKS={};
-const TODAY=5;
 let DONE_TODAY={};
 const STORAGE_KEY='workbuddy_v3';
-function loadState(){try{const raw=localStorage.getItem(STORAGE_KEY);if(!raw)return;const s=JSON.parse(raw);if(Array.isArray(s.topics))TOPICS.splice(0,TOPICS.length,...s.topics);if(Array.isArray(s.notes))NOTES.splice(0,NOTES.length,...s.notes);if(s.calTasks)CAL_TASKS=s.calTasks;if(s.doneToday)DONE_TODAY=s.doneToday;}catch(e){}}
+/** 旧版 CAL_TASKS 值是当月日期数字（无月份），迁移为完整 "YYYY-MM-DD"。 */
+function migrateCalTasks(old){const ym=todayStr().slice(0,7);const out={};for(const k of Object.keys(old)){const v=old[k];out[k]=typeof v==='number'?ym+'-'+String(v).padStart(2,'0'):v;}return out;}
+function loadState(){try{const raw=localStorage.getItem(STORAGE_KEY);if(!raw)return;const s=JSON.parse(raw);if(Array.isArray(s.topics))TOPICS.splice(0,TOPICS.length,...s.topics);if(Array.isArray(s.notes))NOTES.splice(0,NOTES.length,...s.notes);if(s.calTasks)CAL_TASKS=migrateCalTasks(s.calTasks);if(s.doneToday)DONE_TODAY=s.doneToday;}catch(e){}}
 function saveState(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify({topics:TOPICS,notes:NOTES,calTasks:CAL_TASKS,doneToday:DONE_TODAY}));}catch(e){}updateStats();}
 function openLinkMat(idx){
   const m=MATS[idx];if(!m)return;
@@ -1738,9 +1833,9 @@ function updateStats(){
   setKpi('topicDoneN',TOPICS.filter(t=>t.stage>=lastOf(t)).length);
   set('sbMs','已发布 '+TOPICS.filter(t=>t.stage>=lastOf(t)).length+' 篇选题，继续加油呀～');
   setKpi('matPlatN',[...new Set(MATS.map(m=>m.plat))].length);
-  const _ym=new Date().toISOString().slice(0,7);
+  const _ym=todayStr().slice(0,7);
   setKpi('calPublishedN',NOTES.filter(n=>((n.meta&&n.meta.date)||'').startsWith(_ym)).length);
-  setKpi('calPlannedN',Object.keys(CAL_TASKS).length);
+  setKpi('calPlannedN',Object.keys(CAL_TASKS).filter(tk=>!calTaskDone(tk)).length);
   setKpi('calDraftN',TOPICS.filter(t=>t.stage>=1&&t.stage<=2).length);
   set('hitCount',HITS.length);
 }
@@ -1758,23 +1853,27 @@ function hitCardHtml(h,idx,esc){
   const hasNum=m.likes||m.favs||m.comments;
   return `<article class="card" style="--cc:var(--lav);animation-delay:${idx*60}ms">
     <div class="c-title">${esc(m.title||h.t||h.title||'(未命名)')}</div>
-    ${hasNum?`<div class="hit-metrics">
-      <div class="hit-metric"><b style="color:var(--coral-d)">${esc(m.likes||'-')}</b><span>赞</span></div>
-      <div class="hit-metric"><b style="color:var(--matcha-d)">${esc(m.favs||'-')}</b><span>藏</span></div>
-      <div class="hit-metric"><b style="color:var(--lav-d)">${esc(m.comments||'-')}</b><span>评</span></div>
-    </div>`:''}
+    <div class="hit-metrics">
+      <div class="hit-metric"><b style="color:var(--coral-d)">${esc(m.likes||'/')}</b><span>赞</span></div>
+      <div class="hit-metric"><b style="color:var(--matcha-d)">${esc(m.favs||'/')}</b><span>藏</span></div>
+      <div class="hit-metric"><b style="color:var(--lav-d)">${esc(m.comments||'/')}</b><span>评</span></div>
+    </div>
     ${m.date?`<div style="font-size:11px;color:var(--ink-3);margin-top:4px">📅 ${esc(m.date)}</div>`:''}
     ${tags.length?`<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:8px">${tags.map(t=>`<span style="font-size:10px;padding:2px 8px;background:var(--lav-bg);color:var(--lav-d);border-radius:999px">#${esc(t)}</span>`).join('')}</div>`:''}
     <div class="c-foot">
       <span style="font-size:11px;color:var(--ink-3)">${esc(m.author||h.from||'')}</span>
-      ${h.id?`<span style="margin-left:auto;display:flex;gap:6px">${!hasNum?`<button class="mini" onclick="reparseHit('${h.id}')">🔄 重解析</button>`:''}<button class="mini pri" onclick="openFolder('${h.id}')"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/></svg> 打开文件夹</button></span>`:''}
+      ${h.id?`<span style="margin-left:auto;display:flex;gap:6px"><button class="mini pri" onclick="openFolder('${h.id}')"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/></svg> 打开文件夹</button><button class="mini ghost" onclick="delHit(${idx})" title="删除这条拆解记录（只删列表记录，不动磁盘文件）">删除</button></span>`:''}
     </div>
   </article>`;
 }
+function delHit(idx){
+  const h=HITS[idx];if(!h)return;
+  HITS.splice(idx,1);saveHits();renderHit();
+  toast('已删除拆解记录：'+((h.meta&&h.meta.title)||h.url||''));
+}
 function runningCardHtml(t,esc){
-  const elapsed=Math.floor((Date.now()-(t.startedAt||Date.now()))/1000);
   return `<article class="card" style="--cc:var(--lav);border:2px dashed var(--lav)">
-    <div class="c-title"><span style="margin-right:6px">⏳</span>正在拆解…（已用 ${elapsed}s）</div>
+    <div class="c-title"><span style="margin-right:6px">⏳</span>正在拆解…</div>
     <div style="font-size:12px;color:var(--ink-3);margin:6px 0;word-break:break-all">${esc(t.url||'')}</div>
     <div style="font-size:13.5px;color:var(--coral-d);font-weight:600;line-height:1.5">${esc(t.step||'处理中…')}</div>
     ${t.detail?`<div style="font-size:11px;color:var(--ink-3);margin-top:6px;font-family:monospace;background:var(--cream-2);padding:6px 8px;border-radius:8px;word-break:break-all">${esc(t.detail)}</div>`:''}
@@ -1856,9 +1955,9 @@ async function genTitles(){
 }
 function renderTitleProgress(){
   if(!_runningTitle)return;
-  const t=_runningTitle;const elapsed=Math.floor((Date.now()-(t.startedAt||Date.now()))/1000);
+  const t=_runningTitle;
   $('#titleGrid').innerHTML=`<article class="title-card" style="grid-column:1/-1;border:2px dashed var(--lav);display:block;padding:24px">
-    <div style="font-size:16px;font-weight:600;color:var(--ink)"><span style="margin-right:6px">⏳</span>正在生成标题…（已用 ${elapsed}s）</div>
+    <div style="font-size:16px;font-weight:600;color:var(--ink)"><span style="margin-right:6px">⏳</span>正在生成标题…</div>
     <div style="font-size:13.5px;color:var(--coral-d);font-weight:600;margin-top:8px;line-height:1.5">${t.step||'处理中…'}</div>
     ${t.detail?`<div style="font-size:11px;color:var(--ink-3);margin-top:6px;font-family:monospace;background:var(--cream-2);padding:6px 8px;border-radius:8px;word-break:break-all">${t.detail}</div>`:''}
     <div style="font-size:11px;color:var(--ink-3);margin-top:10px">通常 5-20 秒，请稍候</div>
@@ -1907,29 +2006,44 @@ document.querySelectorAll('.ti-tab').forEach(t=>t.addEventListener('click',()=>{
 /* ===== 我的笔记 ===== */
 const NOTES=[];
 /* ===== 今日待办 ===== */
+const STAGE_ICONS={
+  '灵感':{ic:'💡',bg:'var(--honey-bg)'},
+  '初稿':{ic:'✏️',bg:'var(--coral-bg)'},
+  '大纲':{ic:'🧭',bg:'var(--honey-bg)'},
+  '定稿':{ic:'📜',bg:'var(--lav-bg)'},
+  '脚本':{ic:'🎬',bg:'var(--lav-bg)'},
+  '校对':{ic:'🔍',bg:'var(--lav-bg)'},
+  '图文':{ic:'🖼️',bg:'var(--sky-bg)'},
+  '拍摄':{ic:'📷',bg:'var(--sky-bg)'},
+  '剪辑':{ic:'🎞️',bg:'var(--sky-bg)'},
+  '发布':{ic:'🚀',bg:'var(--matcha-bg)'}
+};
+function stageIcon(nm){const s=STAGE_ICONS[nm];return s||{ic:'📌',bg:'var(--cream-2)'}}
 function renderToday(){
   const ticon={image:'📝',video:'📺',text:'✍️'};
   const tlab={image:'图文',video:'视频',text:'文本'};
   const tcls={image:'',video:'vid',text:'txt'};
   const parse=tk=>{const seg=tk.split('-');const si=parseInt(seg[seg.length-1],10);const id=seg.slice(0,-1).join('-');const t=TOPICS.find(x=>x.id===id);if(!t)return null;const fl=FLOW[t.type]||FLOW.image;return {tk,t,si,fl,nm:fl.steps[si]||''};};
-  const today=Object.keys(CAL_TASKS).filter(tk=>CAL_TASKS[tk]===TODAY).map(parse).filter(Boolean);
+  const today=Object.keys(CAL_TASKS).filter(tk=>CAL_TASKS[tk]===todayStr()).map(parse).filter(Boolean);
   const pending=today.filter(x=>!DONE_TODAY[x.tk]);
   const done=today.filter(x=>DONE_TODAY[x.tk]);
   const card=x=>{
-    const t=x.t,fl=x.fl,d=DONE_TODAY[x.tk];
-    return `<div class="todo-card" style="border-left-color:${d?'var(--matcha)':t.cc}" onclick="toggleTodo('${x.tk}')">
-      <button class="todo-check" onclick="event.stopPropagation();toggleTodo('${x.tk}')">${d?'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5"><path d="M5 12l5 5L20 6"/></svg>':''}</button>
+    const t=x.t,fl=x.fl,d=DONE_TODAY[x.tk],si=stageIcon(x.nm);
+    return `<div class="todo-card" style="border-left-color:${d?'var(--matcha)':t.cc}" onclick="${d?`toggleTodo('${x.tk}')`:`confirmTodo('${x.tk}')`}">
+      <div class="todo-stage-ic" style="background:${si.bg}">${si.ic}</div>
       <div class="todo-main">
-        <div class="todo-top"><div class="todo-top-l"><span class="tp-type ${tcls[t.type]||''}">${ticon[t.type]||'📝'} ${tlab[t.type]||'图文'}</span><span class="todo-of">第 ${x.si}/${fl.steps.length-1} 步</span></div><span class="todo-stage-pill">${x.nm}</span></div>
+        <div class="todo-top"><span class="tp-type ${tcls[t.type]||''}">${ticon[t.type]||'📝'} ${tlab[t.type]||'图文'}</span><span class="todo-stage-pill">${x.nm}</span><span class="todo-of">第 ${x.si}/${fl.steps.length-1} 步</span></div>
         <div class="todo-title">${t.t}</div>
         <div class="todo-flow">${fl.steps.map((s,i)=>`<span class="tf-node ${i<x.si?'done':i===x.si?'cur':''}">${s}</span>`).join('<span class="tf-arr"></span>')}</div>
       </div>
-      <button class="todo-go" onclick="event.stopPropagation();switchView('calendar')" title="在日历中查看"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg></button>
+      ${d
+        ?`<button class="todo-done-btn done" onclick="event.stopPropagation();toggleTodo('${x.tk}')" title="恢复为待办"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5"><path d="M5 12l5 5L20 6"/></svg>已完成</button>`
+        :`<button class="todo-done-btn" onclick="event.stopPropagation();confirmTodo('${x.tk}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M20 6L9 17l-5-5"/></svg>完成</button>`}
     </div>`;
   };
   const empty=txt=>`<div class="todo-empty">${txt}</div>`;
   $('#todoPending').innerHTML=pending.length?pending.map(card).join(''):empty('🎉 今天没有待办了，去发布日历安排新的吧');
-  $('#todoDone').innerHTML=done.length?done.map(card).join(''):empty('还没有完成的任务，勾选上方待办试试');
+  $('#todoDone').innerHTML=done.length?done.map(card).join(''):empty('还没有完成的任务，点上方「完成」试试');
   $('#todoPendingN').textContent=pending.length;
   $('#todoDoneN').textContent=done.length;
   const b=$('#todoBadge');if(b)b.textContent=pending.length;
@@ -1939,7 +2053,7 @@ function advanceTopic(idx){
   const fl=FLOW[t.type]||FLOW.image;
   if(t.stage>=fl.steps.length-1){toast('该选题已发布，可在「笔记复盘」查看数据');return;}
   const curTask=t.id+'-'+t.stage;
-  if(CAL_TASKS[curTask]===TODAY)DONE_TODAY[curTask]=true;
+  if(CAL_TASKS[curTask]===todayStr())DONE_TODAY[curTask]=true;
   t.stage=t.stage+1;
   saveState();renderTopic();renderToday();renderCal();
   toast('已推进到「'+fl.steps[t.stage]+'」');
@@ -1949,10 +2063,30 @@ function toggleTodo(tk){
   saveState();
   renderToday();
 }
+function confirmTodo(tk){
+  const seg=tk.split('-');const si=parseInt(seg[seg.length-1],10);const id=seg.slice(0,-1).join('-');
+  const t=TOPICS.find(x=>x.id===id);if(!t)return;
+  const fl=FLOW[t.type]||FLOW.image;const nm=fl.steps[si]||'';
+  $('#todoConfirmTk').value=tk;
+  $('#todoConfirmIcon').textContent=stageIcon(nm).ic;
+  $('#todoConfirmIcon').style.background=stageIcon(nm).bg;
+  $('#todoConfirmStage').textContent=nm;
+  $('#todoConfirmTitle').textContent=t.t;
+  $('#todoConfirmType').textContent=({image:'图文',video:'视频',text:'文本'})[t.type]||'图文';
+  $('#todoConfirmModal').classList.add('open');
+}
+function closeTodoConfirm(e){if(e&&e.target!==e.currentTarget)return;$('#todoConfirmModal').classList.remove('open');}
+function submitTodoDone(){
+  const tk=$('#todoConfirmTk').value;if(!tk)return;
+  DONE_TODAY[tk]=true;
+  saveState();closeTodoConfirm();renderToday();
+  toast('完成啦！已移入「今日已办」✅');
+}
 function openTodoForm(){
   const sel=$('#todoTopic');
   sel.innerHTML=TOPICS.map((t,i)=>`<option value="${i}">${{image:'📝',video:'📺',text:'✍️'}[t.type]||'📝'} ${t.t}</option>`).join('');
   updateTodoStages();
+  const sub=$('#todoFormSub');if(sub)sub.textContent='会同步到发布日历的今天（'+todayStr().slice(5,7)+' 月 '+todayStr().slice(8,10)+' 号）';
   $('#todoFormModal').classList.add('open');
 }
 function updateTodoStages(){
@@ -1962,18 +2096,65 @@ function updateTodoStages(){
   $('#todoStage').innerHTML=fl.steps.map((s,i)=>`<option value="${i}">${s}</option>`).join('');
 }
 function closeTodoForm(e){if(e&&e.target!==e.currentTarget)return;$('#todoFormModal').classList.remove('open');}
+/* ===== 添加发布计划（发布日历弹窗表单） ===== */
+function openPlanForm(){
+  if(!TOPICS.length){toast('没有可排期的选题，先去选题池新建一个');return;}
+  $('#planTopic').innerHTML=TOPICS.map((t,i)=>`<option value="${i}">${{image:'📝',video:'📺',text:'✍️'}[t.type]||'📝'} ${t.t}</option>`).join('');
+  updatePlanStages();
+  $('#planDate').value=todayStr();
+  $('#planDate').min=todayStr();
+  $('#planFormModal').classList.add('open');
+}
+function updatePlanStages(){
+  const ti=parseInt(($('#planTopic').value)||'0',10);
+  const t=TOPICS[ti];if(!t)return;
+  const fl=FLOW[t.type]||FLOW.image;
+  // 已排期阶段禁选并标注日期；默认选第一个可排阶段
+  const opts=fl.steps.map((s,i)=>{
+    const tk=t.id+'-'+i;
+    const planned=CAL_TASKS[tk];
+    const tag=planned?`（已排 ${Number(planned.split('-')[1])}/${Number(planned.split('-')[2])}）`:'';
+    return `<option value="${i}" ${planned?'disabled':''}>${s}${tag}</option>`;
+  }).join('');
+  $('#planStage').innerHTML=opts;
+  const firstOk=fl.steps.findIndex((s,i)=>CAL_TASKS[t.id+'-'+i]===undefined);
+  if(firstOk>=0)$('#planStage').value=String(firstOk);
+}
+function closePlanForm(e){if(e&&e.target!==e.currentTarget)return;$('#planFormModal').classList.remove('open');}
+function submitPlan(){
+  const ti=parseInt($('#planTopic').value,10);
+  const si=parseInt($('#planStage').value,10);
+  const t=TOPICS[ti];
+  const ds=$('#planDate').value;
+  if(!t||Number.isNaN(si)||si<0){toast('请选择阶段（已排期的阶段不可重复排）');return;}
+  if(!ds){toast('请选择日期');return;}
+  const tk=t.id+'-'+si;
+  CAL_TASKS[tk]=ds;
+  delete DONE_TODAY[tk];
+  saveState();closePlanForm();renderCal();renderToday();
+  const p=ds.split('-');
+  toast('已排期到 '+Number(p[1])+' 月 '+Number(p[2])+' 号：'+t.t+' · '+(FLOW[t.type].steps[si])+' ✅');
+}
 function submitTodo(){
   const ti=parseInt($('#todoTopic').value,10);
   const si=parseInt($('#todoStage').value,10);
   const t=TOPICS[ti];if(!t)return;
   const tk=t.id+'-'+si;
-  CAL_TASKS[tk]=TODAY;
+  CAL_TASKS[tk]=todayStr();
   delete DONE_TODAY[tk];
   saveState();closeTodoForm();renderToday();renderCal();
   toast('已加入今日待办：'+t.t+' · '+(FLOW[t.type].steps[si]));
 }
 
 /* ===== 发布日历 ===== */
+/** 排期任务是否已完成（阶段被推进越过 / 选题已发布 / 当天勾了完成）。选题已删返回 true（视为不该再算）。 */
+function calTaskDone(tk){
+  const seg=tk.split('-');const si=parseInt(seg[seg.length-1],10);
+  const t=TOPICS.find(x=>x.id===seg.slice(0,-1).join('-'));
+  if(!t)return true;
+  const last=(FLOW[t.type]||FLOW.image).steps.length-1;
+  return t.stage>si||t.stage>=last||!!DONE_TODAY[tk];
+}
 function renderCalPool(){
   const ticon={image:'📝',video:'📺',text:'✍️'};
   const tlab={image:'图文',video:'视频',text:'文本'};
@@ -1999,11 +2180,29 @@ function renderCalPool(){
       <div class="cal-pool-hint">把阶段小卡片拖到右边的日历上，安排每项创作的截止日</div>
     </div>`+(groups||`<div class="tp-empty">所有阶段的任务都已排期，去下面日历看看吧 📅</div>`);
 }
+/* 日历当前显示月：null=当月；切换范围限定当月~下月（近排期才有意义） */
+let _calYM=null;
+function calShift(d){
+  const now=new Date();
+  const cur=_calYM||{y:now.getFullYear(),m:now.getMonth()};
+  const t=new Date(cur.y,cur.m+d,1);
+  // 目标月必须在 [当月, 下月] 区间内
+  const min=new Date(now.getFullYear(),now.getMonth(),1);
+  const max=new Date(now.getFullYear(),now.getMonth()+1,1);
+  if(t<min||t>max)return;
+  _calYM={y:t.getFullYear(),m:t.getMonth()};
+  renderCalGrid();
+}
 function renderCalGrid(){
   const dows=['一','二','三','四','五','六','日'];
   let html=dows.map((d,i)=>`<div class="cal-dow ${i>=5?'we':''}">周${d}</div>`).join('');
+  const now=new Date();
+  const base=_calYM||{y:now.getFullYear(),m:now.getMonth()};
+  const y=base.y,m=base.m;
+  const ym=y+'-'+String(m+1).padStart(2,'0');
+  // 按完整日期分组；仅渲染该月且未完成的任务（与 KPI「待发布计划」同口径）
   const byDay={};
-  Object.keys(CAL_TASKS).forEach(tk=>{const d=CAL_TASKS[tk];(byDay[d]=byDay[d]||[]).push(tk);});
+  Object.keys(CAL_TASKS).forEach(tk=>{const d=CAL_TASKS[tk];if(typeof d==='string'&&d.startsWith(ym+'-')&&!calTaskDone(tk)){const day=d.split('-')[2];(byDay[day]=byDay[day]||[]).push(tk);}});
   const taskEl=tk=>{
     const seg=tk.split('-');const siN=parseInt(seg[seg.length-1],10);
     const id=seg.slice(0,-1).join('-');
@@ -2013,20 +2212,33 @@ function renderCalGrid(){
     const short=t.t.length>6?t.t.slice(0,5)+'…':t.t;
     return `<div class="cal-task" style="background:${t.cc}" title="${t.t} · ${nm}"><span class="ct-nm">${short}·${nm}</span><span class="ct-x" onclick="event.stopPropagation();removeTask('${tk}')">×</span></div>`;
   };
-  [27,28,29,30,31].forEach(d=>{html+=`<div class="cal-day mute"><div class="dn">${d}</div></div>`;});
-  for(let d=1;d<=31;d++){
-    const isToday=d===5;
-    const tasks=byDay[d]||[];
+  const daysInMonth=new Date(y,m+1,0).getDate();
+  const offset=(new Date(y,m,1).getDay()+6)%7; // 周一起始的当月 1 号偏移
+  const prevDays=new Date(y,m,0).getDate();    // 上月天数
+  for(let i=0;i<offset;i++){const d=prevDays-offset+1+i;html+=`<div class="cal-day mute"><div class="dn">${d}</div></div>`;}
+  const today=todayStr();
+  for(let d=1;d<=daysInMonth;d++){
+    const ds=ym+'-'+String(d).padStart(2,'0');
+    const isToday=ds===today;
+    const tasks=byDay[String(d).padStart(2,'0')]||[];
     const tels=tasks.map(taskEl).join('');
-    html+=`<div class="cal-day ${isToday?'today':''}" ondragover="calOver(event)" ondragleave="calLeave(event)" ondrop="calDrop(event,${d})" onclick="toast('8 月 ${d} 号：${tasks.length?tasks.length+' 项创作任务':'暂无安排'}')"><div class="dn ${isToday?'today-mark':''}">${d}</div>${tels}</div>`;
+    html+=`<div class="cal-day ${isToday?'today':''}" ondragover="calOver(event)" ondragleave="calLeave(event)" ondrop="calDrop(event,'${ds}')" onclick="toast('${m+1} 月 ${d} 号：${tasks.length?tasks.length+' 项创作任务':'暂无安排'}')"><div class="dn ${isToday?'today-mark':''}">${d}</div>${tels}</div>`;
   }
   $('#calGrid').innerHTML=html;
+  const mt=$('#calMonth');if(mt)mt.textContent=y+' 年 '+(m+1)+' 月 ';
+  const tc=$('#calTodayChip');if(tc){const w=['周日','周一','周二','周三','周四','周五','周六'][now.getDay()];tc.textContent='今天 · '+w+' · '+String(now.getMonth()+1).padStart(2,'0')+'.'+String(now.getDate()).padStart(2,'0');}
+  // 切换按钮禁用态：显示月已到当月（不能再往前）/ 已到下月（不能再往后）
+  const isCurMonth=m===now.getMonth()&&y===now.getFullYear();
+  const isNextMonth=m===(now.getMonth()+1)%12&&y===(now.getMonth()===11?now.getFullYear()+1:now.getFullYear());
+  const prev=$('#calPrev'),next=$('#calNext');
+  if(prev)prev.disabled=isCurMonth;
+  if(next)next.disabled=isNextMonth;
 }
 function renderCal(){renderCalPool();renderCalGrid();}
 function dragTask(e){e.dataTransfer.setData('text/task',e.currentTarget.dataset.task);e.currentTarget.style.opacity='.5';}
 function calOver(e){e.preventDefault();e.currentTarget.classList.add('dragover');}
 function calLeave(e){e.currentTarget.classList.remove('dragover');}
-function calDrop(e,d){e.preventDefault();e.currentTarget.classList.remove('dragover');const tk=e.dataTransfer.getData('text/task');if(tk){CAL_TASKS[tk]=d;saveState();renderCal();toast('已排期到 8 月 '+d+' 号 ✅');}}
+function calDrop(e,ds){e.preventDefault();e.currentTarget.classList.remove('dragover');const tk=e.dataTransfer.getData('text/task');if(tk){CAL_TASKS[tk]=ds;saveState();renderCal();const p=ds.split('-');toast('已排期到 '+Number(p[1])+' 月 '+Number(p[2])+' 号 ✅');}}
 function removeTask(tk){delete CAL_TASKS[tk];saveState();renderCal();toast('已移出排期');}
 /* 转选题录入 */
 function openTopicForm(idx,candIdx){
@@ -2128,17 +2340,42 @@ function deleteNote(idx){
   toast('已删除');
 }
 let _revIdx=-1,_revRating=0;
+const RV_ICONS={
+  like:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20.8 4.6a5.5 5.5 0 00-7.8 0L12 5.6l-1-1a5.5 5.5 0 00-7.8 7.8l1 1L12 21.2l7.8-7.8 1-1a5.5 5.5 0 000-7.8z"/></svg>',
+  fav:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2l2.4 7.2L22 12l-7.6 2.8L12 22l-2.4-7.2L2 12l7.6-2.8z"/></svg>',
+  cmt:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 11.5a8.4 8.4 0 01-9 8.4 9.9 9.9 0 01-2.8-.4L3 21l1.6-4.6a8.3 8.3 0 01-.6-4.9 8.4 8.4 0 018.4-7.5H13a8.4 8.4 0 018 7.5z"/></svg>',
+  shr:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 12v7a2 2 0 002 2h12a2 2 0 002-2v-7M16 6l-4-4-4 4M12 2v13"/></svg>'
+};
+function fmtNum(v){return typeof v==='number'?v.toLocaleString('zh-CN'):v}
+function countUp(el,target,dur){
+  const n=parseInt(target,10);
+  if(isNaN(n)||n<=0){el.textContent=typeof target==='number'?fmtNum(target):target;return;}
+  const t0=performance.now();
+  const tick=now=>{
+    const p=Math.min((now-t0)/dur,1),e=1-Math.pow(1-p,3);
+    el.textContent=fmtNum(Math.round(n*e));
+    if(p<1)requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+}
 function openReview(idx){
   _revIdx=idx;_revRating=0;
   const n=NOTES[idx],m=n.meta||{};
   const num=s=>{const v=parseInt(String(s||'').replace(/[^\d]/g,''),10);return isNaN(v)?0:v;};
   $('#rvTitle').textContent=m.title||'(未命名)';
   $('#rvMeta').textContent=[m.author,m.date?('📅 '+m.date):'',m.url].filter(Boolean).join(' · ');
-  $('#rvStats').innerHTML=`<div class="rv-stat"><b>${m.likes||'-'}</b><span>点赞</span></div><div class="rv-stat"><b>${m.favs||'-'}</b><span>收藏</span></div><div class="rv-stat"><b>${m.comments||'-'}</b><span>评论</span></div>${m.shares?`<div class="rv-stat"><b>${m.shares}</b><span>分享</span></div>`:''}`;
+  const items=[
+    {cls:'like',ic:RV_ICONS.like,lab:'点赞',val:m.likes},
+    {cls:'fav',ic:RV_ICONS.fav,lab:'收藏',val:m.favs},
+    {cls:'cmt',ic:RV_ICONS.cmt,lab:'评论',val:m.comments},
+    {cls:'shr',ic:RV_ICONS.shr,lab:'分享',val:m.shares}
+  ].filter(x=>x.val!==undefined&&x.val!==null&&x.val!=='');
+  $('#rvStats').innerHTML=items.map(x=>`<div class="rv-stat ${x.cls}"><div class="rs-ic">${x.ic}</div><b data-cnt="${x.val}" class="${num(x.val)>=10000?'long':''}">0</b><span>${x.lab}</span></div>`).join('');
+  $$('#rvStats b[data-cnt]').forEach(b=>countUp(b,b.dataset.cnt,450));
   const lk=num(m.likes),fv=num(m.favs),cm=num(m.comments);
   const total=lk+fv+cm;
   const favR=lk>0?(fv/lk*100):0;
-  $('#rvRates').innerHTML=`<span>赞藏评合计 <b>${total}</b></span><span>收藏/点赞 <b>${favR.toFixed(0)}%</b></span>`;
+  $('#rvRates').innerHTML=`<span class="rv-rate-pill">🧮 赞藏评合计 <b>${fmtNum(total)}</b></span><span class="rv-rate-pill">◷ 收藏/点赞 <b>${favR.toFixed(0)}%</b></span>`;
   const insight=favR>150?`收藏/点赞 ${favR.toFixed(0)}%，典型「先马后看」型——标题承诺到位、传播偏弱，可优化开头钩子提升点赞。`
     :favR>80?`收藏/点赞 ${favR.toFixed(0)}%，赞藏比均衡，结构健康。`
     :`收藏/点赞 ${favR.toFixed(0)}%，点赞多收藏少——传播强但留存弱，可加强「带走资产」承诺提升收藏。`;
@@ -2177,6 +2414,7 @@ function todayStr(){const d=new Date();return d.getFullYear()+'-'+String(d.getMo
 function touchFirstUse(){if(loadFirstUse())return;try{localStorage.setItem('wb_first_use',todayStr())}catch(e){}}
 function daysSinceFirst(){const f=loadFirstUse();if(!f)return 1;const a=new Date(f+'T00:00:00'),b=new Date(todayStr()+'T00:00:00');const dd=Math.round((b-a)/86400000);return dd>=0?dd+1:1}
 function greetingByHour(){const h=new Date().getHours();if(h<6)return '夜深啦';if(h<12)return '早上好呀';if(h<14)return '中午好呀';if(h<18)return '下午好呀';return '晚上好呀'}
+function renderDateChip(){const d=new Date(),w=['周日','周一','周二','周三','周四','周五','周六'][d.getDay()];setText('dateChipNum',String(d.getMonth()+1).padStart(2,'0')+'.'+String(d.getDate()).padStart(2,'0'));setText('dateChipWeek',w)}
 function setText(id,v){const e=$('#'+id);if(e)e.textContent=v}
 function setSrc(id,v){const e=$('#'+id);if(e)e.src=v}
 function renderProfile(){
@@ -2208,7 +2446,7 @@ function saveProfile(){
 }
 
 /* ===== 初始化 ===== */
-['topicMatModal','topicFormModal','reviewModal','profileModal'].forEach(function(id){var m=document.getElementById(id);if(m&&m.parentNode!==document.body)document.body.appendChild(m);});
+['topicMatModal','topicFormModal','reviewModal','profileModal','planFormModal','todoFormModal','todoConfirmModal'].forEach(function(id){var m=document.getElementById(id);if(m&&m.parentNode!==document.body)document.body.appendChild(m);});
 const hv=(location.hash||'').replace('#','');
 if(hv&&$('#v-'+hv))switchView(hv);
 window.addEventListener('hashchange',()=>{const v=location.hash.replace('#','');if(v&&$('#v-'+v)&&!$('#v-'+v).classList.contains('active'))switchView(v);});
@@ -2272,7 +2510,7 @@ async function cfgSave(){
     else{toast(j.error||'保存失败');}
   }catch(e){toast('网络错误：'+e.message);}
 }
-touchFirstUse();loadState();renderInsp();renderTopic();renderMat();renderHit();renderToday();renderCal();renderReview();renderProfile();checkConfig();
+touchFirstUse();loadState();renderInsp();renderTopic();renderMat();renderHit();renderToday();renderCal();renderReview();renderProfile();renderDateChip();checkConfig();initProfileUrl();
 if(_runningInspTask)pollInspiration(_runningInspTask.taskId);
 if(_runningTask){pollTeardown(_runningTask.taskId,_runningTask.url);}
 updateStats();

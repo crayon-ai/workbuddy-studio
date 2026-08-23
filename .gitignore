@@ -25,6 +25,15 @@ data/teardowns/
 data/notes/
 # 今日灵感抓取产物（用户数据）
 data/inspirations/
+# 个性化灵感产物：博主画像 + 灵感抓取（用户数据）
+data/personalized/
 
 # 本地 worktree 工作区，不入库
 .claude/worktrees/
+logs/
+
+# 启动日志 + 生成的 .app（打包时自动生成，不入库）
+WorkBuddy.app/
+
+# 本地介绍文档（不发布）
+介绍.md

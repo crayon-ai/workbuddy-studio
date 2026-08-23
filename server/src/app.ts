@@ -6,7 +6,9 @@ import { titleRoutes } from "./routes/title.js";
 import { teardownRoutes } from "./routes/teardown.js";
 import { noteRoutes } from "./routes/note.js";
 import { inspirationRoutes } from "./routes/inspiration.js";
+import { personalizedRoutes } from "./routes/personalized.js";
 import { taskRoutes } from "./routes/task.js";
+import { healthzRoutes } from "./routes/healthz.js";
 
 export interface BuildAppOpts {
   /** API key 落地的 .env 路径，默认 ./.env（相对 server 工作目录） */
@@ -29,7 +31,9 @@ export async function buildApp(opts: BuildAppOpts = {}): Promise<FastifyInstance
   await app.register(teardownRoutes, routeOpts);
   await app.register(noteRoutes, routeOpts);
   await app.register(inspirationRoutes, routeOpts);
+  await app.register(personalizedRoutes, routeOpts);
   await app.register(taskRoutes);
+  await app.register(healthzRoutes);
   return app;
 }
 

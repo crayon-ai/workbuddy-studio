@@ -10,7 +10,7 @@
 
 ### 方式 A：用 agent 启动（推荐，小白友好）
 
-1. 装一个能执行 shell 的 agent（workbuddy,codex等)
+1. 装一个能执行 shell 的 agent（Claude Code / Cursor 等）。
 2. 把本项目文件夹交给它，说「帮我跑起来」。
 3. agent 会读 [`AGENT.md`](./AGENT.md)，自动装 Node、依赖、配 API key、启动、开浏览器。
 4. 浏览器打开 http://127.0.0.1:7788 即可。

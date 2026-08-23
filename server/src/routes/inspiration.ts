@@ -1,8 +1,9 @@
 import type { FastifyPluginCallback } from "fastify";
 import path from "node:path";
 import { createTask, updateTask, getTask } from "../task-store.js";
-import { runSkill } from "../skill-runner.js";
+import { runSkill, collectMarkdown } from "../skill-runner.js";
 import { parseInspiration } from "../parse.js";
+import { fetchSources, type SourceItem } from "../sources.js";
 import { getApiKey } from "../config.js";
 
 export interface InspirationRoutesOpts {
@@ -46,15 +47,30 @@ async function runInspiration(
   apiKey: string,
   projectRoot: string
 ): Promise<void> {
+  const t0 = Date.now();
+  const log = (msg: string) =>
+    console.log(`[${new Date().toTimeString().slice(0, 8)}] (+${((Date.now() - t0) / 1000).toFixed(1)}s) [inspiration:${taskId}] ${msg}`);
+  log(`提交关键词：${keywords}`);
   updateTask(taskId, {
     status: "running",
     step: "已提交，准备抓取灵感…",
     logs: [],
-    updatedAt: Date.now(),
+    updatedAt: t0,
   });
 
   const workDir = inspirationDir(projectRoot, taskId);
-  const prompt = buildPrompt(keywords, workDir);
+  log(`开始抓取 5 源（并行直连）…`);
+
+  // 后端直连并行抓取（不经过 agent，几秒完成）
+  let items: Awaited<ReturnType<typeof fetchSources>> = [];
+  try {
+    items = await fetchSources(keywords);
+  } catch (e: any) {
+    log(`抓取失败：${e?.message ?? String(e)}`);
+  }
+  log(`抓取完成，${items.length} 条原始素材`);
+
+  const prompt = buildPrompt(keywords, workDir, items);
 
   const r = await runSkill("inspiration-radar", prompt, workDir, { apiKey, projectRoot }, (p) => {
     const cur = getTask(taskId);
@@ -70,12 +86,26 @@ async function runInspiration(
     if (p.detail) patch.detail = p.detail;
     updateTask(taskId, patch);
   });
+  log(`skill 结束，耗时 ${((Date.now() - t0) / 1000).toFixed(1)}s，ok=${r.ok}`);
 
   if (!r.ok) {
+    // agent 偶发完成工作后 CLI 崩溃（exit 1）——先从磁盘恢复已落盘的 inspirations.md
+    const recovered = parseInspiration(collectMarkdown(workDir));
+    if (recovered.length > 0) {
+      log(`skill 失败（${r.error}）但磁盘恢复 ${recovered.length} 条`);
+      updateTask(taskId, {
+        status: "done",
+        result: recovered,
+        step: `完成，抓到 ${recovered.length} 条灵感`,
+        updatedAt: Date.now(),
+      });
+      return;
+    }
     updateTask(taskId, { status: "failed", error: r.error, updatedAt: Date.now() });
     return;
   }
   const insp = parseInspiration(r.artifacts);
+  log(`完成，抓到 ${insp.length} 条`);
   updateTask(taskId, {
     status: "done",
     result: insp,
@@ -84,22 +114,54 @@ async function runInspiration(
   });
 }
 
-function buildPrompt(keywords: string, workDir: string): string {
+function buildPrompt(keywords: string, workDir: string, items: SourceItem[]): string {
+  const raw = items
+    .map(
+      (i) =>
+        `- [${i.pfn}] ${i.title}${i.author ? `（${i.author}）` : ""}${i.heat ? ` · 热度${i.heat}` : ""}${i.pub ? ` · ${i.pub}` : ""}\n  url: ${i.url}${i.summary ? `\n  摘要: ${i.summary}` : ""}`
+    )
+    .join("\n");
   return [
     "请使用 inspiration-radar skill 完成以下任务。",
     "",
     `关键词：${keywords}`,
     `输出目录：${workDir}`,
     "",
-    "严格按 inspiration-radar/SKILL.md 执行，用 curl 抓 5 个免登录态数据源：",
-    "  B站搜索 / 必应全网 / 搜狗微信公众号 / HackerNews / 抖音热搜榜。",
-    "直接用 SKILL.md 里给的 curl 命令（每个源各一段），不要探索其他工具，不要尝试需要登录的平台（推特/小红书/微博/知乎/豆瓣）。",
+    "重要（执行方式，先读）：原始素材已由调用方抓取好，见下方「原始素材」。",
+    "不要再用 curl / Bash 去抓取任何数据源，不要调用 Skill 工具。",
+    "你的唯一工作：从原始素材里筛选 top 10，补全推荐理由与候选选题，用 Write 落盘。",
     "",
-    "要求：",
-    "- 每条必须含 url（原链接，可点击回原文）。",
-    "- 5 个源无需全抓，任一组合抓到 ≥6 条优质就停止、进入筛选。",
-    "- 任一源失败最多重试 1 次，仍失败就跳过；绝不反复重试拖垮任务。",
-    `- 写入 ${workDir}/inspirations.md，严格用 SKILL.md 规定的字段格式（pf 只能是 bili/bing/weixin/hn/douyin）。`,
+    "原始素材（共 " + items.length + " 条）：",
+    raw || "（无，本次未抓到任何素材）",
+    "",
+    "筛选要求：",
+    "- 从原始素材挑最多 10 条最有创作价值的（与关键词相关度高、有讨论度、有延展性）。",
+    "- 每条必须含 url（沿用原始素材里给的原链接）。",
+    `- 写入 ${workDir}/inspirations.md（pf 只能是 bili/bing/weixin/hn/douyin）。`,
     `- 最终必须产出 ${workDir}/inspirations.md 文件（即使空也要创建）。`,
+    "",
+    "输出格式（必须逐字段遵循，字段名只用下面这些英文 key，不要中文、不要加粗）：",
+    "",
+    "```",
+    "## 1",
+    "- pf: bili",
+    "- pfn: B站",
+    "- author: 作者名",
+    "- pub: 2 天前",
+    "- t: 标题",
+    "- s: 1-2 句摘要",
+    "- url: https://真实链接",
+    "- why: 理由1 | 理由2 | 理由3",
+    "- m: 热度,82,coral | 匹配,90,matcha | 可写性,85,honey",
+    "- cands: op,选题1 | method,选题2 | eval,选题3",
+    "",
+    "## 2",
+    "- pf: bing",
+    "…",
+    "```",
+    "",
+    "硬约束：",
+    "- 每条以 `## N`（纯数字）分隔，绝不用标题文本做分隔。",
+    "- m 里的匹配度是 0-100 整数（如 90），不是 0-10 小数。",
   ].join("\n");
 }

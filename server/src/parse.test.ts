@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { parseTitles, parseTeardown } from "./parse.js";
+import { parseTitles, parseTeardown, parseProfile } from "./parse.js";
 
 describe("parseTitles", () => {
   it("解析 ```json 代码块里的数组", () => {
@@ -104,5 +104,98 @@ describe("parseTeardown", () => {
   it("忽略非 AI爆款拆解 开头的 md", () => {
     const r = parseTeardown({ "README.md": "# hi" });
     expect(r.raw).toBe("");
+  });
+});
+
+describe("parseProfile", () => {
+  const MD = [
+    "- track: 职场效率工具测评，面向自媒体新手的 AI 工作流",
+    "- pillars: AI 工具实战 | 效率方法论 | 小红书运营",
+    "- topics: AI 标题技巧 | 素材库搭建 | 灵感工作流",
+    "- shift: 从工具测评转向工作流方法论",
+    "- keywords: AI 工作台 | 效率工具 | 内容创作 | 灵感管理",
+  ].join("\n");
+
+  it("正常解析画像各字段", () => {
+    const p = parseProfile({ "profile.md": MD });
+    expect(p).not.toBeNull();
+    expect(p!.track).toContain("效率工具");
+    expect(p!.pillars).toHaveLength(3);
+    expect(p!.topics[0]).toBe("AI 标题技巧");
+    expect(p!.shift).toContain("方法论");
+    expect(p!.keywords).toHaveLength(4);
+  });
+
+  it("字段缺失给默认空数组", () => {
+    const p = parseProfile({ "profile.md": "- 赛道: x\n- keywords: a | b" });
+    expect(p!.pillars).toEqual([]);
+    expect(p!.topics).toEqual([]);
+  });
+
+  it("关键词为空返回 null（视为画像失败）", () => {
+    expect(parseProfile({ "profile.md": "- 赛道: x" })).toBeNull();
+  });
+
+  it("找不到 profile 产物返回 null", () => {
+    expect(parseProfile({ "inspirations.md": "## 1" })).toBeNull();
+  });
+
+  // 实测故障形态（2026-08-23 fa8049a8/91e82129）：agent 无视格式约束，
+  // 写成自由格式报告——key 行无 `- ` 前缀、pillars/topics/keywords 是多行列表。
+  it("解析自由格式报告：无前缀 key 行 + 多行列表（fa8049a8 形态）", () => {
+    const freeForm = [
+      "track: AI-native工作方式与技术内容创作",
+      "",
+      "pillars:",
+      "- AI工具链与工作流（coding agent、skill设计）",
+      "- 技术内容创作方法论",
+      "",
+      "topics:",
+      "- AI-native组织与团队协作",
+      "- Coding agent实战与skill设计",
+      "",
+      "shift: 从个人影响力构建到组织级AI落地",
+      "",
+      "keywords:",
+      "- AI-native团队",
+      "- Coding agent",
+      "- Build in public",
+      "- HTML slides",
+    ].join("\n");
+    const p = parseProfile({ "profile.md": freeForm });
+    expect(p).not.toBeNull();
+    expect(p!.track).toContain("AI-native");
+    expect(p!.pillars).toHaveLength(2);
+    expect(p!.pillars[0]).toBe("AI工具链与工作流（coding agent、skill设计）");
+    expect(p!.topics).toHaveLength(2);
+    expect(p!.shift).toContain("组织级AI落地");
+    expect(p!.keywords).toEqual(["AI-native团队", "Coding agent", "Build in public", "HTML slides"]);
+  });
+
+  it("解析自由格式报告：### 标题形态 key + 编号列表 + **加粗**清洗（91e82129 形态）", () => {
+    const report = [
+      "# 张咋啦 - 博主画像分析",
+      "",
+      "### track: AI原生工作方式与开发者内容创作",
+      "聚焦AI-native开发实践。",
+      "",
+      "### pillars:",
+      "1. **AI-native工作方式与组织变革** (35%)",
+      "2. **开发者工具与开源实践** (30%)",
+      "",
+      "### keywords:",
+      "- AI-native workflow",
+      "- HTML slides & video production",
+      "- **Coding agent** & automation",
+    ].join("\n");
+    const p = parseProfile({ "profile.md": report });
+    expect(p).not.toBeNull();
+    expect(p!.track).toBe("AI原生工作方式与开发者内容创作");
+    expect(p!.pillars).toEqual(["AI-native工作方式与组织变革", "开发者工具与开源实践"]);
+    expect(p!.keywords).toEqual([
+      "AI-native workflow",
+      "HTML slides & video production",
+      "Coding agent & automation",
+    ]);
   });
 });

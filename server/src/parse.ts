@@ -167,7 +167,7 @@ function parseInspBlock(block: string): Insp | null {
 }
 
 /** 把 block 里的 `- key: value` 行解析为 { key: value }。 */
-function parseInspFields(block: string): Record<string, string> {
+export function parseInspFields(block: string): Record<string, string> {
   const out: Record<string, string> = {};
   for (const line of block.split("\n")) {
     const m = line.match(/^\s*-\s*([A-Za-z_]+)\s*[:：]\s*(.*)$/);
@@ -206,4 +206,104 @@ function parseInspCands(v: string | undefined): { g: string; t: string }[] {
     if (g && t) out.push({ g, t });
   }
   return out;
+}
+
+export interface Profile {
+  /** 赛道定位（1-2 句） */
+  track?: string;
+  /** 内容支柱 */
+  pillars: string[];
+  /** 选题偏好（按近期权重排序） */
+  topics: string[];
+  /** 近期转向描述 */
+  shift?: string;
+  /** 供灵感抓取用的关键词（6-10 个） */
+  keywords: string[];
+}
+
+/**
+ * 从 skill 产物（profile.md，文件名含 profile）解析博主画像。
+ * 支持两种产物形态（agent 偶发无视格式约束，实测两种都出现过）：
+ *  1. 标准格式：`- key: value` 单行，多值 `|` 分隔（SKILL.md 规定）
+ *  2. 自由报告：`key: value` / `### key:` 无前缀或标题形态，
+ *     多值跟在 key 后的多行列表（- / * / 1. 开头，含 **加粗** 会清洗）
+ * keywords 为空返回 null —— 调用方视为画像失败。
+ */
+export function parseProfile(artifacts: Record<string, string>): Profile | null {
+  const entry = Object.entries(artifacts).find(([k]) => /profile/i.test(k));
+  if (!entry) return null;
+  const lines = entry[1].split("\n");
+  const single = parseInspFields(entry[1]);
+  const multi = collectProfileListFields(lines);
+
+  const pick = (key: string): string | undefined => {
+    const v = single[key] ?? findInlineValue(lines, key);
+    const t = (v ?? "").trim();
+    return t || undefined;
+  };
+  const split = (v: string | undefined) =>
+    splitBar(v).map((s) => s.trim()).filter(Boolean);
+  const list = (key: string): string[] => {
+    const fromSingle = split(single[key]);
+    return fromSingle.length ? fromSingle : multi[key] ?? [];
+  };
+
+  const keywords = list("keywords");
+  if (!keywords.length) return null;
+  return {
+    track: pick("track") ?? pick("赛道"),
+    pillars: list("pillars"),
+    topics: list("topics"),
+    shift: pick("shift"),
+    keywords,
+  };
+}
+
+/** key 的三种行形态：`- key: v`（parseInspFields 已处理）/ `key: v` / `### key: v`。 */
+const KEY_RE = (key: string) => new RegExp(`^\\s*(?:#{1,6}\\s*|-\\s*)?${key}\\s*[:：]\\s*(.*)$`, "i");
+
+/** 在自由报告里找 `key: value` 行的单行值（标准解析没拿到时兜底）。 */
+function findInlineValue(lines: string[], key: string): string | undefined {
+  for (const line of lines) {
+    const m = line.match(KEY_RE(key));
+    if (m && m[1].trim()) return m[1];
+  }
+  return undefined;
+}
+
+/** 列表行：`- item` / `* item` / `1. item`，清洗 **加粗**。 */
+const LIST_ITEM_RE = /^\s*(?:[-*]|\d+[.、])\s+(.+)$/;
+
+/** 收集自由报告形态的列表字段：`key:`（值为空）后跟的多行列表项。 */
+function collectProfileListFields(lines: string[]): Record<string, string[]> {
+  const out: Record<string, string[]> = {};
+  const keys = ["pillars", "topics", "keywords"];
+  let current: string | null = null;
+  for (const line of lines) {
+    const keyMatch = keys.find((k) => {
+      const m = line.match(KEY_RE(k));
+      return m !== null;
+    });
+    if (keyMatch !== undefined) {
+      // 进入该 key 的区块（值可能为空——列表在后续行）
+      current = out[keyMatch] ? keyMatch : keyMatch;
+      if (!out[current]) out[current] = [];
+      continue;
+    }
+    if (current) {
+      const item = line.match(LIST_ITEM_RE);
+      if (item) {
+        out[current].push(cleanListItem(item[1]));
+        continue;
+      }
+      // 非列表行（含空行）结束当前区块
+      if (line.trim() !== "") current = null;
+    }
+  }
+  return out;
+}
+
+/** 清洗列表项：去 **加粗** 标记、去行尾权重注释（如 `(35%)`）。 */
+function cleanListItem(raw: string): string {
+  return raw.replace(/\*\*/g, "").replace(/\s*[（(]\d+%[)）]\s*$/, "").trim();
 }
