@@ -12,10 +12,21 @@
 
 1. 装一个能执行 shell 的 agent（Claude Code / Cursor 等）。
 2. 把本项目文件夹交给它，说「帮我跑起来」。
-3. agent 会读 [`AGENT.md`](./AGENT.md)，自动装 Node、依赖、配 API key、启动、开浏览器。
+3. agent 会读 [`AGENT.md`](./AGENT.md)，自动装 Node、依赖，跑 `scripts/workbuddy-daemon.sh start` **守护启动**（macOS：launchd 守护——agent 会话退出不掉、进程崩溃自动拉起、开机自启），并打开浏览器。
 4. 浏览器打开 http://127.0.0.1:7788 即可。
 
-> 小白只需「装个 agent + 把文件夹给它」，环境补齐全由 agent 完成。
+> 小白只需「装个 agent + 把文件夹给它」，环境补齐全由 agent 完成。守护启动后工作台常驻后台，随时访问。
+
+### 常驻服务管理（守护启动后）
+
+```bash
+scripts/workbuddy-daemon.sh start     # 守护启动（幂等，已运行则直接复用）
+scripts/workbuddy-daemon.sh status    # 查看运行/守护状态
+scripts/workbuddy-daemon.sh stop      # 本次停止（开机仍会自启）
+scripts/workbuddy-daemon.sh uninstall # 彻底移除守护（不再自启）
+```
+
+服务日志：`logs/server.log`（应用）/ `logs/launchd.log`（守护层）。
 
 ### 方式 B：手动启动
 
@@ -60,7 +71,7 @@ cd .. && ./scripts/start.sh
 自媒体工作台.html      前端
 server/               Node + Fastify + Agent SDK 后端
 .claude/skills/       自带 skill（爆款拆解 / 标题生成）
-scripts/              bootstrap / start / setup-whisper
+scripts/              workbuddy-daemon（守护）/ bootstrap / start / setup-whisper
 AGENT.md              给执行 agent 的启动规约（核心）
 CLAUDE.md             Claude Code 自动读
 docs/superpowers/     设计 spec + 实现计划

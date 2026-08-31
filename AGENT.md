@@ -35,8 +35,14 @@
 
 ## 启动
 
-- 推荐：`scripts/bootstrap.sh`（自动装依赖 + 配 key + 起服务 + 开浏览器）
-- 或手动：`cd server && npm run dev`，再 `open http://127.0.0.1:7788`
+- **默认（macOS，推荐）**：`scripts/workbuddy-daemon.sh start`
+  - 把服务注册为 launchd LaunchAgent：**与你的会话彻底解耦**——你会话退出、终端关闭服务都不掉；进程崩溃自动拉起；开机自启。
+  - 脚本自动完成：装依赖（若缺）→ 注册 → 起服务 → 等就绪 → 开浏览器。
+  - 端口被占用时用 `PORT=7789 scripts/workbuddy-daemon.sh start` 换端口。
+  - 其他命令：`status` 查状态 / `stop` 本次停止（开机仍自启）/ `uninstall` 彻底移除。
+  - **不要**用 `npm run dev` 起常驻服务——那是开发热重载模式，且作为你会话的子进程，会话结束服务就死。
+- Windows / Linux / 临时调试：`scripts/bootstrap.sh`（装依赖 + 起服务 + 开浏览器；服务生命周期与会话绑定）
+- 手动开发调试：`cd server && npm run dev`，再 `open http://127.0.0.1:7788`
 
 ## 验收（确认跑通了）
 
@@ -58,7 +64,9 @@
 
 | 现象 | 处理 |
 |---|---|
-| 端口 7788 占用 | 改 `server/src/index.ts` 的 `PORT` 或设环境变量 `PORT=7789` |
+| 端口 7788 占用 | `PORT=7789 scripts/workbuddy-daemon.sh start` 换端口（守护脚本会提示占用） |
+| 服务一会就自动关了 | 说明不是守护方式启动。跑 `scripts/workbuddy-daemon.sh start` 注册 launchd 守护；`status` 可查当前是否守护运行 |
+| 守护启动 30 秒未就绪 | `tail -50 logs/launchd.log logs/server.log` 排查；残留进程用 `pkill -9 -f "server/node_modules/.bin/tsx"` 清掉再 start |
 | skill 没被调用 | 确认 `.claude/skills/baokuan-chaijie/SKILL.md` 与 `xhs-title-psych/SKILL.md` 存在；后端 `cwd` 是项目根 |
 | 图文拆解图片文字没提取 | agent 应自动用 vision；若没提取，在后端 `routes/teardown.ts` 的 prompt 里加一句"用 Read 工具读取图片" |
 | 视频拆解卡住 | 确认 ffmpeg + whisper server(:2022) 已起；没装就提示用户图文拆解可用、视频需装工具 |

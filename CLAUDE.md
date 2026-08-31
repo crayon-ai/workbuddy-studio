@@ -6,6 +6,8 @@
 
 **面向 agent 启动**：把本项目交给一个能执行 shell 的 agent（如 Claude Code），让它读 [AGENT.md](./AGENT.md) 自动补齐依赖并启动。
 
+**常驻守护启动（macOS 默认）**：`scripts/workbuddy-daemon.sh start` — launchd 守护，会话退出不掉、崩溃自动拉起、开机自启。status / stop / uninstall 子命令管理。**agent 启动一律走此脚本，不要 `npm run dev` 起常驻服务。**
+
 **手动启动**：`scripts/bootstrap.sh`（或见 README）。
 
 ## 项目结构要点
@@ -13,7 +15,7 @@
 - `自媒体工作台.html` — 前端（localStorage 持久化业务数据）
 - `server/` — Node + Fastify + Agent SDK 后端（`src/`：路由、skill-runner、task-store、config）
 - `.claude/skills/` — 项目自带 skill（`baokuan-chaijie` 爆款拆解、`xhs-title-psych` 标题）
-- `scripts/` — 启动与工具脚本（bootstrap / start / setup-whisper）
+- `scripts/` — 启动与工具脚本（workbuddy-daemon 守护 / bootstrap / start / setup-whisper）
 - `docs/superpowers/specs/` — 设计 spec
 - `docs/superpowers/plans/` — 实现计划
 
