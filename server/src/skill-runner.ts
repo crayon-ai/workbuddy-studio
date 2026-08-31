@@ -50,6 +50,7 @@ export async function runSkill(
 
   const fullPrompt = `请使用 ${skillName} skill 完成以下任务。\n\n${prompt}`;
   let text = "";
+  let agentError = ""; // agent 非正常结束的原因（error_max_turns / error_during_execution 等）
 
   try {
     for await (const msg of query({
@@ -78,15 +79,43 @@ export async function runSkill(
         }
       }
 
-      if (m.type === "result" && m.subtype === "success") {
-        text = m.result ?? "";
+      if (m.type === "result") {
+        if (m.subtype === "success") {
+          text = m.result ?? "";
+        } else {
+          // 非正常结束不当作成功：否则 ok=true + 空产物，真实原因被吞掉
+          agentError = `agent 异常结束（subtype=${m.subtype}）：${truncate(m.result ?? "无详情", 300)}`;
+        }
       }
     }
   } catch (e: any) {
-    return { ok: false, text: "", artifacts: {}, error: e?.message ?? String(e) };
+    const detail = serializeError(e);
+    console.error(`[skill:${skillName}] 调用异常：${detail}`);
+    return { ok: false, text: "", artifacts: {}, error: detail };
+  }
+
+  if (agentError) {
+    console.error(`[skill:${skillName}] ${agentError}`);
+    return { ok: false, text: "", artifacts: {}, error: agentError };
   }
 
   return { ok: true, text, artifacts: collectMarkdown(workDir) };
+}
+
+/**
+ * 把异常序列化成尽量完整的一行多行文本：message + 关键字段（stderr/exitCode 等）+ 堆栈前几行。
+ * SDK 抛的错误常带 stderr / exit_code 等字段，只取 message 会丢最关键的排查信息。
+ */
+function serializeError(e: any): string {
+  const parts: string[] = [e?.message ?? String(e)];
+  for (const key of ["stderr", "stdout", "exitCode", "exit_code", "code"]) {
+    const v = e?.[key];
+    if (v !== undefined && v !== null && String(v).trim() !== "") {
+      parts.push(`${key}=${truncate(String(v), 400)}`);
+    }
+  }
+  if (e?.stack) parts.push(truncate(e.stack, 600));
+  return parts.join(" | ");
 }
 
 function truncate(s: string, n: number): string {

@@ -39,14 +39,32 @@ describe("runSkill", () => {
     expect(r.artifacts["AI爆款拆解-测试.md"]).toContain("正文内容");
   });
 
-  it("query 抛错时返回 ok=false + error", async () => {
+  it("query 抛错时返回 ok=false + error（含堆栈与 stderr 等细节）", async () => {
+    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
     (query as any).mockImplementationOnce(async function* () {
-      throw new Error("boom");
+      throw Object.assign(new Error("boom"), { stderr: "CLI crashed", exitCode: 1 });
     });
     const r = await runSkill("x", "p", tmpDir, { apiKey: "sk", projectRoot: "." });
     expect(r.ok).toBe(false);
-    expect(r.error).toBe("boom");
+    expect(r.error).toContain("boom");
+    expect(r.error).toContain("stderr=CLI crashed");
+    expect(r.error).toContain("exitCode=1");
     expect(r.artifacts).toEqual({});
+    expect(spy.mock.calls.some((c) => String(c[0]).includes("调用异常"))).toBe(true);
+    spy.mockRestore();
+  });
+
+  it("agent 非正常结束（subtype=error_max_turns）不再伪装成功", async () => {
+    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+    (query as any).mockImplementationOnce(async function* () {
+      yield { type: "result", subtype: "error_max_turns", result: "达到轮次上限" };
+    });
+    const r = await runSkill("x", "p", tmpDir, { apiKey: "sk", projectRoot: "." });
+    expect(r.ok).toBe(false);
+    expect(r.error).toContain("error_max_turns");
+    expect(r.error).toContain("达到轮次上限");
+    expect(spy.mock.calls.some((c) => String(c[0]).includes("异常结束"))).toBe(true);
+    spy.mockRestore();
   });
 
   it("onProgress 回调上报 assistant 文字与工具调用", async () => {

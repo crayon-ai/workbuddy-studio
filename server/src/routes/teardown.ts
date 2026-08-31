@@ -5,6 +5,7 @@ import { createTask, updateTask, getTask } from "../task-store.js";
 import { runSkill, collectMarkdown } from "../skill-runner.js";
 import { parseTeardown } from "../parse.js";
 import { getApiKey } from "../config.js";
+import { taskLog } from "../log.js";
 import path from "node:path";
 
 export interface TeardownRoutesOpts {
@@ -45,9 +46,10 @@ export const teardownRoutes: FastifyPluginCallback<TeardownRoutesOpts> = (
       return { success: false, data: null, error: "未配置 API key" };
     }
     const taskId = createTask();
-    runTeardown(taskId, url, apiKey, opts.projectRoot).catch((e) =>
-      updateTask(taskId, { status: "failed", error: String(e?.message ?? e) })
-    );
+    runTeardown(taskId, url, apiKey, opts.projectRoot).catch((e) => {
+      console.error(`[teardown:${taskId}] 编排异常：`, e);
+      updateTask(taskId, { status: "failed", error: String(e?.message ?? e) });
+    });
     return { success: true, data: { taskId } };
   });
 
@@ -88,6 +90,8 @@ async function runTeardown(
   apiKey: string,
   projectRoot: string
 ): Promise<void> {
+  const t0 = Date.now();
+  taskLog("teardown", taskId, `提交：url=${url}`);
   updateTask(taskId, {
     status: "running",
     step: "已提交，准备调用 skill…",
@@ -131,11 +135,14 @@ async function runTeardown(
 
   if (!r.ok) {
     // agent 偶发完成工作后 CLI 崩溃（exit 1）——先从磁盘恢复已落盘的拆解产物
+    taskLog("teardown", taskId, `skill 失败（${r.error}），尝试从磁盘恢复产物`, t0);
     const recovered = parseTeardown(collectMarkdown(workDir));
     if (!recovered.reportFile) {
+      taskLog("teardown", taskId, `失败，无可用产物`, t0);
       updateTask(taskId, { status: "failed", error: r.error, updatedAt: Date.now() });
       return;
     }
+    taskLog("teardown", taskId, `完成（磁盘恢复 ${recovered.reportFile}）`, t0);
     updateTask(taskId, {
       status: "done",
       result: recovered,
@@ -147,6 +154,7 @@ async function runTeardown(
   const result = parseTeardown(r.artifacts);
   if (!result.reportFile) {
     // agent 偶发「介绍 skill 即宣布完成」零产物（实测抖音链接）：不伪装成 done
+    taskLog("teardown", taskId, `失败，skill 结束但零产物（耗时 ${((Date.now() - t0) / 1000).toFixed(1)}s）`, t0);
     updateTask(taskId, {
       status: "failed",
       error: "拆解未产出报告（下载或拆解未实际执行），请重试",
@@ -156,6 +164,7 @@ async function runTeardown(
   }
   if (fabricatedArtifacts(r.artifacts)) {
     // agent 偶发编造「示例内容/模拟数据」交差（实测抖音 8c93dd73）：假成功比失败更糟
+    taskLog("teardown", taskId, `失败，产物为编造示例`, t0);
     updateTask(taskId, {
       status: "failed",
       error: "内容未能真实抓取（agent 未获取到原文，产物为编造示例），请重试",
@@ -163,6 +172,7 @@ async function runTeardown(
     });
     return;
   }
+  taskLog("teardown", taskId, `完成，报告 ${result.reportFile}，总耗时 ${((Date.now() - t0) / 1000).toFixed(1)}s`, t0);
   updateTask(taskId, {
     status: "done",
     result,

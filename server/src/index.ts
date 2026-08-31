@@ -4,11 +4,13 @@ import { fileURLToPath } from "node:url";
 import path from "node:path";
 import { buildApp } from "./app.js";
 import { loadEnv } from "./config.js";
+import { teeToFile } from "./logger.js";
 
 const PORT = Number(process.env.PORT ?? 7788);
 const HOST = "127.0.0.1";
 
 async function main(): Promise<void> {
+  teeToFile(); // stdout/stderr 镜像到 logs/server.log（任何启动方式都落盘）
   loadEnv(); // 加载 server/.env（ANTHROPIC_AUTH_TOKEN / ANTHROPIC_BASE_URL 等）
   const app = await buildApp();
   const here = fileURLToPath(import.meta.url);

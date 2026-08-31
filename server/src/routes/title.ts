@@ -3,6 +3,7 @@ import { runSkill } from "../skill-runner.js";
 import { parseTitles } from "../parse.js";
 import { getApiKey } from "../config.js";
 import { createTask, updateTask, getTask } from "../task-store.js";
+import { taskLog } from "../log.js";
 import path from "node:path";
 import os from "node:os";
 
@@ -23,9 +24,10 @@ export const titleRoutes: FastifyPluginCallback<TitleRoutesOpts> = (app, opts, d
     }
 
     const taskId = createTask();
-    runTitle(taskId, topic, apiKey, opts.projectRoot).catch((e) =>
-      updateTask(taskId, { status: "failed", error: String(e?.message ?? e) })
-    );
+    runTitle(taskId, topic, apiKey, opts.projectRoot).catch((e) => {
+      console.error(`[title:${taskId}] 编排异常：`, e);
+      updateTask(taskId, { status: "failed", error: String(e?.message ?? e) });
+    });
     return { success: true, data: { taskId } };
   });
 
@@ -38,6 +40,8 @@ async function runTitle(
   apiKey: string,
   projectRoot: string
 ): Promise<void> {
+  const t0 = Date.now();
+  taskLog("title", taskId, `提交：主题=${topic.slice(0, 50)}`);
   updateTask(taskId, { status: "running", step: "已提交，准备调用 skill…", logs: [], updatedAt: Date.now() });
   const workDir = path.join(os.tmpdir(), "wb-title", taskId);
   const prompt = [
@@ -61,12 +65,15 @@ async function runTitle(
   });
 
   if (!r.ok) {
+    taskLog("title", taskId, `skill 失败：${r.error}`, t0);
     updateTask(taskId, { status: "failed", error: r.error, updatedAt: Date.now() });
     return;
   }
+  const titles = parseTitles(r.text);
+  taskLog("title", taskId, `完成，生成 ${titles.length} 个标题，总耗时 ${((Date.now() - t0) / 1000).toFixed(1)}s`, t0);
   updateTask(taskId, {
     status: "done",
-    result: { titles: parseTitles(r.text), raw: r.text },
+    result: { titles, raw: r.text },
     step: "完成",
     updatedAt: Date.now(),
   });

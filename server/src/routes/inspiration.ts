@@ -31,9 +31,10 @@ export const inspirationRoutes: FastifyPluginCallback<InspirationRoutesOpts> = (
       return { success: false, data: null, error: "未配置 API key" };
     }
     const taskId = createTask();
-    runInspiration(taskId, keywords.trim(), apiKey, opts.projectRoot).catch((e) =>
-      updateTask(taskId, { status: "failed", error: String(e?.message ?? e), updatedAt: Date.now() })
-    );
+    runInspiration(taskId, keywords.trim(), apiKey, opts.projectRoot).catch((e) => {
+      console.error(`[inspiration:${taskId}] 编排异常：`, e);
+      updateTask(taskId, { status: "failed", error: String(e?.message ?? e), updatedAt: Date.now() });
+    });
     return { success: true, data: { taskId } };
   });
 

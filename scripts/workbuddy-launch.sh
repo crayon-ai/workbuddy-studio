@@ -147,8 +147,9 @@ if [ ! -d "$PROJECT_ROOT/server/node_modules" ]; then
 fi
 
 # 6. 后台起服务（nohup 常驻，本窗口关闭不影响）
+#    服务进程内部已 tee 到 logs/server.log（src/logger.ts），脚本这里只兜底丢弃输出，避免双写同一文件
 echo "==> 启动后端服务…"
-( cd "$PROJECT_ROOT/server" && nohup npm run dev >>"$LOG_FILE" 2>&1 & )
+( cd "$PROJECT_ROOT/server" && nohup npm run dev >/dev/null 2>&1 & )
 
 # 7. 轮询健康检查，最多 30 秒
 echo -n "==> 等待服务就绪"
