@@ -17,15 +17,13 @@ set "HEALTHZ=%URL%/healthz"
 
 echo ==== WorkBuddy 工作台启动中... ====
 
-REM 1. Node 检查
+REM 1. Node 检查（缺失不退出：守护脚本会自动下载便携版 Node，免管理员免安装器）
 where node >nul 2>nul
 if errorlevel 1 (
-  echo [X] 未检测到 Node.js
-  echo     请到 https://nodejs.org 下载 LTS 版并安装，装完重新双击本脚本。
-  pause
-  exit /b 1
+  echo [..] 未检测到 Node.js，将通过守护脚本自动下载便携版（约 25MB，1~3 分钟）...
+) else (
+  for /f "delims=" %%v in ('node -v') do echo [OK] Node %%v
 )
-for /f "delims=" %%v in ('node -v') do echo [OK] Node %%v
 
 REM 2. 已活则直接开浏览器（幂等）
 curl -s -m 1 "%HEALTHZ%" 2>nul | findstr /c:"status" | findstr /c:"ok" >nul
@@ -43,6 +41,17 @@ if not errorlevel 1 exit /b 0
 REM 4. 回退：最小化窗口方式（关窗口/重启电脑服务停）
 echo.
 echo [!] 守护启动不可用，回退到普通窗口方式（关闭「WorkBuddy 后端」窗口服务即停止）。
+
+REM 便携版 Node（守护脚本装的）补进本窗口 PATH，回退路径的 npm 才能找到 node
+if exist "%USERPROFILE%\.workbuddy-node\node.exe" set "PATH=%USERPROFILE%\.workbuddy-node;%PATH%"
+where node >nul 2>nul
+if errorlevel 1 (
+  echo [X] 未检测到 Node.js 且守护启动失败。
+  echo     请到 https://nodejs.org 下载 LTS 版安装后，重新双击本脚本。
+  pause
+  exit /b 1
+)
+
 if not exist "%ROOT%\server\node_modules" (
   echo ==== 首次使用，安装依赖（约 1~2 分钟）... ====
   pushd "%ROOT%\server"

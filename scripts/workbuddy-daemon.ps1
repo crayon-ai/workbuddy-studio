@@ -46,13 +46,64 @@ function Wait-Ready([int]$Seconds = 30) {
   return $false
 }
 
+# Portable Node auto-install (no admin, no installer wizard - mirrors macOS ensure_node).
+# Lands in ~\.workbuddy-node; mirrors China-friendly first. ~25MB zip, 1-3 min.
+$NodeVersion = "v22.14.0"
+$NodeHome = Join-Path $env:USERPROFILE ".workbuddy-node"
+function Ensure-Node {
+  if (Get-Command node -ErrorAction SilentlyContinue) {
+    Write-Host "[OK] Node $((node -v)) (system)"
+    return $true
+  }
+  $n = Join-Path $NodeHome "node.exe"
+  if (Test-Path $n) {
+    $env:PATH = "$NodeHome;$env:PATH"
+    Write-Host "[OK] Node $(& $n -v) (WorkBuddy portable)"
+    return $true
+  }
+
+  $arch = switch ($env:PROCESSOR_ARCHITECTURE) { "ARM64" { "win-arm64" } default { "win-x64" } }
+  $pkg = "node-$NodeVersion-$arch"
+  $mirrors = @(
+    "https://registry.npmmirror.com/-/binary/node",
+    "https://nodejs.org/dist"
+  )
+  $zip = Join-Path $env:TEMP "$pkg.zip"
+  $ok = $false
+  foreach ($m in $mirrors) {
+    Write-Host "==> Downloading Node.js $NodeVersion (~25MB, 1-3 min) from $m ..."
+    try {
+      # Security protocol: Win PowerShell 5.1 defaults to TLS1.0/1.1, nodejs.org requires TLS1.2+
+      [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+      Invoke-WebRequest -Uri "$m/$NodeVersion/$pkg.zip" -OutFile $zip -UseBasicParsing
+      if ((Get-Item $zip).Length -gt 1MB) { $ok = $true; break }
+    } catch { Write-Host "    source failed, trying next..." }
+  }
+  if (-not $ok) {
+    Write-Host "[X] Node download failed. Install manually from https://nodejs.org, then re-run."
+    return $false
+  }
+
+  Write-Host "==> Extracting to $NodeHome ..."
+  $tmpDir = Join-Path $env:TEMP "wb-node-extract"
+  if (Test-Path $tmpDir) { Remove-Item $tmpDir -Recurse -Force }
+  try {
+    Expand-Archive -Path $zip -DestinationPath $tmpDir -Force
+    if (Test-Path $NodeHome) { Remove-Item $NodeHome -Recurse -Force }
+    Move-Item (Join-Path $tmpDir $pkg) $NodeHome
+    $env:PATH = "$NodeHome;$env:PATH"
+    Write-Host "[OK] Node $(& (Join-Path $NodeHome 'node.exe') -v) (WorkBuddy portable, ready)"
+    return $true
+  } catch {
+    Write-Host "[X] Extract failed ($($_.Exception.Message)). Install Node manually from https://nodejs.org."
+    return $false
+  }
+}
+
 switch ($Action) {
 
 "start" {
-  if (-not (Get-Command node -ErrorAction SilentlyContinue)) {
-    Write-Host "[X] Node.js not found. Install Node 20+ from https://nodejs.org first."
-    exit 1
-  }
+  if (-not (Ensure-Node)) { exit 1 }
   if (-not (Test-Path (Join-Path $ServerDir "node_modules"))) {
     Write-Host "==> Installing dependencies (1-2 min, first run only)..."
     Push-Location $ServerDir

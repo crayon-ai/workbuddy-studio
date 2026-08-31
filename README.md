@@ -35,6 +35,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\workbuddy-daemon.ps1
 
 守护方式：macOS 用 launchd、Windows 用任务计划程序（用户级，免管理员权限）——窗口关闭、agent 会话退出、进程崩溃都不掉，开机自动启动。
 
+**没有 Node.js 也不用先装**：两个平台的守护脚本检测到缺失时都会自动下载用户级便携版 Node（macOS → `~/.workbuddy-node`，Windows → `~\.workbuddy-node`，国内镜像优先，免管理员/免安装向导），装完继续自动启动。
+
 服务日志：`logs/server.log`（应用，任何平台任何启动方式都落盘）/ `logs/launchd.log`（macOS 守护层）。
 
 ### 方式 B：手动启动
@@ -68,8 +70,8 @@ cd .. && ./scripts/start.sh
 
 ## 你需要准备
 
-- **Anthropic API key**（[获取](https://console.anthropic.com/)，按 token 付费）
-- **Node.js 20+**
+- **API key**（智谱或 Anthropic，在网页「设置」里填写；见上方说明）
+- **Node.js 20+**（没有也行：守护脚本会自动下载便携版，无需手动安装）
 - 视频拆解额外需要 ffmpeg + whisper.cpp（脚本会装）
 
 ---
