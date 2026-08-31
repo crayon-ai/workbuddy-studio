@@ -1,6 +1,6 @@
 ---
 name: workbuddy-launch
-description: 启动 WorkBuddy 自媒体工作台（本地端口 7788，常驻后台守护）。Use when 用户要启动/跑起来/安装/打开/开始使用 WorkBuddy、自媒体工作台、自媒体创作工作台、内容生产工作台，或刚拿到这个项目文件夹想把它运行起来。本 skill 在 macOS 上用 launchd 守护启动（会话退出不掉、崩溃自动拉起、开机自启），自动检测 Node.js、安装后端依赖、启动 Fastify 服务并打开浏览器。API key 由用户在工作台网页「设置」里填写，本 skill 不碰 .env。
+description: 启动 WorkBuddy 自媒体工作台（本地端口 7788，常驻后台守护，macOS/Windows 双平台）。Use when 用户要启动/跑起来/安装/打开/开始使用 WorkBuddy、自媒体工作台、自媒体创作工作台、内容生产工作台，或刚拿到这个项目文件夹想把它运行起来。本 skill 在 macOS 用 launchd、Windows 用任务计划程序守护启动（会话退出不掉、崩溃自动拉起、开机自启），自动检测 Node.js、安装后端依赖、启动 Fastify 服务并打开浏览器。API key 由用户在工作台网页「设置」里填写，本 skill 不碰 .env。
 ---
 
 # WorkBuddy 工作台 · 一键启动（常驻守护）
@@ -26,10 +26,18 @@ description: 启动 WorkBuddy 自媒体工作台（本地端口 7788，常驻后
 
 > ⚠️ **不要用 `npm run dev` 起常驻服务**——它是你会话的子进程，会话结束服务就死；且 tsx watch 会挡住崩溃自愈。开发调试才用它。
 
-### 3. 非 macOS（Windows / Linux）
+### 3. Windows
+- 命令：`powershell -NoProfile -ExecutionPolicy Bypass -File scripts\workbuddy-daemon.ps1 start`
+- 用任务计划程序实现与 macOS launchd 同等的常驻守护：用户级任务（免管理员）、崩溃自动重启、登录自启。
+- 成功标志：`[OK] Persistent service ready: http://127.0.0.1:7788`。
+- 换端口：末尾加 `-Port 7790`。管理：`status` / `stop` / `uninstall`。
+- 注册失败（公司组策略等）时回退：双击 `scripts\WorkBuddy启动.bat` 的窗口方式，并告知用户窗口关闭/重启电脑后服务会停。
+- PowerShell 注意：npm 要用 `npm.cmd`；`curl` 需显式写 `curl.exe`（5.1 里 curl 是 Invoke-WebRequest 别名）。
+
+### 4. Linux
 - 跑 `scripts/bootstrap.sh`（装依赖 + 起服务 + 开浏览器），并明确告知用户：此方式服务与当前会话绑定，关闭后需重新启动。
 
-### 4. 配置 API key（关键，必须引导用户完成）
+### 5. 配置 API key（关键，必须引导用户完成）
 浏览器打开工作台后：
 - 引导用户点工作台的「设置」入口（齿轮 / 侧边栏）。
 - 让用户**自己**粘贴 API key 并保存。
@@ -55,18 +63,19 @@ description: 启动 WorkBuddy 自媒体工作台（本地端口 7788，常驻后
 ## 故障排查
 | 现象 | 处理 |
 |---|---|
-| 端口 7788 占用 | `PORT=7789 scripts/workbuddy-daemon.sh start`，浏览器改开 http://127.0.0.1:7789 |
-| 守护启动 30 秒未就绪 | `tail -50 logs/launchd.log logs/server.log`；残留进程 `pkill -9 -f "server/node_modules/.bin/tsx"` 清掉再 start |
-| 服务一会就自动关了 | 不是守护方式启动。`scripts/workbuddy-daemon.sh status` 查守护身份，`start` 重新注册 |
+| 端口 7788 占用 | macOS：`PORT=7789 scripts/workbuddy-daemon.sh start`；Windows：`... workbuddy-daemon.ps1 start -Port 7789` |
+| 守护启动 30 秒未就绪 | macOS：`tail -50 logs/launchd.log logs/server.log`，残留进程 `pkill -9 -f "server/node_modules/.bin/tsx"`；Windows：看 `logs\server.log` + `Get-ScheduledTaskInfo -TaskName WorkBuddyStudio` |
+| 服务一会就自动关了 | 不是守护方式启动。对应平台跑 daemon 脚本 `status` 查守护身份、`start` 重新注册 |
+| Windows 任务计划注册失败 | 确认 `powershell -NoProfile -ExecutionPolicy Bypass -File` 调用；组策略受限时回退 `WorkBuddy启动.bat` 并告知局限 |
 | 标题/拆解 skill 没被调用 | 确认 `.claude/skills/baokuan-chaijie/SKILL.md`、`xhs-title-psych/SKILL.md` 存在；后端 cwd 是项目根 |
 | API key 报 401 / 报错 | 引导用户在「设置」里重新填 key（智谱填 token，Anthropic 填 sk-ant-） |
 | 标题/拆解很慢 | 正常，AI 调用需 3 秒~3 分钟，前端有进度展示，耐心等 |
 
 ## 关键路径与机制（出问题时看）
 - 后端入口：`server/src/index.ts`（Fastify，只听 127.0.0.1:7788）。
-- 守护脚本：`scripts/workbuddy-daemon.sh`（launchd 注册；start/status/stop/uninstall）。服务进程父级为 launchd（PPID=1），与 agent 会话零关联。
+- 守护脚本：macOS `scripts/workbuddy-daemon.sh`（launchd）、Windows `scripts/workbuddy-daemon.ps1`（任务计划程序 Task Scheduler）。两者行为对齐：start/status/stop/uninstall，注册后服务与 agent 会话零关联、崩溃自动重启、登录自启。
 - skill 加载：后端用 `@anthropic-ai/claude-agent-sdk` 的 `query()`，`settingSources:["project"]` + `cwd=项目根` → 自动加载 `.claude/skills/` 下的 skill。
-- 日志：`logs/server.log`（应用日志，任何启动方式都落盘）、`logs/launchd.log`（守护模式 npm/tsx 层）。
+- 日志：`logs/server.log`（应用日志，任何启动方式、任何平台都落盘，由进程内 tee 写入）。
 - 数据：业务数据全在前端 localStorage（选题/待办/日历/复盘/拆解历史），后端无状态，重启不丢前端数据。
 
 ## 合规

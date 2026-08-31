@@ -35,14 +35,19 @@
 
 ## 启动
 
-- **默认（macOS，推荐）**：`scripts/workbuddy-daemon.sh start`
+- **默认（macOS）**：`scripts/workbuddy-daemon.sh start`
   - 把服务注册为 launchd LaunchAgent：**与你的会话彻底解耦**——你会话退出、终端关闭服务都不掉；进程崩溃自动拉起；开机自启。
   - 脚本自动完成：装依赖（若缺）→ 注册 → 起服务 → 等就绪 → 开浏览器。
   - 端口被占用时用 `PORT=7789 scripts/workbuddy-daemon.sh start` 换端口。
   - 其他命令：`status` 查状态 / `stop` 本次停止（开机仍自启）/ `uninstall` 彻底移除。
-  - **不要**用 `npm run dev` 起常驻服务——那是开发热重载模式，且作为你会话的子进程，会话结束服务就死。
-- Windows / Linux / 临时调试：`scripts/bootstrap.sh`（装依赖 + 起服务 + 开浏览器；服务生命周期与会话绑定）
-- 手动开发调试：`cd server && npm run dev`，再 `open http://127.0.0.1:7788`
+- **Windows**：`powershell -NoProfile -ExecutionPolicy Bypass -File scripts\workbuddy-daemon.ps1 start`
+  - 原理同上，用 Windows 任务计划程序（Task Scheduler）实现常驻：用户级任务（不需要管理员权限）、崩溃自动重启、登录自启。
+  - 其他命令：`status` / `stop` / `uninstall`；换端口加参数 `-Port 7790`。
+  - 用户双击 `scripts\WorkBuddy启动.bat` 效果相同（优先守护，失败回退最小化窗口方式）。
+  - 注意：用 `npm.cmd`（不是 `npm`，PowerShell 里裸 npm 是 .ps1 会受限）；PowerShell 5.1 里 `curl` 是 `Invoke-WebRequest` 的别名，代码里已显式用 `curl.exe`。
+- Linux / 临时调试：`scripts/bootstrap.sh`（装依赖 + 起服务 + 开浏览器；服务生命周期与会话绑定）
+- 手动开发调试：`cd server && npm run dev`，再打开 http://127.0.0.1:7788
+- **任何平台都不要**用 `npm run dev` 起常驻服务——那是开发热重载模式，且作为你会话的子进程，会话结束服务就死；tsx watch 还会挡住守护层的崩溃自愈。
 
 ## 验收（确认跑通了）
 
@@ -64,9 +69,10 @@
 
 | 现象 | 处理 |
 |---|---|
-| 端口 7788 占用 | `PORT=7789 scripts/workbuddy-daemon.sh start` 换端口（守护脚本会提示占用） |
-| 服务一会就自动关了 | 说明不是守护方式启动。跑 `scripts/workbuddy-daemon.sh start` 注册 launchd 守护；`status` 可查当前是否守护运行 |
-| 守护启动 30 秒未就绪 | `tail -50 logs/launchd.log logs/server.log` 排查；残留进程用 `pkill -9 -f "server/node_modules/.bin/tsx"` 清掉再 start |
+| 端口 7788 占用 | macOS：`PORT=7789 scripts/workbuddy-daemon.sh start`；Windows：`... workbuddy-daemon.ps1 start -Port 7789` |
+| 服务一会就自动关了 | 说明不是守护方式启动。macOS 跑 `workbuddy-daemon.sh start`，Windows 跑 `workbuddy-daemon.ps1 start`；`status` 可查当前是否守护运行 |
+| 守护启动 30 秒未就绪 | macOS：`tail -50 logs/launchd.log logs/server.log`，残留进程 `pkill -9 -f "server/node_modules/.bin/tsx"`；Windows：看 `logs\server.log` 和 `Get-ScheduledTaskInfo -TaskName WorkBuddyStudio` |
+| Windows 任务计划注册失败 | 确认用 `powershell -NoProfile -ExecutionPolicy Bypass -File` 方式调用；公司电脑可能组策略限制，此时回退 `WorkBuddy启动.bat` 的窗口方式并告知用户关机后需重启服务 |
 | skill 没被调用 | 确认 `.claude/skills/baokuan-chaijie/SKILL.md` 与 `xhs-title-psych/SKILL.md` 存在；后端 `cwd` 是项目根 |
 | 图文拆解图片文字没提取 | agent 应自动用 vision；若没提取，在后端 `routes/teardown.ts` 的 prompt 里加一句"用 Read 工具读取图片" |
 | 视频拆解卡住 | 确认 ffmpeg + whisper server(:2022) 已起；没装就提示用户图文拆解可用、视频需装工具 |

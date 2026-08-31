@@ -3,9 +3,10 @@ chcp 65001 >nul
 setlocal enabledelayedexpansion
 
 REM ============================================================
-REM  WorkBuddy 工作台 · Windows 精简启动器
-REM  双击 = 起后端（已活则复用）+ 开浏览器。幂等，可重复双击。
-REM  依赖 Windows 10+ 自带工具：curl.exe / netstat / start / findstr
+REM  WorkBuddy 工作台 · Windows 启动器
+REM  双击 = 优先注册任务计划守护（常驻：窗口关不掉/崩溃自启/开机自启）
+REM  守护不可用时回退到最小化窗口方式（旧路径，关窗口服务停）。
+REM  幂等，可重复双击。依赖 Win10+ 自带：curl.exe / netstat / PowerShell
 REM ============================================================
 
 REM —— 定位项目根（脚本在 scripts\ 下，项目根是其上级）——
@@ -34,16 +35,14 @@ if not errorlevel 1 (
   exit /b 0
 )
 
-REM 3. 端口被非 WorkBuddy 进程占用？
-netstat -ano | findstr ":7788" | findstr "LISTENING" >nul
-if not errorlevel 1 (
-  echo [X] 端口 7788 被其他程序占用
-  echo     请关闭占用该端口的程序后重试。
-  pause
-  exit /b 1
-)
+REM 3. 优先：任务计划守护启动（常驻，推荐）
+echo ==== 尝试守护启动（任务计划程序，常驻后台）... ====
+powershell -NoProfile -ExecutionPolicy Bypass -File "%ROOT%\scripts\workbuddy-daemon.ps1" start
+if not errorlevel 1 exit /b 0
 
-REM 4. 依赖自举（首次双击时 node_modules 不存在）
+REM 4. 回退：最小化窗口方式（关窗口/重启电脑服务停）
+echo.
+echo [!] 守护启动不可用，回退到普通窗口方式（关闭「WorkBuddy 后端」窗口服务即停止）。
 if not exist "%ROOT%\server\node_modules" (
   echo ==== 首次使用，安装依赖（约 1~2 分钟）... ====
   pushd "%ROOT%\server"
@@ -58,11 +57,9 @@ if not exist "%ROOT%\server\node_modules" (
   echo [OK] 依赖安装完成
 )
 
-REM 5. 后台起服务（独立最小化窗口，主窗口可关，服务常驻）
-echo ==== 启动后端服务... ====
+echo ==== 启动后端服务（最小化窗口）... ====
 start "WorkBuddy 后端" /MIN /D "%ROOT%\server" cmd /k "npm run dev"
 
-REM 6. 轮询健康检查，最多 30 秒
 echo ==== 等待服务就绪... ====
 set /a n=0
 :wait
@@ -80,6 +77,6 @@ exit /b 0
 
 :fail
 echo [X] 服务 30 秒内未就绪
-echo     请查看「WorkBuddy 后端」窗口的输出排查。
+echo     请查看「WorkBuddy 后端」窗口的输出排查，或查看 logs\server.log
 pause
 exit /b 1

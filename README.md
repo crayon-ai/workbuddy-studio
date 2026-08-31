@@ -20,13 +20,22 @@
 ### 常驻服务管理（守护启动后）
 
 ```bash
+# macOS
 scripts/workbuddy-daemon.sh start     # 守护启动（幂等，已运行则直接复用）
 scripts/workbuddy-daemon.sh status    # 查看运行/守护状态
 scripts/workbuddy-daemon.sh stop      # 本次停止（开机仍会自启）
 scripts/workbuddy-daemon.sh uninstall # 彻底移除守护（不再自启）
+
+# Windows（或直接双击 scripts\WorkBuddy启动.bat，效果相同）
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\workbuddy-daemon.ps1 start
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\workbuddy-daemon.ps1 status
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\workbuddy-daemon.ps1 stop
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\workbuddy-daemon.ps1 uninstall
 ```
 
-服务日志：`logs/server.log`（应用）/ `logs/launchd.log`（守护层）。
+守护方式：macOS 用 launchd、Windows 用任务计划程序（用户级，免管理员权限）——窗口关闭、agent 会话退出、进程崩溃都不掉，开机自动启动。
+
+服务日志：`logs/server.log`（应用，任何平台任何启动方式都落盘）/ `logs/launchd.log`（macOS 守护层）。
 
 ### 方式 B：手动启动
 
