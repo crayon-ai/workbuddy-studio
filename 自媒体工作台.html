@@ -2101,7 +2101,7 @@ function refreshInspirationFromInput(btn){
 }
 async function pollInspiration(taskId){
   let n=0;const t=setInterval(async()=>{
-    n++;if(n>300){clearInterval(t);_runningInspTask=null;saveRunningInspTask();renderInsp();toast('抓取超时，稍后重试');return;}
+    n++;if(n>450){clearInterval(t);_runningInspTask=null;saveRunningInspTask();renderInsp();toast('抓取超时（15分钟），稍后重试');return;}
     try{
       const r=await fetch('/api/task/'+taskId);const j=await r.json();
       if(!j.success){clearInterval(t);_runningInspTask=null;saveRunningInspTask();renderInsp();toast('任务已失效（后端可能重启）');return;}
@@ -2515,7 +2515,7 @@ async function startTeardown(btn){
 }
 async function pollTeardown(taskId,url){
   let n=0;const t=setInterval(async()=>{
-    n++;if(n>150){clearInterval(t);_runningTask=null;saveRunningTask();renderHit();toast('拆解超时，稍后重试');return;}
+    n++;if(n>450){clearInterval(t);_runningTask=null;saveRunningTask();renderHit();toast('拆解超时（15分钟），请查看 logs/server.log 或重试');return;}
     try{
       const r=await fetch('/api/task/'+taskId);const j=await r.json();
       if(!j.success){clearInterval(t);_runningTask=null;saveRunningTask();renderHit();toast('任务已失效（后端可能重启）');return;}
@@ -3400,7 +3400,7 @@ async function startDeep(){
 }
 async function pollDeep(taskId,noteId){
   let n=0;const t=setInterval(async()=>{
-    n++;if(n>300){clearInterval(t);_rvDeepTask=null;renderDeepState();toast('深度复盘超时，稍后重试');return;}
+    n++;if(n>450){clearInterval(t);_rvDeepTask=null;renderDeepState();toast('深度复盘超时（15分钟），稍后重试');return;}
     try{
       const r=await fetch('/api/task/'+taskId);const j=await r.json();
       if(!j.success){clearInterval(t);_rvDeepTask=null;renderDeepState();toast('任务已失效（后端可能重启）');return;}
