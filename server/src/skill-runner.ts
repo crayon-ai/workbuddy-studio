@@ -1,7 +1,7 @@
 import { query } from "@anthropic-ai/claude-agent-sdk";
 import { mkdirSync, readdirSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
-import { getProvider } from "./config.js";
+import { resolveModelName } from "./config.js";
 
 export interface RunSkillResult {
   ok: boolean;
@@ -17,14 +17,13 @@ export interface RunSkillOpts {
 }
 
 /**
- * 按当前厂商返回子进程要用的模型名：
- * - zhipu：CLI 默认的 claude-* 模型名智谱端点不认（400 modelCode 不存在），必须显式传 glm
- * - anthropic / custom：不传，走 CLI 默认（custom 端点自己负责兼容模型名）
+ * 按当前厂商返回子进程要用的模型名（含 DeepSeek）：
+ * - zhipu → glm-4.6
+ * - deepseek → deepseek-v4-pro（不传会被 DeepSeek 静默降级成弱模型）
+ * - 其他 → undefined，走 SDK 默认
  */
 function modelForProvider(): string | undefined {
-  const provider = getProvider();
-  if (provider === "zhipu") return "glm-4.6";
-  return undefined;
+  return resolveModelName();
 }
 
 export interface SkillProgress {

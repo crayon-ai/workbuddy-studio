@@ -119,6 +119,24 @@ export function getProvider(envPath = "./.env"): Provider | undefined {
 }
 
 /**
+ * 解析当前厂商调用子进程时应显式传给 SDK 的模型名。
+ * - zhipu：glm-4.6（智谱端点不认 claude-* 模型名，400 modelCode 不存在）
+ * - deepseek：deepseek-v4-pro（不传则 SDK 默认 claude-*，DeepSeek 静默降级成
+ *   弱模型 deepseek-v4-flash，跑不动爆款拆解这类多步复杂 skill，表现为一直卡在执行）
+ * - 其他（anthropic / 非 deepseek 的 custom）：不传，走 SDK 默认
+ */
+export function resolveModelName(envPath = "./.env"): string | undefined {
+  const baseUrl = (
+    process.env.ANTHROPIC_BASE_URL || parseEnv(envPath).ANTHROPIC_BASE_URL || ""
+  )
+    .trim()
+    .toLowerCase();
+  if (getProvider(envPath) === "zhipu") return "glm-4.6";
+  if (baseUrl.includes("deepseek.com")) return "deepseek-v4-pro";
+  return undefined;
+}
+
+/**
  * 用当前 .env 配置打一个最小 /v1/messages，验证 key + url 是否可用。
  * 不依赖 Claude Agent SDK，仅做鉴权/连通性探测。
  */
@@ -132,7 +150,8 @@ export async function testConnection(envPath = "./.env"): Promise<ConnectionTest
   const rawBase = (process.env.ANTHROPIC_BASE_URL || file.ANTHROPIC_BASE_URL || "").replace(/\/+$/, "");
   const url = rawBase ? `${rawBase}/v1/messages` : "https://api.anthropic.com/v1/messages";
   const provider = getProvider(envPath);
-  const model = provider === "zhipu" ? "glm-4.6" : "claude-sonnet-4-5";
+  // 用和真实 skill 调用一致的模型名（DeepSeek 需 deepseek-v4-pro，否则会被静默降级）
+  const model = resolveModelName(envPath) ?? "claude-sonnet-4-5";
   const useApiKeyHeader = provider === "anthropic";
 
   const headers: Record<string, string> = {

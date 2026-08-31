@@ -9,6 +9,7 @@ const {
   saveApiKey,
   saveConfig,
   getProvider,
+  resolveModelName,
   testConnection,
   isVideoReady,
   parseEnv,
@@ -115,6 +116,34 @@ describe("getProvider", () => {
 
   it("未配置返回 undefined", () => {
     expect(getProvider(envPath)).toBeUndefined();
+  });
+});
+
+describe("resolveModelName", () => {
+  beforeEach(resetEnv);
+
+  it("智谱返回 glm-4.6", async () => {
+    await saveConfig({ provider: "zhipu", apiKey: "k" }, envPath);
+    expect(resolveModelName(envPath)).toBe("glm-4.6");
+  });
+
+  it("DeepSeek（baseUrl 含 deepseek.com）返回 deepseek-v4-pro", async () => {
+    await saveConfig({ provider: "custom", apiKey: "k", baseUrl: "https://api.deepseek.com/anthropic" }, envPath);
+    expect(resolveModelName(envPath)).toBe("deepseek-v4-pro");
+  });
+
+  it("其他 custom（非 deepseek）返回 undefined", async () => {
+    await saveConfig({ provider: "custom", apiKey: "k", baseUrl: "https://my.proxy/v1" }, envPath);
+    expect(resolveModelName(envPath)).toBeUndefined();
+  });
+
+  it("anthropic 返回 undefined", async () => {
+    await saveConfig({ provider: "anthropic", apiKey: "sk-ant-x" }, envPath);
+    expect(resolveModelName(envPath)).toBeUndefined();
+  });
+
+  it("未配置返回 undefined", () => {
+    expect(resolveModelName(envPath)).toBeUndefined();
   });
 });
 
