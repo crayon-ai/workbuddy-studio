@@ -14,13 +14,15 @@ export interface NoteMeta {
   tags?: string[];
   noteId?: string;
   url?: string;
+  /** 作者粉丝数（SSR user.fans，可能没有） */
+  fans?: string;
 }
 
 /**
  * 直接 curl 笔记页 HTML，从 __INITIAL_STATE__.note.noteDetailMap 提取元数据。
  * 不走 skill、不调 LLM、不下载媒体——有效链接 SSR 本就含数据，几秒返回。
  */
-async function fetchNoteMeta(url: string): Promise<NoteMeta> {
+export async function fetchNoteMeta(url: string): Promise<NoteMeta> {
   const html: string = await fetch(url, {
     headers: {
       "User-Agent": UA,
@@ -63,6 +65,7 @@ async function fetchNoteMeta(url: string): Promise<NoteMeta> {
       ? n.tagList.map((t: any) => t?.name).filter(Boolean)
       : [],
     noteId: n.noteId,
+    fans: n.user?.fans != null ? String(n.user.fans) : undefined,
     url,
   };
 }

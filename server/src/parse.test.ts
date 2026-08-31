@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { parseTitles, parseTeardown, parseProfile } from "./parse.js";
+import { parseTitles, parseTeardown, parseProfile, parseDeepReview } from "./parse.js";
 
 describe("parseTitles", () => {
   it("解析 ```json 代码块里的数组", () => {
@@ -197,5 +197,50 @@ describe("parseProfile", () => {
       "HTML slides & video production",
       "Coding agent & automation",
     ]);
+  });
+});
+
+describe("parseDeepReview（深度复盘报告解析）", () => {
+  const REPORT = [
+    "# AI深度复盘-我的笔记",
+    "",
+    "## 数据对比总览",
+    "| 笔记 | 赞 | 藏 | 评 | 发布 |",
+    "| --- | --- | --- | --- | --- |",
+    "| 我的 | 200 | 800 | 30 | 08-20 |",
+    "| 对标A | 20000 | 15000 | 800 | 08-18 |",
+    "",
+    "## 差距归因",
+    "标题钩子差距……",
+    "",
+    "## 可执行建议",
+    "1. 建议一",
+    "2. 建议二",
+    "",
+    "## 可复用经验候选",
+    "- 数字+场景标题最有效",
+    "- 正文前 3 行给结论",
+  ].join("\n");
+
+  it("识别 AI深度复盘 报告并提取 sections", () => {
+    const r = parseDeepReview({ "AI深度复盘-我的笔记.md": REPORT });
+    expect(r).not.toBeNull();
+    expect(r!.reportFile).toBe("AI深度复盘-我的笔记.md");
+    expect(Object.keys(r!.sections).length).toBe(4);
+    expect(r!.sections["差距归因"]).toContain("标题钩子");
+  });
+
+  it("无报告文件返回 null", () => {
+    expect(parseDeepReview({ "其他.md": "x" })).toBeNull();
+  });
+
+  it("sections 按行首 ## 切分，内容进对应 section", () => {
+    const r = parseDeepReview({ "AI深度复盘-x.md": REPORT })!;
+    expect(r!.sections["可复用经验候选"]).toContain("- 数字+场景标题最有效");
+  });
+
+  it("## 节无内容（标题后无换行）时 section 值为空串", () => {
+    const r = parseDeepReview({ "AI深度复盘-x.md": "# t\n\n## 差距归因" });
+    expect(r!.sections["差距归因"]).toBe("");
   });
 });

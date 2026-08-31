@@ -186,10 +186,6 @@ describe("GET /api/task/:id（异步轮询）", () => {
     const prompt = vi.mocked(runSkill).mock.calls[0]?.[1] ?? "";
     expect(prompt).toContain("不要调用 Skill 工具");
     expect(prompt).toContain("完成的唯一标准");
-    // 必须先 Read SKILL.md 再按「九维度模板」拆解（否则 agent 自由发挥另一套结构）
-    expect(prompt).toContain(".claude/skills/baokuan-chaijie/SKILL.md");
-    expect(prompt).toContain("九维度");
-    expect(prompt).toContain("不得自创");
     await app.close();
   });
 

@@ -7,6 +7,7 @@ import { teardownRoutes } from "./routes/teardown.js";
 import { noteRoutes } from "./routes/note.js";
 import { inspirationRoutes } from "./routes/inspiration.js";
 import { personalizedRoutes } from "./routes/personalized.js";
+import { deepReviewRoutes } from "./routes/deep-review.js";
 import { taskRoutes } from "./routes/task.js";
 import { healthzRoutes } from "./routes/healthz.js";
 
@@ -32,6 +33,7 @@ export async function buildApp(opts: BuildAppOpts = {}): Promise<FastifyInstance
   await app.register(noteRoutes, routeOpts);
   await app.register(inspirationRoutes, routeOpts);
   await app.register(personalizedRoutes, routeOpts);
+  await app.register(deepReviewRoutes, routeOpts);
   await app.register(taskRoutes);
   await app.register(healthzRoutes);
   return app;

@@ -83,6 +83,19 @@ function parseNoteMeta(text: string): TeardownMeta {
  * 从 skill 产物（.md 文件名 → 内容）提取拆解结果。
  * 元数据按优先级合并：笔记信息.md / 正文.md → AI拆解报告 frontmatter → 全扫兜底。
  */
+/** 把 markdown 按 ## 二级标题切分为 { 标题: 内容 }；同标题后者覆盖前者。 */
+function splitSections(md: string): Record<string, string> {
+  const sections: Record<string, string> = {};
+  for (const sec of md.split(/^##\s+/m).slice(1)) {
+    const line = sec.split("\n")[0].trim();
+    if (line) {
+      const idx = sec.indexOf("\n");
+      sections[line] = idx < 0 ? "" : sec.slice(idx).trim();
+    }
+  }
+  return sections;
+}
+
 export function parseTeardown(artifacts: Record<string, string>): Teardown {
   const priority = ["笔记信息.md", "正文.md"];
   let meta: TeardownMeta = {};
@@ -110,11 +123,7 @@ export function parseTeardown(artifacts: Record<string, string>): Teardown {
   if (!entry) return { meta, sections: {}, raw: "" };
   const [filename, md] = entry;
 
-  const sections: Record<string, string> = {};
-  for (const sec of md.split(/^##\s+/m).slice(1)) {
-    const line = sec.split("\n")[0].trim();
-    if (line) sections[line] = sec.slice(sec.indexOf("\n")).trim();
-  }
+  const sections = splitSections(md);
 
   return { meta, sections, raw: md, reportFile: filename };
 }
@@ -306,4 +315,21 @@ function collectProfileListFields(lines: string[]): Record<string, string[]> {
 /** 清洗列表项：去 **加粗** 标记、去行尾权重注释（如 `(35%)`）。 */
 function cleanListItem(raw: string): string {
   return raw.replace(/\*\*/g, "").replace(/\s*[（(]\d+%[)）]\s*$/, "").trim();
+}
+
+export interface DeepReview {
+  sections: Record<string, string>;
+  raw: string;
+  reportFile?: string;
+}
+
+/**
+ * 从 skill 产物识别深度复盘报告（文件名以 AI深度复盘 开头）。
+ * 无报告返回 null；有报告则按 ## 二级标题切 sections。
+ */
+export function parseDeepReview(artifacts: Record<string, string>): DeepReview | null {
+  const entry = Object.entries(artifacts).find(([k]) => k.startsWith("AI深度复盘"));
+  if (!entry) return null;
+  const [filename, md] = entry;
+  return { sections: splitSections(md), raw: md, reportFile: filename };
 }

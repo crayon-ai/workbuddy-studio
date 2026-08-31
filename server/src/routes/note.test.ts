@@ -8,7 +8,7 @@ const FAKE_STATE: any = {
         note: {
           title: "测试笔记",
           noteId: "abc",
-          user: { nickname: "测试作者" },
+          user: { nickname: "测试作者", fans: "1200" },
           interactInfo: {
             likedCount: "100",
             collectedCount: "50",
@@ -51,6 +51,7 @@ describe("POST /api/note（直接 curl 解析，不走 skill）", () => {
     expect(body.data.meta.comments).toBe("10");
     expect(body.data.meta.shares).toBe("5");
     expect(body.data.meta.tags).toEqual(["标签1", "标签2"]);
+    expect(body.data.meta.fans).toBe("1200");
     expect(body.data.meta.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     await app.close();
   });
