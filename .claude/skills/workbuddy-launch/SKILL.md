@@ -11,33 +11,39 @@ description: 启动 WorkBuddy 自媒体工作台（本地端口 7788，常驻后
 
 启动本地后端（Fastify，端口 7788，只监听 127.0.0.1）并自动打开浏览器。核心要求：**服务必须常驻**——agent 会话退出、终端关闭、进程崩溃都不能让工作台掉线。
 
-## 启动步骤（macOS，默认路径）
+## 启动步骤
 
-### 1. 检测 Node.js 20+
-- 命令：`node -v`
-- 缺失（Mac）：优先 `brew install node`；若没装 Homebrew，引导用户去 https://nodejs.org 下载 .pkg 安装包双击安装（对小白最简单），装完重开终端再继续。
+### 0. 先检测操作系统（选对脚本，关键第一步）
 
-### 2. 一条命令守护启动
+在 macOS 和 Windows 上命令不同，先判断平台再执行：
+
+- macOS：`uname -s` 输出 `Darwin` → 走下面「步骤 1A」
+- Windows：`echo $env:OS` 输出 `Windows_NT`（或 `cmd /c ver`）→ 走下面「步骤 1B」
+- Linux：其他 → 走「步骤 1C」
+
+> ⚠️ **不要**看到 `npm run dev` 之类的 macOS 命令就直接在 Windows 上套用。Windows 上守护脚本是 `.ps1`，需用 PowerShell 显式调用。
+
+### 1A. macOS：一条命令守护启动
 - 命令：`scripts/workbuddy-daemon.sh start`
-- 脚本自动完成：装依赖（若缺）→ 注册 launchd LaunchAgent → 起服务 → 等就绪（最多 30 秒）→ 开浏览器。
+- 脚本自动完成：检测/下载 Node（若缺，自动装便携版）→ 装依赖（若缺）→ 注册 launchd LaunchAgent → 起服务 → 等就绪（最多 30 秒）→ 开浏览器。
 - 成功标志：输出 `✓ 常驻服务已就绪：http://127.0.0.1:7788`。
 - 若 7788 被占用：`PORT=7789 scripts/workbuddy-daemon.sh start`，并告诉用户改开 http://127.0.0.1:7789。
 - 验证守护身份：`scripts/workbuddy-daemon.sh status` 应显示 `launchd：已注册`。
 
-> ⚠️ **不要用 `npm run dev` 起常驻服务**——它是你会话的子进程，会话结束服务就死；且 tsx watch 会挡住崩溃自愈。开发调试才用它。
-
-### 3. Windows
+### 1B. Windows：一条命令守护启动
 - 命令：`powershell -NoProfile -ExecutionPolicy Bypass -File scripts\workbuddy-daemon.ps1 start`
-- 用任务计划程序实现与 macOS launchd 同等的常驻守护：用户级任务（免管理员）、崩溃自动重启、登录自启。
+- 脚本自动完成：检测/下载 Node（若缺，自动装便携版 `~\.workbuddy-node`）→ 装依赖 → 注册任务计划程序（用户级，免管理员）→ 起服务 → 等就绪 → 开浏览器。
 - 成功标志：`[OK] Persistent service ready: http://127.0.0.1:7788`。
-- 换端口：末尾加 `-Port 7790`。管理：`status` / `stop` / `uninstall`。
+- 换端口：末尾加 `-Port 7790`。管理：`status` / `stop` / `uninstall`（同样用 powershell -File 调用）。
 - 注册失败（公司组策略等）时回退：双击 `scripts\WorkBuddy启动.bat` 的窗口方式，并告知用户窗口关闭/重启电脑后服务会停。
 - PowerShell 注意：npm 要用 `npm.cmd`；`curl` 需显式写 `curl.exe`（5.1 里 curl 是 Invoke-WebRequest 别名）。
 
-### 4. Linux
+### 1C. Linux
 - 跑 `scripts/bootstrap.sh`（装依赖 + 起服务 + 开浏览器），并明确告知用户：此方式服务与当前会话绑定，关闭后需重新启动。
 
-### 5. 配置 API key（关键，必须引导用户完成）
+> ⚠️ **任何平台都不要用 `npm run dev` 起常驻服务**——它是你会话的子进程，会话结束服务就死；且 tsx watch 会挡住守护层的崩溃自愈。开发调试才用它。
+
+### 2. 配置 API key（关键，必须引导用户完成）
 浏览器打开工作台后：
 - 引导用户点工作台的「设置」入口（齿轮 / 侧边栏）。
 - 让用户**自己**粘贴 API key 并保存。

@@ -35,14 +35,19 @@
 
 ## 启动
 
-- **默认（macOS）**：`scripts/workbuddy-daemon.sh start`
+**第 0 步：先检测操作系统，选对脚本**（macOS 和 Windows 命令不同）：
+- `uname -s` 输出 `Darwin` → macOS；`echo $env:OS` 输出 `Windows_NT`（或 `cmd /c ver`）→ Windows。
+- 判断后按下面对应平台执行，不要跨平台套用。
+
+- **macOS**：`scripts/workbuddy-daemon.sh start`
   - 把服务注册为 launchd LaunchAgent：**与你的会话彻底解耦**——你会话退出、终端关闭服务都不掉；进程崩溃自动拉起；开机自启。
-  - 脚本自动完成：装依赖（若缺）→ 注册 → 起服务 → 等就绪 → 开浏览器。
+  - 脚本自动完成：检测/下载 Node（若缺自动装便携版）→ 装依赖（若缺）→ 注册 → 起服务 → 等就绪 → 开浏览器。
   - 端口被占用时用 `PORT=7789 scripts/workbuddy-daemon.sh start` 换端口。
   - 其他命令：`status` 查状态 / `stop` 本次停止（开机仍自启）/ `uninstall` 彻底移除。
 - **Windows**：`powershell -NoProfile -ExecutionPolicy Bypass -File scripts\workbuddy-daemon.ps1 start`
   - 原理同上，用 Windows 任务计划程序（Task Scheduler）实现常驻：用户级任务（不需要管理员权限）、崩溃自动重启、登录自启。
-  - 其他命令：`status` / `stop` / `uninstall`；换端口加参数 `-Port 7790`。
+  - 脚本自动完成：检测/下载 Node（若缺自动装便携版 `~\.workbuddy-node`）→ 装依赖 → 注册 → 起服务 → 等就绪 → 开浏览器。
+  - 其他命令：`status` / `stop` / `uninstall`（同样用 `powershell -File` 调用）；换端口加参数 `-Port 7790`。
   - 用户双击 `scripts\WorkBuddy启动.bat` 效果相同（优先守护，失败回退最小化窗口方式）。
   - 注意：用 `npm.cmd`（不是 `npm`，PowerShell 里裸 npm 是 .ps1 会受限）；PowerShell 5.1 里 `curl` 是 `Invoke-WebRequest` 的别名，代码里已显式用 `curl.exe`。
 - Linux / 临时调试：`scripts/bootstrap.sh`（装依赖 + 起服务 + 开浏览器；服务生命周期与会话绑定）
