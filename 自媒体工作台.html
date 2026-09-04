@@ -174,10 +174,47 @@ button{font-family:inherit;border:none;background:none;cursor:pointer;color:inhe
 .sb-logo svg{width:23px;height:23px}
 .sb-brand-name{font-size:16px;font-weight:700;letter-spacing:-.01em}
 .sb-brand-sub{font-size:11px;color:var(--ink-3);font-weight:500}
-.sb-lib{margin:6px 8px 4px;padding:10px 12px;background:rgba(255,255,255,.55);border:1px dashed var(--line-2);border-radius:var(--radius)}
-.sb-lib-top{display:flex;align-items:center;justify-content:space-between;font-size:10.5px;color:var(--ink-3);margin-bottom:4px}
-.sb-lib-top b{font-weight:600;color:var(--matcha-d);display:flex;align-items:center;gap:4px}
-.sb-lib-path{font-size:11.5px;color:var(--ink-2);font-weight:500}
+/* ===== 账号切换器（3.0 多账号，替代原「当前创作库」卡） ===== */
+.acc-switch{margin:6px 8px 4px;padding:9px 10px 9px 12px;background:rgba(255,255,255,.65);border:1px solid var(--line-2);border-radius:var(--radius);cursor:pointer;display:flex;align-items:center;gap:10px;transition:all .18s var(--ease)}
+.acc-switch:hover{background:var(--paper);box-shadow:var(--shadow-s);border-color:var(--coral)}
+.acc-ava{width:34px;height:34px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.acc-mid{flex:1;min-width:0}
+.acc-label{font-size:10.5px;color:var(--ink-3);font-weight:600}
+.acc-name{font-size:13.5px;font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+.acc-cv{width:16px;height:16px;color:var(--ink-3);flex-shrink:0;transition:transform .18s var(--ease)}
+.acc-switch:hover .acc-cv{transform:translateY(1px);color:var(--coral-d)}
+/* 账号管理弹窗 */
+.acc-row{display:flex;align-items:center;gap:13px;padding:13px 14px;border:1.5px solid var(--line);border-radius:var(--radius);background:var(--paper);cursor:pointer;transition:all .18s var(--ease)}
+.acc-row:hover{border-color:var(--line-2);background:var(--paper-2);transform:translateY(-1px)}
+.acc-row.cur{border-color:var(--coral);background:var(--coral-bg);cursor:default}
+.acc-row.cur:hover{transform:none}
+.acc-row .ava{width:42px;height:42px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.acc-row .mid{flex:1;min-width:0}
+.acc-row .nm{font-size:14px;font-weight:700;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.plat-chip{font-size:10px;font-weight:700;color:#fff;padding:1px 8px;border-radius:var(--pill);letter-spacing:.02em;flex-shrink:0}
+.acc-row .st{font-size:11.5px;color:var(--ink-3);font-weight:500;margin-top:4px}
+.acc-row .side{display:flex;flex-direction:column;align-items:flex-end;gap:7px;flex-shrink:0}
+.acc-pill{font-size:10.5px;font-weight:800;color:var(--coral-d);background:var(--paper);border:1px solid var(--coral);padding:2px 10px;border-radius:var(--pill)}
+.acc-hint{font-size:11px;font-weight:700;color:var(--coral-d);opacity:0;transition:opacity .18s var(--ease)}
+.acc-row:hover .acc-hint{opacity:1}
+.acc-ops{display:flex;gap:5px}
+.acc-ops button{width:25px;height:25px;border-radius:8px;border:none;background:var(--cream-2);color:var(--ink-2);cursor:pointer;font-size:12px;transition:all .15s var(--ease);display:flex;align-items:center;justify-content:center;font-family:inherit}
+.acc-ops button:hover{background:var(--coral);color:#fff}
+.acc-new{display:flex;align-items:center;gap:10px;padding:12px 14px;border:1.5px dashed var(--line-2);border-radius:var(--radius);color:var(--ink-3);font-size:13px;font-weight:600;cursor:pointer;transition:all .18s var(--ease);background:transparent;font-family:inherit;width:100%}
+.acc-new:hover{color:var(--coral-d);border-color:var(--coral);background:var(--coral-bg)}
+.acc-form{border:1.5px solid var(--lav);border-radius:var(--radius);padding:14px 15px;background:var(--lav-bg);display:flex;flex-direction:column;gap:11px}
+.acc-form label{font-size:11px;font-weight:700;color:var(--ink-2)}
+.acc-form input[type=text]{height:38px;border-radius:11px;border:1.5px solid var(--line);background:var(--paper);padding:0 12px;font-size:13.5px;font-family:inherit;color:var(--ink);outline:none}
+.acc-form input[type=text]:focus{border-color:var(--lav-d)}
+.acc-chips{display:flex;gap:6px;flex-wrap:wrap}
+.acc-chip{height:30px;padding:0 12px;border-radius:var(--pill);border:1px solid var(--line);background:var(--paper);color:var(--ink-2);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s var(--ease);font-family:inherit}
+.acc-chip:hover{border-color:var(--line-2)}
+.acc-chip.on{border-color:var(--coral);color:var(--coral-d);background:var(--coral-bg)}
+.acc-chip.emo{width:34px;padding:0;font-size:16px}
+.acc-fnote{padding:10px 18px 16px;font-size:11px;color:var(--ink-3);font-weight:500;display:flex;align-items:center;justify-content:space-between;gap:10px;border-top:1px solid var(--line)}
+/* 账号切换时主内容淡入 */
+.fade-swap{animation:accSwapIn .32s var(--ease)}
+@keyframes accSwapIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 .sb-nav{flex:1;overflow-y:auto;padding:6px 4px 4px;display:flex;flex-direction:column;gap:1px}
 .sb-nav::-webkit-scrollbar{width:0}
 .sb-cat{font-size:10.5px;font-weight:700;color:var(--ink-3);letter-spacing:.06em;padding:14px 11px 6px;display:flex;align-items:center;gap:7px}
@@ -852,6 +889,7 @@ button{font-family:inherit;border:none;background:none;cursor:pointer;color:inhe
   .sb-brand{justify-content:center}
   .sb-brand .bt{display:none}
   .sb-lib{display:none}
+  .acc-switch{margin:4px 6px;padding:7px 9px}
   .sb-item{justify-content:center;padding:11px 0}
   .sb-item .txt,.sb-item .badge{display:none}
   .sb-item.active::before{display:none}
@@ -911,12 +949,13 @@ button{font-family:inherit;border:none;background:none;cursor:pointer;color:inhe
       </div>
     </div>
 
-    <div class="sb-lib">
-      <div class="sb-lib-top">
-        <span>当前创作库</span>
-        <b><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg>已同步</b>
+    <div class="acc-switch" id="accSwitch" onclick="openAccModal()" title="切换 / 管理账号">
+      <div class="acc-ava" id="accAva">🌟</div>
+      <div class="acc-mid">
+        <div class="acc-label">当前账号</div>
+        <div class="acc-name" id="accName">—</div>
       </div>
-      <div class="sb-lib-path">WorkBuddy/自媒体创作工作台</div>
+      <svg class="acc-cv" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
     </div>
 
     <nav class="sb-nav" id="sbNav">
@@ -1522,25 +1561,38 @@ button{font-family:inherit;border:none;background:none;cursor:pointer;color:inhe
       <div><div class="modal-eyebrow">💾 数据备份</div><div class="modal-title">数据导出与导入</div></div>
       <button class="modal-close" onclick="closeBackupModal()">✕</button>
     </div>
-    <div class="modal-sub">工作台数据保存在浏览器本地，清缓存会丢失。定期导出备份，需要时一键恢复</div>
+    <div class="modal-sub">工作台数据保存在浏览器本地，清缓存会丢失。定期导出备份（含全部账号），需要时一键恢复</div>
     <div class="modal-body">
       <div class="backup-box">
         <div style="flex:1">
           <div style="font-size:13.5px;font-weight:700">📥 导出数据</div>
-          <div style="font-size:11.5px;color:var(--ink-3);margin-top:3px;line-height:1.6">把全部工作台数据（选题/灵感/素材/拆解/复盘/日历/个人资料）存为一个 JSON 备份文件，由你选择保存位置</div>
+          <div style="font-size:11.5px;color:var(--ink-3);margin-top:3px;line-height:1.6">把<b>全部账号</b>的工作台数据（选题/灵感/素材/拆解/复盘/日历/个人资料）存为一个 JSON 备份文件，由你选择保存位置</div>
         </div>
         <button class="btn btn-coral" style="height:40px;flex-shrink:0" onclick="exportData()">导出数据</button>
       </div>
       <div class="backup-box">
         <div style="flex:1">
           <div style="font-size:13.5px;font-weight:700">📤 导入数据</div>
-          <div style="font-size:11.5px;color:var(--ink-3);margin-top:3px;line-height:1.6">选择之前导出的备份文件恢复。<b style="color:var(--coral-d)">导入会覆盖当前全部数据</b>，恢复到备份时点的状态</div>
+          <div style="font-size:11.5px;color:var(--ink-3);margin-top:3px;line-height:1.6">选择之前导出的备份文件恢复。<b style="color:var(--coral-d)">导入会覆盖当前全部数据</b>，恢复到备份时点的状态；2.0 旧备份会导入为当前账号</div>
         </div>
         <button class="btn" style="height:40px;flex-shrink:0" onclick="$('#backupFile').click()">导入数据</button>
         <input type="file" id="backupFile" accept=".json,application/json" style="display:none" onchange="importData(this)">
       </div>
       <div style="font-size:11px;color:var(--ink-3);margin-top:4px;text-align:center">建议每次大规模整理后导出一次备份 💡</div>
     </div>
+  </div>
+</div>
+
+<!-- ============ 账号管理弹窗（3.0 多账号） ============ -->
+<div class="modal-mask" id="accModal" onclick="closeAccModal(event)">
+  <div class="modal" onclick="event.stopPropagation()" style="max-width:560px">
+    <div class="modal-head">
+      <div><div class="modal-eyebrow">👥 账号管理</div><div class="modal-title">切换创作账号</div></div>
+      <button class="modal-close" onclick="closeAccModal()">✕</button>
+    </div>
+    <div class="modal-sub">每个账号拥有完全独立的选题池、素材库、灵感、拆解与复盘数据</div>
+    <div class="modal-body" id="accRows"></div>
+    <div class="acc-fnote"><span>数据仅存本机浏览器 · 可用「数据导出与导入」备份全部账号</span><span id="accFoot">—</span></div>
   </div>
 </div>
 
@@ -1725,6 +1777,194 @@ let toastTimer;
 function toast(msg){const t=$('#toast');t.textContent=msg;t.style.opacity='1';t.style.transform='translateX(-50%) translateY(0)';clearTimeout(toastTimer);toastTimer=setTimeout(()=>{t.style.opacity='0';t.style.transform='translateX(-50%) translateY(20px)';},2200);}
 const MC1={coral:'var(--coral)',lav:'var(--lav)',matcha:'var(--matcha)',honey:'var(--honey)',rose:'var(--rose)',sky:'var(--sky)'};
 const MC2={coral:'var(--coral-d)',lav:'var(--lav-d)',matcha:'var(--matcha-d)',honey:'var(--honey)',rose:'var(--rose)',sky:'var(--sky)'};
+/* ===== 账号体系（3.0：多账号数据隔离） ===== */
+const ACC_PLATS={xhs:{n:'小红书',c:'var(--p-xhs)'},douyin:{n:'抖音',c:'#2A2A2A'},bili:{n:'B站',c:'#F88EAA'},gzh:{n:'公众号',c:'#62B870'},web:{n:'通用',c:'#A89E92'}};
+const ACC_EMOJIS=['🌟','🍜','🧸','✈️','📷','📚','🌱','🎮','🐾','💄','🍳','🎤'];
+const ACC_BG=['var(--coral-bg)','var(--rose-bg)','var(--sky-bg)','var(--honey-bg)','var(--lav-bg)','var(--matcha-bg)'];
+/** 账号内数据 key（2.0 全局 key → 账号内 suffix），迁移与备份共用 */
+const ACC_OLD2NEW={'workbuddy_v3':'main','wb_insp':'insp','wb_insp_topic':'insp_topic','wb_mats':'mats','wb_hits':'hits','wb_goals':'goals','wb_profile_url':'profile_url','wb_avatar':'avatar','wb_user':'user','wb_first_use':'first_use','wb_running_task':'running_task','wb_running_insp_task':'running_insp_task'};
+const ACC_SUFFIXES=[...new Set(Object.values(ACC_OLD2NEW))];
+let CUR_ACC=null,ACCOUNTS=[];
+/** 账号内命名空间 key：wb:<账号id>:<suffix> */
+function ak(k){return 'wb:'+CUR_ACC+':'+k}
+function lsG(k){try{return localStorage.getItem(ak(k))}catch(e){return null}}
+function lsS(k,v){try{localStorage.setItem(ak(k),v)}catch(e){}}
+function lsD(k){try{localStorage.removeItem(ak(k))}catch(e){}}
+function accById(id){return ACCOUNTS.find(a=>a.id===id)}
+function saveAccounts(){try{localStorage.setItem('wb_accounts',JSON.stringify({currentId:CUR_ACC,accounts:ACCOUNTS}))}catch(e){}}
+function newAccountId(){return 'a'+Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
+/** 临时切到指定账号的命名空间执行同步读取（不触发任何渲染） */
+function withAcc(id,fn){const keep=CUR_ACC;CUR_ACC=id;try{return fn()}finally{CUR_ACC=keep}}
+/** 账号清单里各栏目数量摘要（弹窗卡片用） */
+function accStats(id){
+  return withAcc(id,()=>{
+    const j=(s,d)=>{try{const r=JSON.parse(lsG(s)||d);return r}catch(e){return JSON.parse(d)}};
+    const insp=j('insp','[]').length,mats=j('mats','[]').length,hits=j('hits','[]').length;
+    const m=j('main','{}');
+    const topics=Array.isArray(m.topics)?m.topics:[];
+    const pub=topics.filter(t=>{try{const L=(FLOW[t.type]||FLOW.image).steps.length-1;return t.stage>=L}catch(e){return false}}).length;
+    return {insp,topic:topics.length,mat:mats,hit:hits,pub};
+  });
+}
+/** 启动初始化：有清单读清单；2.0 老数据一次性迁移为「默认账号」（先快照再逐项校验后删旧 key）；全新用户建默认账号 */
+function initAccounts(){
+  let saved=null;
+  try{saved=JSON.parse(localStorage.getItem('wb_accounts')||'null')}catch(e){}
+  if(saved&&Array.isArray(saved.accounts)&&saved.accounts.length){
+    ACCOUNTS=saved.accounts;
+    CUR_ACC=accById(saved.currentId)?saved.currentId:ACCOUNTS[0].id;
+    return;
+  }
+  const oldKeys=Object.keys(ACC_OLD2NEW).filter(k=>{try{return localStorage.getItem(k)!=null}catch(e){return false}});
+  if(oldKeys.length){
+    try{ // 迁移前快照，半途失败可凭快照回滚
+      const snap={};for(const k of oldKeys){const v=localStorage.getItem(k);if(v!=null)snap[k]=v}
+      localStorage.setItem('wb:migration_backup_v2',JSON.stringify(snap));
+    }catch(e){}
+    let oldName='默认账号';
+    try{oldName=(localStorage.getItem('wb_user')||'').trim()||oldName}catch(e){}
+    ACCOUNTS=[{id:'default',name:oldName,plat:'web',emoji:'🌟',bg:ACC_BG[0],createdAt:Date.now()}];
+    CUR_ACC='default';
+    let allOk=true;
+    for(const k of oldKeys){
+      const v=localStorage.getItem(k);if(v==null)continue;
+      try{
+        lsS(ACC_OLD2NEW[k],v);
+        if(lsG(ACC_OLD2NEW[k])===v)localStorage.removeItem(k);else allOk=false;
+      }catch(e){allOk=false}
+    }
+    saveAccounts();
+    if(allOk){try{localStorage.removeItem('wb:migration_backup_v2')}catch(e){}}
+    return;
+  }
+  ACCOUNTS=[{id:'default',name:'默认账号',plat:'web',emoji:'🌟',bg:ACC_BG[0],createdAt:Date.now()}];
+  CUR_ACC='default';
+  saveAccounts();
+}
+initAccounts();
+/* ===== 账号切换器 + 管理弹窗 ===== */
+function renderAccSwitch(){
+  const a=accById(CUR_ACC)||ACCOUNTS[0];
+  if(!a)return;
+  const ava=$('#accAva'),nm=$('#accName');
+  if(ava){ava.textContent=a.emoji;ava.style.background=a.bg}
+  if(nm)nm.textContent=a.name;
+}
+function openAccModal(){renderAccRows();$('#accModal').classList.add('open');}
+function closeAccModal(e){if(e&&e.target!==e.currentTarget)return;$('#accModal').classList.remove('open');}
+function escQ(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;')}
+function renderAccRows(){
+  const box=$('#accRows');if(!box)return;
+  box.innerHTML=ACCOUNTS.map(a=>{
+    const isCur=a.id===CUR_ACC,p=ACC_PLATS[a.plat]||ACC_PLATS.web,st=accStats(a.id);
+    return `<div class="acc-row${isCur?' cur':''}" onclick="switchAccount('${a.id}')">
+      <div class="ava" style="background:${a.bg}">${a.emoji}</div>
+      <div class="mid"><div class="nm">${escQ(a.name)} <span class="plat-chip" style="background:${p.c}">${p.n}</span></div>
+      <div class="st">选题 ${st.topic} · 素材 ${st.mat} · 灵感 ${st.insp} · 拆解 ${st.hit} · 已发布 ${st.pub}</div></div>
+      <div class="side">${isCur?'<span class="acc-pill">当前 ✓</span>':'<span class="acc-hint">点击切换 →</span>'}
+      <div class="acc-ops"><button title="编辑账号" onclick="event.stopPropagation();editAcc('${a.id}')">✎</button><button title="删除账号" onclick="event.stopPropagation();delAcc('${a.id}')">🗑</button></div></div>
+    </div>`;
+  }).join('')+
+  `<button class="acc-new" onclick="toggleAccForm(true)">＋ 新建账号</button>
+  <div class="acc-form" id="accForm" style="display:none">
+    <div><label>账号名称</label><input type="text" id="afName" placeholder="例如：深夜食堂研究所" style="margin-top:6px;width:100%"></div>
+    <div><label>平台</label><div class="acc-chips" id="afPlats" style="margin-top:6px">${Object.entries(ACC_PLATS).map(([k,v],i)=>`<button type="button" class="acc-chip${i===0?' on':''}" data-p="${k}" onclick="pickAccChip(this)">${v.n}</button>`).join('')}</div></div>
+    <div><label>图标</label><div class="acc-chips" id="afEmos" style="margin-top:6px">${ACC_EMOJIS.map((e,i)=>`<button type="button" class="acc-chip emo${i===0?' on':''}" onclick="pickAccChip(this)">${e}</button>`).join('')}</div></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn" style="height:36px" onclick="toggleAccForm(false)">取消</button><button class="btn btn-coral" style="height:36px" onclick="createAcc()">创建并切换</button></div>
+  </div>`;
+  const foot=$('#accFoot');
+  if(foot)foot.textContent='共 '+ACCOUNTS.length+' 个账号 · 本机已用 '+accStorageKB()+'KB';
+}
+function pickAccChip(btn){Array.from(btn.parentElement.children).forEach(c=>c.classList.remove('on'));btn.classList.add('on');}
+function toggleAccForm(show){const f=$('#accForm');if(!f)return;f.style.display=show?'flex':'none';if(show){$('#afName').value='';$('#afName').focus();}}
+function createAcc(){
+  const name=($('#afName').value||'').trim();
+  if(!name){toast('先给账号起个名字吧');$('#afName').focus();return;}
+  if(ACCOUNTS.some(a=>a.name===name)){toast('已有同名账号，换个名字吧');return;}
+  const emoji=$('#afEmos .on')?$('#afEmos .on').textContent:'🌟';
+  const plat=$('#afPlats .on')?$('#afPlats .on').dataset.p:'web';
+  const acc={id:newAccountId(),name,plat,emoji,bg:ACC_BG[ACCOUNTS.length%ACC_BG.length],createdAt:Date.now()};
+  ACCOUNTS.push(acc);
+  saveAccounts();
+  toast('账号「'+name+'」已创建，所有栏目从零开始 🎉');
+  switchAccount(acc.id,true);
+}
+function editAcc(id){
+  const a=accById(id);if(!a)return;
+  const name=prompt('修改账号名称：',a.name);
+  if(name==null)return;
+  const n=name.trim();
+  if(!n){toast('名称不能为空');return;}
+  if(ACCOUNTS.some(x=>x.id!==id&&x.name===n)){toast('已有同名账号，换个名字吧');return;}
+  a.name=n;
+  if(id===CUR_ACC){ // 昵称默认跟随账号名（与 2.0 个人资料语义一致），用户可再在个人资料里改
+    try{if(!lsG('user'))lsS('user',n)}catch(e){}
+    renderProfile();
+  }
+  saveAccounts();renderAccSwitch();renderAccRows();
+  toast('已重命名为「'+n+'」');
+}
+function delAcc(id){
+  if(ACCOUNTS.length<=1){toast('最后一个账号不能删除，只能编辑哦');return;}
+  const a=accById(id);if(!a)return;
+  const st=accStats(id);
+  if(!confirm('删除账号「'+a.name+'」将清空它的全部数据（'+st.topic+' 个选题 / '+st.mat+' 条素材 / '+st.hit+' 条拆解记录），不可恢复。\n\n确定继续？'))return;
+  const twice=prompt('二次确认：请输入账号名「'+a.name+'」以确认删除');
+  if(twice===null)return;
+  if(twice.trim()!==a.name){toast('名称不匹配，已取消删除');return;}
+  withAcc(id,()=>{for(const s of ACC_SUFFIXES)lsD(s)});
+  ACCOUNTS=ACCOUNTS.filter(x=>x.id!==id);
+  if(CUR_ACC===id){saveAccounts();switchAccount(ACCOUNTS[0].id,true);toast('账号已删除，已切换到「'+ACCOUNTS[0].name+'」');}
+  else{saveAccounts();renderAccRows();}
+}
+/** 停掉全部轮询（后端任务继续跑，切回来时可凭 running_task 恢复进度） */
+function stopAllPolling(){
+  [_inspPollTimer,_hitPollTimer,_titlePollTimer,_rvPollTimer].forEach(t=>{if(t)clearInterval(t)});
+  _inspPollTimer=_hitPollTimer=_titlePollTimer=_rvPollTimer=null;
+  _runningTitle=null;_rvDeepTask=null;
+}
+/** 把内存态整体换成 CUR_ACC 账号的数据 */
+function reloadAllData(){
+  TOPICS.splice(0,TOPICS.length);NOTES.splice(0,NOTES.length);CAL_TASKS={};DONE_TODAY={};
+  loadState();
+  INSP=loadInsp();MATS=loadMats();HITS=loadHits();
+  _runningTask=loadRunningTask();_runningInspTask=loadRunningInspTask();
+  _revIdx=-1;_revRating=0;_rvBenches=[];
+}
+/** 按启动序列全量重渲染（界面偏好是全局的，沿用当前值） */
+function renderAllViews(){
+  renderAccSwitch();
+  renderInsp();
+  setTopicView((()=>{try{return localStorage.getItem('wb_topic_view')||'card'}catch(e){return 'card'}})());
+  renderMat();renderHit();renderToday();
+  setTodoView((()=>{try{return localStorage.getItem('wb_todo_view')||'today'}catch(e){return 'today'}})());
+  renderCal();renderReview();renderGoal();renderProfile();renderDateChip();initProfileUrl();
+  updateStats();
+  const v=$('.view.active');
+  if(v){v.classList.remove('fade-swap');void v.offsetWidth;v.classList.add('fade-swap');}
+}
+function switchAccount(id,silent){
+  const a=accById(id);if(!a)return;
+  if(id===CUR_ACC){if(!silent)closeAccModal();return;}
+  stopAllPolling();
+  CUR_ACC=id;saveAccounts();
+  reloadAllData();renderAllViews();
+  $$('.modal-mask.open').forEach(m=>m.classList.remove('open'));
+  if(_runningInspTask)pollInspiration(_runningInspTask.taskId);
+  if(_runningTask)pollTeardown(_runningTask.taskId,_runningTask.url);
+  if(!silent)toast('已切换到「'+a.name+'」，栏目数据已全部切换 ✨');
+}
+/** 账号数据占用估算（KB） */
+function accStorageKB(){
+  let n=0;
+  try{
+    for(let i=0;i<localStorage.length;i++){
+      const k=localStorage.key(i);
+      if(k&&(k.indexOf('wb:')===0||k==='wb_accounts'))n+=(k.length+((localStorage.getItem(k)||'').length));
+    }
+  }catch(e){}
+  return Math.round(n/1024);
+}
 /* ===== view 切换 ===== */
 function switchView(v){
   $$('.view').forEach(x=>x.classList.remove('active'));
@@ -2012,11 +2252,11 @@ const MOCK_INSP=[
 ];
 let INSP=loadInsp();
 let _runningInspTask=loadRunningInspTask();
-function loadInsp(){try{const r=JSON.parse(localStorage.getItem('wb_insp')||'null');return Array.isArray(r)&&r.length?r:[]}catch(e){return []}}
-function saveInsp(){try{localStorage.setItem('wb_insp',JSON.stringify(INSP))}catch(e){}}
+function loadInsp(){try{const r=JSON.parse(lsG('insp')||'null');return Array.isArray(r)&&r.length?r:[]}catch(e){return []}}
+function saveInsp(){try{lsS('insp',JSON.stringify(INSP))}catch(e){}}
 let _lastInspIdx=null;
-function loadInspTopicEd(){try{return JSON.parse(localStorage.getItem('wb_insp_topic')||'[]')}catch(e){return []}}
-function saveInspTopicEd(a){try{localStorage.setItem('wb_insp_topic',JSON.stringify(a))}catch(e){}}
+function loadInspTopicEd(){try{return JSON.parse(lsG('insp_topic')||'[]')}catch(e){return []}}
+function saveInspTopicEd(a){try{lsS('insp_topic',JSON.stringify(a))}catch(e){}}
 function updateInspStats(){
   const total=INSP.length;
   const high=INSP.filter(i=>{const mm=(i.m||[]).find(x=>x[0]==='匹配');return mm&&Number(mm[1])>=85;}).length;
@@ -2025,11 +2265,11 @@ function updateInspStats(){
   set('statNew',total);set('statMatch',high);set('statTopic',topicEd);
   set('statNewLine',total);set('statMatchLine',high);
 }
-function loadRunningInspTask(){try{return JSON.parse(localStorage.getItem('wb_running_insp_task')||'null')}catch(e){return null}}
-function saveRunningInspTask(){try{localStorage.setItem('wb_running_insp_task',_runningInspTask?JSON.stringify(_runningInspTask):'')}catch(e){}}
+function loadRunningInspTask(){try{return JSON.parse(lsG('running_insp_task')||'null')}catch(e){return null}}
+function saveRunningInspTask(){try{lsS('running_insp_task',_runningInspTask?JSON.stringify(_runningInspTask):'')}catch(e){}}
 /* ===== 个性化灵感（按我的笔记刷新） ===== */
-function loadProfileUrl(){try{return localStorage.getItem('wb_profile_url')||''}catch(e){return ''}}
-function saveProfileUrl(v){try{localStorage.setItem('wb_profile_url',(v||'').trim())}catch(e){}}
+function loadProfileUrl(){try{return lsG('profile_url')||''}catch(e){return ''}}
+function saveProfileUrl(v){try{lsS('profile_url',(v||'').trim())}catch(e){}}
 function initProfileUrl(){const i=$('#profileUrlInput');if(i)i.value=loadProfileUrl();}
 async function refreshPersonalizedInspiration(btn){
   const input=$('#profileUrlInput');
@@ -2039,7 +2279,7 @@ async function refreshPersonalizedInspiration(btn){
   saveProfileUrl(url);
   if(_runningInspTask){toast('已有灵感在抓取中，请等它完成');return;}
   try{
-    const r=await fetch('/api/inspiration/personalized',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({profileUrl:url})});
+    const r=await fetch('/api/inspiration/personalized',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({profileUrl:url,accountId:CUR_ACC})});
     const j=await r.json();
     if(!j.success){toast(j.error||'提交失败');return;}
     _runningInspTask={taskId:j.data.taskId,keywords:'博主主页 · '+url.split('/').pop(),startedAt:Date.now(),step:'已提交，准备抓取主页笔记…',detail:''};
@@ -2085,7 +2325,7 @@ async function refreshInspiration(keywords){
   if(!keywords){const v=prompt('输入要抓取的关键词，如「AI 工作台」「本地创作库」');if(!v)return;keywords=v.trim();if(!keywords)return;}
   if(_runningInspTask){toast('已有灵感在抓取中，请等它完成');return;}
   try{
-    const r=await fetch('/api/inspiration/refresh',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({keywords})});
+    const r=await fetch('/api/inspiration/refresh',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({keywords,accountId:CUR_ACC})});
     const j=await r.json();
     if(!j.success){toast(j.error||'提交失败');return;}
     _runningInspTask={taskId:j.data.taskId,keywords,startedAt:Date.now(),step:'已提交，准备抓取…',detail:''};
@@ -2100,19 +2340,20 @@ function refreshInspirationFromInput(btn){
   refreshInspiration(kw);
 }
 async function pollInspiration(taskId){
-  let n=0;const t=setInterval(async()=>{
-    n++;if(n>450){clearInterval(t);_runningInspTask=null;saveRunningInspTask();renderInsp();toast('抓取超时（15分钟），稍后重试');return;}
+  let n=0;_inspPollTimer=setInterval(async()=>{
+    n++;if(n>450){clearInterval(_inspPollTimer);_runningInspTask=null;saveRunningInspTask();renderInsp();toast('抓取超时（15分钟），稍后重试');return;}
     try{
       const r=await fetch('/api/task/'+taskId);const j=await r.json();
-      if(!j.success){clearInterval(t);_runningInspTask=null;saveRunningInspTask();renderInsp();toast('任务已失效（后端可能重启）');return;}
+      if(!j.success){clearInterval(_inspPollTimer);_runningInspTask=null;saveRunningInspTask();renderInsp();toast('任务已失效（后端可能重启）');return;}
       const s=j.data.status;
       if(_runningInspTask){_runningInspTask.step=j.data.step||_runningInspTask.step;_runningInspTask.detail=j.data.detail||'';}
       if(s==='running'){renderInsp();}
-      else if(s==='done'){clearInterval(t);const res=j.data.result||[];_runningInspTask=null;saveRunningInspTask();if(Array.isArray(res)&&res.length){INSP=res;saveInsp();renderInsp();toast('抓到 '+res.length+' 条灵感 ✨');}else{renderInsp();toast('未抓到相关灵感，换个关键词试试');}}
-      else if(s==='failed'){clearInterval(t);_runningInspTask=null;saveRunningInspTask();renderInsp();toast('抓取失败：'+(j.data.error||'未知'));}
+      else if(s==='done'){clearInterval(_inspPollTimer);const res=j.data.result||[];_runningInspTask=null;saveRunningInspTask();if(Array.isArray(res)&&res.length){INSP=res;saveInsp();renderInsp();toast('抓到 '+res.length+' 条灵感 ✨');}else{renderInsp();toast('未抓到相关灵感，换个关键词试试');}}
+      else if(s==='failed'){clearInterval(_inspPollTimer);_runningInspTask=null;saveRunningInspTask();renderInsp();toast('抓取失败：'+(j.data.error||'未知'));}
     }catch(e){}
   },2000);
 }
+let _inspPollTimer=null;
 /* #inspFilters 已移除（不向用户暴露抓取平台） */
 
 /* ===== 选题池 ===== */
@@ -2124,11 +2365,10 @@ const FLOW={
 const TOPICS=[];
 let CAL_TASKS={};
 let DONE_TODAY={};
-const STORAGE_KEY='workbuddy_v3';
 /** 旧版 CAL_TASKS 值是当月日期数字（无月份），迁移为完整 "YYYY-MM-DD"。 */
 function migrateCalTasks(old){const ym=todayStr().slice(0,7);const out={};for(const k of Object.keys(old)){const v=old[k];out[k]=typeof v==='number'?ym+'-'+String(v).padStart(2,'0'):v;}return out;}
-function loadState(){try{const raw=localStorage.getItem(STORAGE_KEY);if(!raw)return;const s=JSON.parse(raw);if(Array.isArray(s.topics))TOPICS.splice(0,TOPICS.length,...s.topics.map(t=>({...t,priority:['high','mid','low'].includes(t.priority)?t.priority:'mid'})));if(Array.isArray(s.notes))NOTES.splice(0,NOTES.length,...s.notes);if(s.calTasks)CAL_TASKS=migrateCalTasks(s.calTasks);if(s.doneToday)DONE_TODAY=s.doneToday;}catch(e){}}
-function saveState(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify({topics:TOPICS,notes:NOTES,calTasks:CAL_TASKS,doneToday:DONE_TODAY}));}catch(e){}updateStats();}
+function loadState(){try{const raw=lsG('main');if(!raw)return;const s=JSON.parse(raw);if(Array.isArray(s.topics))TOPICS.splice(0,TOPICS.length,...s.topics.map(t=>({...t,priority:['high','mid','low'].includes(t.priority)?t.priority:'mid'})));if(Array.isArray(s.notes))NOTES.splice(0,NOTES.length,...s.notes);if(s.calTasks)CAL_TASKS=migrateCalTasks(s.calTasks);if(s.doneToday)DONE_TODAY=s.doneToday;}catch(e){}}
+function saveState(){try{lsS('main',JSON.stringify({topics:TOPICS,notes:NOTES,calTasks:CAL_TASKS,doneToday:DONE_TODAY}));}catch(e){}updateStats();}
 function delTopic(idx){
   const t=TOPICS[idx];
   if(!t)return;
@@ -2381,8 +2621,8 @@ const DEFAULT_MATS=[
    points:['「自然语言调度 Excel 公式」是小白也能上手的自动化入口，门槛极低','5 个实战模板（周报/对账/盘点/预测/清洗）可直接复用，实用性强','强调「2 小时→10 分钟」的量化提效，适合做干货教程型爆款']}
 ];
 let MATS=loadMats();
-function loadMats(){try{const r=JSON.parse(localStorage.getItem('wb_mats')||'null');return Array.isArray(r)&&r.length?r:[]}catch(e){return []}}
-function saveMats(){try{localStorage.setItem('wb_mats',JSON.stringify(MATS))}catch(e){}}
+function loadMats(){try{const r=JSON.parse(lsG('mats')||'null');return Array.isArray(r)&&r.length?r:[]}catch(e){return []}}
+function saveMats(){try{lsS('mats',JSON.stringify(MATS))}catch(e){}}
 function delMat(idx){
   const m=MATS[idx];
   if(!m)return;
@@ -2431,8 +2671,8 @@ function renderMat(f='all'){
 /* ===== 爆款拆解 ===== */
 let HITS=loadHits();
 let _runningTask=loadRunningTask();
-function loadHits(){try{return JSON.parse(localStorage.getItem('wb_hits')||'[]')}catch(e){return []}}
-function saveHits(){try{localStorage.setItem('wb_hits',JSON.stringify(HITS))}catch(e){}updateStats();}
+function loadHits(){try{return JSON.parse(lsG('hits')||'[]')}catch(e){return []}}
+function saveHits(){try{lsS('hits',JSON.stringify(HITS))}catch(e){}updateStats();}
 function updateStats(){
   const set=(id,v)=>{const e=$('#'+id);if(e)e.textContent=v;};
   const setKpi=(id,v)=>{const n=$('#'+id);if(!n)return;n.textContent=v;const t=n.parentElement.querySelector('.kpi-trend');if(t)t.style.display='none';};
@@ -2457,8 +2697,8 @@ function updateStats(){
   setKpi('calDraftN',TOPICS.filter(t=>t.stage>=1&&t.stage<=2).length);
   set('hitCount',HITS.length);
 }
-function loadRunningTask(){try{return JSON.parse(localStorage.getItem('wb_running_task')||'null')}catch(e){return null}}
-function saveRunningTask(){try{localStorage.setItem('wb_running_task',_runningTask?JSON.stringify(_runningTask):'')}catch(e){}}
+function loadRunningTask(){try{return JSON.parse(lsG('running_task')||'null')}catch(e){return null}}
+function saveRunningTask(){try{lsS('running_task',_runningTask?JSON.stringify(_runningTask):'')}catch(e){}}
 function renderHit(){
   const esc=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   const runningHtml=_runningTask?runningCardHtml(_runningTask,esc):'';
@@ -2480,7 +2720,7 @@ function hitCardHtml(h,idx,esc){
     ${tags.length?`<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:8px">${tags.map(t=>`<span style="font-size:10px;padding:2px 8px;background:var(--lav-bg);color:var(--lav-d);border-radius:999px">#${esc(t)}</span>`).join('')}</div>`:''}
     <div class="c-foot">
       <span style="font-size:11px;color:var(--ink-3)">${esc(m.author||h.from||'')}</span>
-      ${h.id?`<span style="margin-left:auto;display:flex;gap:6px"><button class="mini pri" onclick="openFolder('${h.id}')"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/></svg> 打开文件夹</button><button class="mini ghost" onclick="delHit(${idx})" title="删除这条拆解记录（只删列表记录，不动磁盘文件）">删除</button></span>`:''}
+      ${h.id?`<span style="margin-left:auto;display:flex;gap:6px"><button class="mini pri" onclick="openFolder('${h.id}','${h.acc||CUR_ACC}')"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/></svg> 打开文件夹</button><button class="mini ghost" onclick="delHit(${idx})" title="删除这条拆解记录（只删列表记录，不动磁盘文件）">删除</button></span>`:''}
     </div>
   </article>`;
 }
@@ -2504,7 +2744,7 @@ async function startTeardown(btn){
   if(_runningTask){toast('已有拆解在进行中，请等它完成');return;}
   if(input)input.value='';
   try{
-    const r=await fetch('/api/teardown',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url})});
+    const r=await fetch('/api/teardown',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url,accountId:CUR_ACC})});
     const j=await r.json();
     if(!j.success){toast(j.error||'提交失败');return;}
     _runningTask={taskId:j.data.taskId,url,startedAt:Date.now(),step:'已提交，准备调用 skill…',detail:''};
@@ -2514,26 +2754,27 @@ async function startTeardown(btn){
   }catch(e){toast('网络错误：'+e.message);}
 }
 async function pollTeardown(taskId,url){
-  let n=0;const t=setInterval(async()=>{
-    n++;if(n>450){clearInterval(t);_runningTask=null;saveRunningTask();renderHit();toast('拆解超时（15分钟），请查看 logs/server.log 或重试');return;}
+  let n=0;_hitPollTimer=setInterval(async()=>{
+    n++;if(n>450){clearInterval(_hitPollTimer);_runningTask=null;saveRunningTask();renderHit();toast('拆解超时（15分钟），请查看 logs/server.log 或重试');return;}
     try{
       const r=await fetch('/api/task/'+taskId);const j=await r.json();
-      if(!j.success){clearInterval(t);_runningTask=null;saveRunningTask();renderHit();toast('任务已失效（后端可能重启）');return;}
+      if(!j.success){clearInterval(_hitPollTimer);_runningTask=null;saveRunningTask();renderHit();toast('任务已失效（后端可能重启）');return;}
       const s=j.data.status;
       if(_runningTask){_runningTask.step=j.data.step||_runningTask.step;_runningTask.detail=j.data.detail||'';}
       if(s==='running'){renderHit();}
-      else if(s==='done'){clearInterval(t);_runningTask=null;saveRunningTask();const res=j.data.result||{};HITS.unshift({id:taskId,url,meta:res.meta||{},createdAt:Date.now()});saveHits();renderHit();toast('拆解完成 ✨，点卡片「打开文件夹」看完整报告');}
-      else if(s==='failed'){clearInterval(t);_runningTask=null;saveRunningTask();renderHit();toast('拆解失败：'+(j.data.error||'未知'));}
+      else if(s==='done'){clearInterval(_hitPollTimer);_runningTask=null;saveRunningTask();const res=j.data.result||{};HITS.unshift({id:taskId,url,meta:res.meta||{},createdAt:Date.now(),acc:CUR_ACC});saveHits();renderHit();toast('拆解完成 ✨，点卡片「打开文件夹」看完整报告');}
+      else if(s==='failed'){clearInterval(_hitPollTimer);_runningTask=null;saveRunningTask();renderHit();toast('拆解失败：'+(j.data.error||'未知'));}
     }catch(e){}
   },2000);
 }
-function openFolder(id){
-  fetch('/api/teardown/'+id+'/folder').then(r=>r.json()).then(j=>{
+let _hitPollTimer=null;
+function openFolder(id,acc){
+  fetch('/api/teardown/'+id+'/folder?account='+encodeURIComponent(acc||CUR_ACC)).then(r=>r.json()).then(j=>{
     toast(j.success?'已在文件夹打开，查看 AI拆解/ 里的完整报告':'打开失败：'+(j.error||''));
   }).catch(e=>toast('网络错误：'+e.message));
 }
-function reparseHit(id){
-  fetch('/api/teardown/'+id+'/reparse',{method:'POST'}).then(r=>r.json()).then(j=>{
+function reparseHit(id,acc){
+  fetch('/api/teardown/'+id+'/reparse?account='+encodeURIComponent(acc||CUR_ACC),{method:'POST'}).then(r=>r.json()).then(j=>{
     if(!j.success){toast(j.error||'解析失败');return;}
     const i=HITS.findIndex(h=>h.id===id);
     if(i>=0){HITS[i]={...HITS[i],meta:(j.data.result&&j.data.result.meta)||{}};saveHits();renderHit();toast('已重新解析元数据 ✨');}
@@ -2582,19 +2823,20 @@ function renderTitleProgress(){
   </article>`;
 }
 async function pollTitle(taskId){
-  let n=0;const t=setInterval(async()=>{
-    n++;if(n>80){clearInterval(t);_runningTitle=null;$('#titleGrid').innerHTML='';toast('生成超时，稍后重试');return;}
+  let n=0;_titlePollTimer=setInterval(async()=>{
+    n++;if(n>80){clearInterval(_titlePollTimer);_runningTitle=null;$('#titleGrid').innerHTML='';toast('生成超时，稍后重试');return;}
     try{
       const r=await fetch('/api/task/'+taskId);const j=await r.json();
-      if(!j.success){clearInterval(t);_runningTitle=null;$('#titleGrid').innerHTML='';toast('查询失败');return;}
+      if(!j.success){clearInterval(_titlePollTimer);_runningTitle=null;$('#titleGrid').innerHTML='';toast('查询失败');return;}
       if(_runningTitle){_runningTitle.step=j.data.step||_runningTitle.step;_runningTitle.detail=j.data.detail||'';}
       const s=j.data.status;
       if(s==='running'){renderTitleProgress();}
-      else if(s==='done'){clearInterval(t);const titles=(j.data.result&&j.data.result.titles)||[];_runningTitle=null;renderTitles(titles);toast((titles.length?('已生成 '+titles.length+' 个标题'):'未解析到标题')+' ✨');}
-      else if(s==='failed'){clearInterval(t);_runningTitle=null;$('#titleGrid').innerHTML='';toast('生成失败：'+(j.data.error||'未知'));}
+      else if(s==='done'){clearInterval(_titlePollTimer);const titles=(j.data.result&&j.data.result.titles)||[];_runningTitle=null;renderTitles(titles);toast((titles.length?('已生成 '+titles.length+' 个标题'):'未解析到标题')+' ✨');}
+      else if(s==='failed'){clearInterval(_titlePollTimer);_runningTitle=null;$('#titleGrid').innerHTML='';toast('生成失败：'+(j.data.error||'未知'));}
     }catch(e){}
   },1500);
 }
+let _titlePollTimer=null;
 function renderTitles(list){
   if(!list||!list.length){$('#titleGrid').innerHTML='<div style="padding:48px;text-align:center;color:var(--ink-3);grid-column:1/-1">未解析到标题，换个主题或重试</div>';return;}
   const esc=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/'/g,"\\'");
@@ -3057,18 +3299,17 @@ function submitTopic(){
 }
 
 /* ===== 运营目标 ===== */
-const GOALS_KEY='wb_goals';
 const INC_META={brand:{ic:'🤝',lab:'商单笔记',bg:'var(--coral-bg)'},deal:{ic:'🛍',lab:'带货收入',bg:'var(--honey-bg)'},consult:{ic:'💬',lab:'咨询收入',bg:'var(--matcha-bg)'},bonus:{ic:'🎁',lab:'平台激励',bg:'var(--lav-bg)'},other:{ic:'➕',lab:'其他',bg:'var(--cream-2)'}};
 function loadGoals(){
   try{
-    const s=JSON.parse(localStorage.getItem(GOALS_KEY)||'{}');
+    const s=JSON.parse(lsG('goals')||'{}');
     return {
       fans:{target:s.fans&&s.fans.target>0?s.fans.target:0,due:s.fans&&s.fans.due||'',records:Array.isArray(s.fans&&s.fans.records)?s.fans.records.slice().sort((a,b)=>a.d<b.d?-1:1):[]},
       income:{target:s.income&&s.income.target>0?s.income.target:0,due:s.income&&s.income.due||'',records:Array.isArray(s.income&&s.income.records)?s.income.records:[]}
     };
   }catch(e){return {fans:{target:0,due:'',records:[]},income:{target:0,due:'',records:[]}};}
 }
-function saveGoals(g){try{localStorage.setItem(GOALS_KEY,JSON.stringify(g));}catch(e){}}
+function saveGoals(g){try{lsS('goals',JSON.stringify(g));}catch(e){}}
 function fmtNum(n){return Number(n).toLocaleString('zh-CN');}
 function fmtAmt(n){const v=Number(n);return '¥'+(v>=10000?(v/10000).toFixed(v%10000===0?0:1)+'w':fmtNum(Math.round(v)));}
 function daysLeft(due){if(!due)return null;const one=24*3600*1000;const t=new Date(todayStr().replace(/-/g,'/'));const e=new Date(due.replace(/-/g,'/'));return Math.ceil((e-t)/one);}
@@ -3390,7 +3631,7 @@ async function startDeep(){
   if(!n||!n.url){toast('这篇笔记没有原文链接，无法深度分析');return;}
   if(!_rvBenches.length){toast('请先添加至少 1 条对标笔记');return;}
   try{
-    const r=await fetch('/api/deep-review',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({noteUrl:n.url,benchmarkUrls:_rvBenches.map(b=>b.url)})});
+    const r=await fetch('/api/deep-review',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({noteUrl:n.url,benchmarkUrls:_rvBenches.map(b=>b.url),accountId:CUR_ACC})});
     const j=await r.json();
     if(!j.success){toast(j.error||'提交失败');return;}
     _rvDeepTask={taskId:j.data.taskId,step:'已提交，准备调用 skill…',detail:''};
@@ -3399,19 +3640,20 @@ async function startDeep(){
   }catch(e){toast('网络错误：'+e.message);}
 }
 async function pollDeep(taskId,noteId){
-  let n=0;const t=setInterval(async()=>{
-    n++;if(n>450){clearInterval(t);_rvDeepTask=null;renderDeepState();toast('深度复盘超时（15分钟），稍后重试');return;}
+  let n=0;_rvPollTimer=setInterval(async()=>{
+    n++;if(n>450){clearInterval(_rvPollTimer);_rvDeepTask=null;renderDeepState();toast('深度复盘超时（15分钟），稍后重试');return;}
     try{
       const r=await fetch('/api/task/'+taskId);const j=await r.json();
-      if(!j.success){clearInterval(t);_rvDeepTask=null;renderDeepState();toast('任务已失效（后端可能重启）');return;}
+      if(!j.success){clearInterval(_rvPollTimer);_rvDeepTask=null;renderDeepState();toast('任务已失效（后端可能重启）');return;}
       const s=j.data.status;
       if(_rvDeepTask){_rvDeepTask.step=j.data.step||_rvDeepTask.step;_rvDeepTask.detail=j.data.detail||'';}
       if(s==='running'){renderDeepState();}
-      else if(s==='done'){clearInterval(t);_rvDeepTask=null;const i=NOTES.findIndex(x=>x.id===noteId);if(i>=0){const res=j.data.result||{};NOTES[i]={...NOTES[i],deepReviewTaskId:taskId,deepReport:res.sections||null};saveState();if(_revIdx===i)renderDeepState();}else{renderDeepState();}toast('深度复盘完成 🎯，点「打开报告文件夹」看完整分析');}
-      else if(s==='failed'){clearInterval(t);_rvDeepTask=null;renderDeepState();toast('深度复盘失败：'+(j.data.error||'未知'));}
+      else if(s==='done'){clearInterval(_rvPollTimer);_rvDeepTask=null;const i=NOTES.findIndex(x=>x.id===noteId);if(i>=0){const res=j.data.result||{};NOTES[i]={...NOTES[i],deepReviewTaskId:taskId,deepReviewAcc:CUR_ACC,deepReport:res.sections||null};saveState();if(_revIdx===i)renderDeepState();}else{renderDeepState();}toast('深度复盘完成 🎯，点「打开报告文件夹」看完整分析');}
+      else if(s==='failed'){clearInterval(_rvPollTimer);_rvDeepTask=null;renderDeepState();toast('深度复盘失败：'+(j.data.error||'未知'));}
     }catch(e){}
   },2000);
 }
+let _rvPollTimer=null;
 function benchDateDiff(benchDate){
   if(_revIdx<0)return null;
   const my=NOTES[_revIdx]&&NOTES[_revIdx].meta&&NOTES[_revIdx].meta.date;
@@ -3465,14 +3707,14 @@ function renderDeepState(){
   const hasReport=_revIdx>=0&&NOTES[_revIdx]&&NOTES[_revIdx].deepReviewTaskId;
   const inputs=`<div class="rv-deep-inputs"><input id="rvBenchInput" type="text" placeholder="粘贴对标笔记链接，回车添加（1-5 条）" onkeydown="if(event.key==='Enter')addBench()"><button class="btn" onclick="addBench()">➕ 添加</button></div><div id="rvBenchList"></div>`;
   if(hasReport){
-    el.innerHTML=hd+`<div class="rv-deep-sub">已有深度复盘报告（旧报告保留在文件夹中）。粘新对标可重新生成。</div><div class="rv-deep-run"><button class="btn btn-coral" data-id="${rvEsc(NOTES[_revIdx].deepReviewTaskId)}" onclick="openDeepFolder(this.dataset.id)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>打开报告文件夹</button></div>${deepReportHtml(NOTES[_revIdx].deepReport)}${inputs}<div class="rv-deep-run"><button class="btn btn-coral" onclick="startDeep()">🚀 重新深度分析</button></div>`;
+    el.innerHTML=hd+`<div class="rv-deep-sub">已有深度复盘报告（旧报告保留在文件夹中）。粘新对标可重新生成。</div><div class="rv-deep-run"><button class="btn btn-coral" data-id="${rvEsc(NOTES[_revIdx].deepReviewTaskId)}" onclick="openDeepFolder(this.dataset.id,this.dataset.acc)" data-acc="${rvEsc(NOTES[_revIdx].deepReviewAcc||CUR_ACC)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>打开报告文件夹</button></div>${deepReportHtml(NOTES[_revIdx].deepReport)}${inputs}<div class="rv-deep-run"><button class="btn btn-coral" onclick="startDeep()">🚀 重新深度分析</button></div>`;
   }else{
     el.innerHTML=hd+`<div class="rv-deep-sub">粘贴 1-5 条同赛道、发布时间相近的对标笔记链接，AI 会逐篇下载并对比内容差异 + 数据归因，生成深度复盘报告。</div>${inputs}<div class="rv-deep-run"><button class="btn btn-coral" onclick="startDeep()">🚀 开始深度分析</button><span class="rv-deep-sub">含逐篇下载，通常 3-10 分钟</span></div>`;
   }
   renderBenchListOnly();
 }
-function openDeepFolder(id){
-  fetch('/api/deep-review/'+id+'/folder').then(r=>r.json()).then(j=>{
+function openDeepFolder(id,acc){
+  fetch('/api/deep-review/'+id+'/folder?account='+encodeURIComponent(acc||CUR_ACC)).then(r=>r.json()).then(j=>{
     toast(j.success?'已在文件夹打开，查看深度复盘报告':'打开失败：'+(j.error||''));
   }).catch(e=>toast('网络错误：'+e.message));
 }
@@ -3480,13 +3722,13 @@ function openDeepFolder(id){
 /* ===== 个人资料（头像/昵称/创作天数，纯本地 localStorage）===== */
 const DEFAULT_AVATAR='assets/avatar.png';
 const DEFAULT_USER='创作者';
-function loadAvatar(){try{return localStorage.getItem('wb_avatar')||''}catch(e){return ''}}
-function saveAvatar(v){try{localStorage.setItem('wb_avatar',v)}catch(e){}}
-function loadUserName(){try{return localStorage.getItem('wb_user')||''}catch(e){return ''}}
-function saveUserName(v){try{localStorage.setItem('wb_user',v)}catch(e){}}
-function loadFirstUse(){try{return localStorage.getItem('wb_first_use')||''}catch(e){return ''}}
+function loadAvatar(){try{return lsG('avatar')||''}catch(e){return ''}}
+function saveAvatar(v){try{lsS('avatar',v)}catch(e){}}
+function loadUserName(){try{return lsG('user')||''}catch(e){return ''}}
+function saveUserName(v){try{lsS('user',v)}catch(e){}}
+function loadFirstUse(){try{return lsG('first_use')||''}catch(e){return ''}}
 function todayStr(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
-function touchFirstUse(){if(loadFirstUse())return;try{localStorage.setItem('wb_first_use',todayStr())}catch(e){}}
+function touchFirstUse(){if(loadFirstUse())return;try{lsS('first_use',todayStr())}catch(e){}}
 function daysSinceFirst(){const f=loadFirstUse();if(!f)return 1;const a=new Date(f+'T00:00:00'),b=new Date(todayStr()+'T00:00:00');const dd=Math.round((b-a)/86400000);return dd>=0?dd+1:1}
 function greetingByHour(){const h=new Date().getHours();if(h<6)return '夜深啦';if(h<12)return '早上好呀';if(h<14)return '中午好呀';if(h<18)return '下午好呀';return '晚上好呀'}
 function renderDateChip(){const d=new Date(),w=['周日','周一','周二','周三','周四','周五','周六'][d.getDay()];setText('dateChipNum',String(d.getMonth()+1).padStart(2,'0')+'.'+String(d.getDate()).padStart(2,'0'));setText('dateChipWeek',w)}
@@ -3546,15 +3788,19 @@ function openThemeModal(){
 function closeThemeModal(e){if(e&&e.target!==e.currentTarget)return;$('#themeModal').classList.remove('open');}
 
 /* ===== 数据导出与导入（备份/恢复，整体覆盖）===== */
-const BACKUP_KEYS=['workbuddy_v3','wb_insp','wb_insp_topic','wb_mats','wb_hits','wb_avatar','wb_user','wb_first_use','wb_profile_url','wb_theme'];
+const GLOBAL_BACKUP_KEYS=['wb_theme'];
 function openBackupModal(){$('#backupModal').classList.add('open');}
 function closeBackupModal(e){if(e&&e.target!==e.currentTarget)return;$('#backupModal').classList.remove('open');}
 function exportData(){
-  const data={};
-  for(const k of BACKUP_KEYS){
-    try{const v=localStorage.getItem(k);if(v!=null)data[k]=v}catch(e){}
+  const global={};
+  for(const k of GLOBAL_BACKUP_KEYS){
+    try{const v=localStorage.getItem(k);if(v!=null)global[k]=v}catch(e){}
   }
-  const payload={app:'workbuddy',version:1,exportedAt:new Date().toISOString(),data};
+  const accounts=ACCOUNTS.map(a=>({
+    id:a.id,name:a.name,plat:a.plat,emoji:a.emoji,bg:a.bg,createdAt:a.createdAt,
+    data:withAcc(a.id,()=>{const d={};for(const s of ACC_SUFFIXES){const v=lsG(s);if(v!=null)d[s]=v}return d})
+  }));
+  const payload={app:'workbuddy',version:2,exportedAt:new Date().toISOString(),currentId:CUR_ACC,global,accounts};
   const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');
@@ -3562,7 +3808,7 @@ function exportData(){
   a.href=url;a.download=`workbuddy-backup-${ds}.json`;
   document.body.appendChild(a);a.click();a.remove();
   setTimeout(()=>URL.revokeObjectURL(url),3000);
-  toast('备份文件已生成，请选择保存位置 💾');
+  toast('备份文件已生成（含 '+ACCOUNTS.length+' 个账号），请选择保存位置 💾');
 }
 function importData(input){
   const f=input.files&&input.files[0];
@@ -3573,21 +3819,58 @@ function importData(input){
     let payload;
     try{payload=JSON.parse(String(r.result||''))}
     catch(e){toast('文件不是有效的备份文件（JSON 解析失败）');return}
-    if(!payload||payload.app!=='workbuddy'||typeof payload.data!=='object'||payload.data===null){toast('文件不是 WorkBuddy 备份文件');return}
-    if(payload.version>1){toast('备份文件版本更高，请先升级工作台');return}
-    const n=Object.keys(payload.data).length;
-    if(!confirm(`将导入备份（${n} 项数据，导出于 ${String(payload.exportedAt||'').slice(0,10)||'未知时间'}）。\n\n导入会覆盖当前全部数据，确定继续？`))return;
+    if(!payload||payload.app!=='workbuddy'){toast('文件不是 WorkBuddy 备份文件');return}
+    if(payload.version>2){toast('备份文件版本更高，请先升级工作台');return}
+    const when=String(payload.exportedAt||'').slice(0,10)||'未知时间';
+    if(payload.version===1){
+      // 2.0 单账号备份：导入为「当前账号」的数据
+      if(typeof payload.data!=='object'||payload.data===null){toast('备份文件缺少数据');return}
+      const n=Object.keys(payload.data).length;
+      const curName=(accById(CUR_ACC)||{}).name||'当前账号';
+      if(!confirm(`检测到 2.0 单账号备份（${n} 项数据，导出于 ${when}）。\n\n将导入为当前账号「${curName}」的数据并覆盖其现有内容，确定继续？`))return;
+      try{
+        for(const s of ACC_SUFFIXES)lsD(s);
+        for(const [k,v] of Object.entries(payload.data)){
+          const suf=ACC_OLD2NEW[k];
+          if(suf&&typeof v==='string')lsS(suf,v);
+        }
+        toast('导入成功，正在刷新…');
+        setTimeout(()=>location.reload(),600);
+      }catch(e){toast('导入失败：'+e.message)}
+      return;
+    }
+    // v2：全账号整体覆盖恢复
+    if(!Array.isArray(payload.accounts)||!payload.accounts.length){toast('备份文件缺少账号数据');return}
+    if(!confirm(`将导入备份（含 ${payload.accounts.length} 个账号，导出于 ${when}）。\n\n导入会覆盖当前全部账号与数据，确定继续？`))return;
     try{
-      // 整体覆盖：先清掉备份范围内的 key，再原样写回（备份里缺的 key 即删除）
-      for(const k of BACKUP_KEYS)localStorage.removeItem(k);
-      for(const [k,v] of Object.entries(payload.data)){
-        if(BACKUP_KEYS.includes(k)&&typeof v==='string')localStorage.setItem(k,v);
+      // 先清空现有账号数据与清单（wb: 前缀命名空间 + 清单）
+      for(let i=localStorage.length-1;i>=0;i--){
+        const k=localStorage.key(i);
+        if(k&&(k.indexOf('wb:')===0||k==='wb_accounts'))localStorage.removeItem(k);
       }
+      if(payload.global&&typeof payload.global==='object'){
+        for(const [k,v] of Object.entries(payload.global)){
+          if(GLOBAL_BACKUP_KEYS.includes(k)&&typeof v==='string')try{localStorage.setItem(k,v)}catch(e){}
+        }
+      }
+      const accs=[];
+      for(const a of payload.accounts){
+        if(!a||typeof a.id!=='string')continue;
+        accs.push({id:a.id,name:String(a.name||'未命名账号'),plat:ACC_PLATS[a.plat]?a.plat:'web',emoji:a.emoji||'🌟',bg:a.bg||ACC_BG[0],createdAt:a.createdAt||Date.now()});
+        const keep=CUR_ACC;CUR_ACC=a.id;
+        if(a.data&&typeof a.data==='object'){
+          for(const [suf,v] of Object.entries(a.data)){
+            if(ACC_SUFFIXES.includes(suf)&&typeof v==='string')lsS(suf,v);
+          }
+        }
+        CUR_ACC=keep;
+      }
+      if(accs.length)localStorage.setItem('wb_accounts',JSON.stringify({currentId:payload.currentId&&accs.some(a=>a.id===payload.currentId)?payload.currentId:accs[0].id,accounts:accs}));
       toast('导入成功，正在刷新…');
       setTimeout(()=>location.reload(),600);
     }catch(e){toast('导入失败：'+e.message)}
   };
-  r.onerror=()=>toast('读取文件失败');
+  r.onerror=()=>toast('读取备份失败');
   r.readAsText(f,'utf-8');
 }
 /* 侧边栏「外观主题」行的迷你色点：显示当前主题的三色 */
@@ -3684,7 +3967,7 @@ async function cfgSave(){
     else{toast(j.error||'保存失败');}
   }catch(e){toast('网络错误：'+e.message);}
 }
-touchFirstUse();loadState();renderInsp();setTopicView((()=>{const q=new URLSearchParams(location.search).get('view');if(q==='table'||q==='card')return q;try{return localStorage.getItem('wb_topic_view')||'card'}catch(e){return 'card'}})());renderMat();renderHit();renderToday();setTodoView((()=>{try{return localStorage.getItem('wb_todo_view')||'today'}catch(e){return 'today'}})());renderCal();renderReview();renderGoal();renderProfile();renderDateChip();checkConfig();initProfileUrl();
+renderAccSwitch();touchFirstUse();loadState();renderInsp();setTopicView((()=>{const q=new URLSearchParams(location.search).get('view');if(q==='table'||q==='card')return q;try{return localStorage.getItem('wb_topic_view')||'card'}catch(e){return 'card'}})());renderMat();renderHit();renderToday();setTodoView((()=>{try{return localStorage.getItem('wb_todo_view')||'today'}catch(e){return 'today'}})());renderCal();renderReview();renderGoal();renderProfile();renderDateChip();checkConfig();initProfileUrl();
 if(_runningInspTask)pollInspiration(_runningInspTask.taskId);
 if(_runningTask){pollTeardown(_runningTask.taskId,_runningTask.url);}
 updateStats();

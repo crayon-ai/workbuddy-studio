@@ -5,6 +5,7 @@ import path from "node:path";
 import { buildApp } from "./app.js";
 import { loadEnv } from "./config.js";
 import { teeToFile } from "./logger.js";
+import { migrateLegacyDataDirs } from "./account-dirs.js";
 
 const PORT = Number(process.env.PORT ?? 7788);
 const HOST = "127.0.0.1";
@@ -15,6 +16,12 @@ async function main(): Promise<void> {
   const app = await buildApp();
   const here = fileURLToPath(import.meta.url);
   const projectRoot = path.resolve(path.dirname(here), "../..");
+
+  // 3.0 多账号：2.0 的 data/<模块>/ 惰性迁移到 data/accounts/default/（幂等）
+  const migrated = migrateLegacyDataDirs(projectRoot);
+  if (migrated.length) {
+    console.log(`[migrate] 2.0 产物目录已迁入默认账号：${migrated.join(", ")}`);
+  }
 
   // 静态资源（assets 图片等）
   await app.register(fastifyStatic, {

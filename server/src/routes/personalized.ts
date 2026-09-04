@@ -1,11 +1,11 @@
 import type { FastifyPluginCallback } from "fastify";
-import path from "node:path";
 import { createTask, updateTask, getTask } from "../task-store.js";
 import { runSkill, collectMarkdown } from "../skill-runner.js";
 import { parseInspiration, parseProfile, type Profile } from "../parse.js";
 import { fetchBloggerProfile, isXhsProfileUrl, type BloggerProfile } from "../xhs-profile.js";
 import { fetchSources, type SourceItem } from "../sources.js";
 import { getApiKey } from "../config.js";
+import { accountTaskDir, accountSlug } from "../account-dirs.js";
 
 /** 任务级日志：带时间戳 + 距任务开始的相对秒数，写 server 控制台（随启动脚本进 logs/server.log）。 */
 function log(taskId: string, msg: string, t0?: number): void {
@@ -19,9 +19,9 @@ export interface PersonalizedRoutesOpts {
   projectRoot: string;
 }
 
-/** 个性化灵感产物目录：项目内 data/personalized/<taskId>/ */
-function personalizedDir(projectRoot: string, taskId: string): string {
-  return path.join(projectRoot, "data", "personalized", taskId);
+/** 个性化灵感产物目录：data/accounts/<account>/personalized/<taskId>/（3.0 按账号隔离） */
+function personalizedDir(projectRoot: string, accountId: unknown, taskId: string): string {
+  return accountTaskDir(projectRoot, accountId, "personalized", taskId);
 }
 
 export const personalizedRoutes: FastifyPluginCallback<PersonalizedRoutesOpts> = (
@@ -30,7 +30,7 @@ export const personalizedRoutes: FastifyPluginCallback<PersonalizedRoutesOpts> =
   done
 ) => {
   app.post("/api/inspiration/personalized", async (req) => {
-    const { profileUrl } = (req.body ?? {}) as { profileUrl?: string };
+    const { profileUrl, accountId } = (req.body ?? {}) as { profileUrl?: string; accountId?: string };
     const url = (profileUrl ?? "").trim();
     if (!url || !isXhsProfileUrl(url)) {
       return { success: false, data: null, error: "暂只支持小红书主页链接" };
@@ -40,8 +40,10 @@ export const personalizedRoutes: FastifyPluginCallback<PersonalizedRoutesOpts> =
       return { success: false, data: null, error: "未配置 API key" };
     }
     const taskId = createTask();
-    log(taskId, `提交：profileUrl=${url}`);
-    runPersonalized(taskId, url, apiKey, opts.projectRoot).catch((e) => {
+    const account = accountSlug(accountId);
+    updateTask(taskId, { accountId: account });
+    log(taskId, `提交：profileUrl=${url}（账号 ${account}）`);
+    runPersonalized(taskId, url, apiKey, opts.projectRoot, account).catch((e) => {
       log(taskId, `编排异常：${String(e?.message ?? e)}`);
       updateTask(taskId, { status: "failed", error: String(e?.message ?? e), updatedAt: Date.now() });
     });
@@ -59,7 +61,8 @@ async function runPersonalized(
   taskId: string,
   profileUrl: string,
   apiKey: string,
-  projectRoot: string
+  projectRoot: string,
+  account: string
 ): Promise<void> {
   const t0 = Date.now();
   updateTask(taskId, {
@@ -88,7 +91,7 @@ async function runPersonalized(
     updatedAt: Date.now(),
   });
 
-  const workDir = personalizedDir(projectRoot, taskId);
+  const workDir = personalizedDir(projectRoot, account, taskId);
   const onProgress = makeProgress(taskId);
 
   // ② 画像分析

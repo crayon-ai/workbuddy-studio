@@ -7,6 +7,7 @@ import { runSkill, collectMarkdown } from "../skill-runner.js";
 import { parseDeepReview } from "../parse.js";
 import { fetchNoteMeta, type NoteMeta } from "./note.js";
 import { getApiKey } from "../config.js";
+import { accountTaskDir, resolveTaskDir, accountSlug } from "../account-dirs.js";
 
 export interface DeepReviewRoutesOpts {
   envPath: string;
@@ -20,9 +21,9 @@ function log(taskId: string, msg: string, t0?: number): void {
   console.log(`[${hhmmss}]${rel ? ` (${rel})` : ""} [deep-review:${taskId}] ${msg}`);
 }
 
-/** 复盘产物目录：项目内 data/deep-reviews/<taskId>/ */
-function deepReviewDir(projectRoot: string, taskId: string): string {
-  return path.join(projectRoot, "data", "deep-reviews", taskId);
+/** 复盘产物目录：data/accounts/<account>/deep-reviews/<taskId>/（3.0 按账号隔离） */
+function deepReviewDir(projectRoot: string, accountId: unknown, taskId: string): string {
+  return accountTaskDir(projectRoot, accountId, "deep-reviews", taskId);
 }
 
 interface NoteEntry {
@@ -160,9 +161,10 @@ export const deepReviewRoutes: FastifyPluginCallback<DeepReviewRoutesOpts> = (
   done
 ) => {
   app.post("/api/deep-review", async (req) => {
-    const { noteUrl, benchmarkUrls } = (req.body ?? {}) as {
+    const { noteUrl, benchmarkUrls, accountId } = (req.body ?? {}) as {
       noteUrl?: string;
       benchmarkUrls?: string[];
+      accountId?: string;
     };
     const url = (noteUrl ?? "").trim();
     const list = Array.isArray(benchmarkUrls) ? benchmarkUrls : [];
@@ -178,8 +180,10 @@ export const deepReviewRoutes: FastifyPluginCallback<DeepReviewRoutesOpts> = (
       return { success: false, data: null, error: "未配置 API key" };
     }
     const taskId = createTask();
-    log(taskId, `提交：mine=${url} benchmarks=${list.length}`);
-    runDeepReview(taskId, url, list, apiKey, opts.projectRoot).catch((e) => {
+    const account = accountSlug(accountId);
+    updateTask(taskId, { accountId: account });
+    log(taskId, `提交：mine=${url} benchmarks=${list.length}（账号 ${account}）`);
+    runDeepReview(taskId, url, list, apiKey, opts.projectRoot, account).catch((e) => {
       log(taskId, `编排异常：${String(e?.message ?? e)}`);
       updateTask(taskId, { status: "failed", error: String(e?.message ?? e), updatedAt: Date.now() });
     });
@@ -188,7 +192,8 @@ export const deepReviewRoutes: FastifyPluginCallback<DeepReviewRoutesOpts> = (
 
   app.get("/api/deep-review/:id/folder", async (req) => {
     const id = (req.params as { id: string }).id;
-    const dir = deepReviewDir(opts.projectRoot, id);
+    const { account } = (req.query as { account?: string }) ?? {};
+    const dir = resolveTaskDir(opts.projectRoot, account, "deep-reviews", id);
     if (!existsSync(dir)) {
       return { success: false, data: null, error: "目录不存在（任务可能未完成或已被清理）" };
     }
@@ -202,7 +207,8 @@ export const deepReviewRoutes: FastifyPluginCallback<DeepReviewRoutesOpts> = (
 
   app.post("/api/deep-review/:id/reparse", async (req) => {
     const id = (req.params as { id: string }).id;
-    const dir = deepReviewDir(opts.projectRoot, id);
+    const { account } = (req.query as { account?: string }) ?? {};
+    const dir = resolveTaskDir(opts.projectRoot, account, "deep-reviews", id);
     if (!existsSync(dir)) {
       return { success: false, data: null, error: "目录不存在" };
     }
@@ -219,7 +225,8 @@ async function runDeepReview(
   noteUrl: string,
   benchmarkUrls: string[],
   apiKey: string,
-  projectRoot: string
+  projectRoot: string,
+  account: string
 ): Promise<void> {
   const t0 = Date.now();
   updateTask(taskId, {
@@ -228,7 +235,7 @@ async function runDeepReview(
     logs: [],
     updatedAt: t0,
   });
-  const workDir = deepReviewDir(projectRoot, taskId);
+  const workDir = deepReviewDir(projectRoot, account, taskId);
 
   // ① 元数据
   const targets = [

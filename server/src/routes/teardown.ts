@@ -6,16 +6,16 @@ import { runSkill, collectMarkdown } from "../skill-runner.js";
 import { parseTeardown } from "../parse.js";
 import { getApiKey } from "../config.js";
 import { taskLog } from "../log.js";
-import path from "node:path";
+import { accountTaskDir, resolveTaskDir, accountSlug } from "../account-dirs.js";
 
 export interface TeardownRoutesOpts {
   envPath: string;
   projectRoot: string;
 }
 
-/** 拆解产物持久化目录：项目内 data/teardowns/<taskId>/ */
-function teardownDir(projectRoot: string, taskId: string): string {
-  return path.join(projectRoot, "data", "teardowns", taskId);
+/** 拆解产物持久化目录：data/accounts/<account>/teardowns/<taskId>/（3.0 按账号隔离） */
+function teardownDir(projectRoot: string, accountId: unknown, taskId: string): string {
+  return accountTaskDir(projectRoot, accountId, "teardowns", taskId);
 }
 
 /** 跨平台打开文件夹。 */
@@ -37,7 +37,7 @@ export const teardownRoutes: FastifyPluginCallback<TeardownRoutesOpts> = (
   done
 ) => {
   app.post("/api/teardown", async (req) => {
-    const { url } = (req.body ?? {}) as { url?: string };
+    const { url, accountId } = (req.body ?? {}) as { url?: string; accountId?: string };
     if (!url || !/^https?:\/\//.test(url)) {
       return { success: false, data: null, error: "url 无效" };
     }
@@ -46,7 +46,9 @@ export const teardownRoutes: FastifyPluginCallback<TeardownRoutesOpts> = (
       return { success: false, data: null, error: "未配置 API key" };
     }
     const taskId = createTask();
-    runTeardown(taskId, url, apiKey, opts.projectRoot).catch((e) => {
+    const account = accountSlug(accountId);
+    updateTask(taskId, { accountId: account });
+    runTeardown(taskId, url, apiKey, opts.projectRoot, account).catch((e) => {
       console.error(`[teardown:${taskId}] 编排异常：`, e);
       updateTask(taskId, { status: "failed", error: String(e?.message ?? e) });
     });
@@ -55,7 +57,8 @@ export const teardownRoutes: FastifyPluginCallback<TeardownRoutesOpts> = (
 
   app.get("/api/teardown/:id/folder", async (req) => {
     const id = (req.params as { id: string }).id;
-    const dir = teardownDir(opts.projectRoot, id);
+    const { account } = (req.query as { account?: string }) ?? {};
+    const dir = resolveTaskDir(opts.projectRoot, account, "teardowns", id);
     if (!existsSync(dir)) {
       return {
         success: false,
@@ -73,7 +76,8 @@ export const teardownRoutes: FastifyPluginCallback<TeardownRoutesOpts> = (
 
   app.post("/api/teardown/:id/reparse", async (req) => {
     const id = (req.params as { id: string }).id;
-    const dir = teardownDir(opts.projectRoot, id);
+    const { account } = (req.query as { account?: string }) ?? {};
+    const dir = resolveTaskDir(opts.projectRoot, account, "teardowns", id);
     if (!existsSync(dir)) {
       return { success: false, data: null, error: "目录不存在" };
     }
@@ -88,7 +92,8 @@ async function runTeardown(
   taskId: string,
   url: string,
   apiKey: string,
-  projectRoot: string
+  projectRoot: string,
+  account: string
 ): Promise<void> {
   const t0 = Date.now();
   taskLog("teardown", taskId, `提交：url=${url}`);
@@ -98,7 +103,7 @@ async function runTeardown(
     logs: [],
     updatedAt: Date.now(),
   });
-  const workDir = teardownDir(projectRoot, taskId);
+  const workDir = teardownDir(projectRoot, account, taskId);
   const prompt = [
     "请完整执行以下两步（缺一不可，不要只做第一步就停）：",
     "",

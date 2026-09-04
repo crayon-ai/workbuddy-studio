@@ -147,7 +147,7 @@ describe("POST /api/deep-review", () => {
     const done = await waitDone(app, body.data.taskId);
     expect(done.data.status).toBe("done");
     expect(done.data.result.reportFile).toContain("AI深度复盘");
-    const meta = JSON.parse(readFileSync(`tmp-deepreview-root/data/deep-reviews/${body.data.taskId}/meta.json`, "utf8"));
+    const meta = JSON.parse(readFileSync(`tmp-deepreview-root/data/accounts/default/deep-reviews/${body.data.taskId}/meta.json`, "utf8"));
     expect(meta.notes.length).toBe(2);
     expect(meta.notes.find((n: any) => n.role === "mine").meta.title).toBe("t");
     expect(meta.signal).toBeDefined();
@@ -172,7 +172,7 @@ describe("POST /api/deep-review", () => {
     expect(done.data.status).toBe("done");
     expect(done.data.result.reportFile).toContain("AI深度复盘");
     const meta = JSON.parse(
-      readFileSync(`tmp-deepreview-root/data/deep-reviews/${body.data.taskId}/meta.json`, "utf8")
+      readFileSync(`tmp-deepreview-root/data/accounts/default/deep-reviews/${body.data.taskId}/meta.json`, "utf8")
     );
     const bench = meta.notes.find((n: any) => n.url.includes("bench-fail"));
     expect(bench.downloaded).toBe(false);
@@ -224,7 +224,7 @@ describe("POST /api/deep-review", () => {
     const done = await waitDone(app, body.data.taskId);
     expect(done.data.status).toBe("done");
     const meta = JSON.parse(
-      readFileSync(`tmp-deepreview-root/data/deep-reviews/${body.data.taskId}/meta.json`, "utf8")
+      readFileSync(`tmp-deepreview-root/data/accounts/default/deep-reviews/${body.data.taskId}/meta.json`, "utf8")
     );
     const mine = meta.notes.find((n: any) => n.role === "mine");
     expect(mine.downloaded).toBe(true);

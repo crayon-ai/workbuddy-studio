@@ -21,6 +21,8 @@ server/tmp*
 
 # 拆解产物（用户数据，每人不同，不入库）
 data/teardowns/
+# 3.0 多账号产物目录（用户数据，不入库）
+data/accounts/
 # 笔记复盘录入的原文（用户数据）
 data/notes/
 # 今日灵感抓取产物（用户数据）

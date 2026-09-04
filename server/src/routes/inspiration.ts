@@ -1,19 +1,19 @@
 import type { FastifyPluginCallback } from "fastify";
-import path from "node:path";
 import { createTask, updateTask, getTask } from "../task-store.js";
 import { runSkill, collectMarkdown } from "../skill-runner.js";
 import { parseInspiration } from "../parse.js";
 import { fetchSources, type SourceItem } from "../sources.js";
 import { getApiKey } from "../config.js";
+import { accountTaskDir, accountSlug } from "../account-dirs.js";
 
 export interface InspirationRoutesOpts {
   envPath: string;
   projectRoot: string;
 }
 
-/** 灵感抓取产物目录：项目内 data/inspirations/<taskId>/ */
-function inspirationDir(projectRoot: string, taskId: string): string {
-  return path.join(projectRoot, "data", "inspirations", taskId);
+/** 灵感抓取产物目录：data/accounts/<account>/inspirations/<taskId>/（3.0 按账号隔离） */
+function inspirationDir(projectRoot: string, accountId: unknown, taskId: string): string {
+  return accountTaskDir(projectRoot, accountId, "inspirations", taskId);
 }
 
 export const inspirationRoutes: FastifyPluginCallback<InspirationRoutesOpts> = (
@@ -22,7 +22,7 @@ export const inspirationRoutes: FastifyPluginCallback<InspirationRoutesOpts> = (
   done
 ) => {
   app.post("/api/inspiration/refresh", async (req) => {
-    const { keywords } = (req.body ?? {}) as { keywords?: string };
+    const { keywords, accountId } = (req.body ?? {}) as { keywords?: string; accountId?: string };
     if (!keywords || !keywords.trim()) {
       return { success: false, data: null, error: "关键词无效" };
     }
@@ -31,7 +31,9 @@ export const inspirationRoutes: FastifyPluginCallback<InspirationRoutesOpts> = (
       return { success: false, data: null, error: "未配置 API key" };
     }
     const taskId = createTask();
-    runInspiration(taskId, keywords.trim(), apiKey, opts.projectRoot).catch((e) => {
+    const account = accountSlug(accountId);
+    updateTask(taskId, { accountId: account });
+    runInspiration(taskId, keywords.trim(), apiKey, opts.projectRoot, account).catch((e) => {
       console.error(`[inspiration:${taskId}] 编排异常：`, e);
       updateTask(taskId, { status: "failed", error: String(e?.message ?? e), updatedAt: Date.now() });
     });
@@ -46,7 +48,8 @@ async function runInspiration(
   taskId: string,
   keywords: string,
   apiKey: string,
-  projectRoot: string
+  projectRoot: string,
+  account: string
 ): Promise<void> {
   const t0 = Date.now();
   const log = (msg: string) =>
@@ -59,7 +62,7 @@ async function runInspiration(
     updatedAt: t0,
   });
 
-  const workDir = inspirationDir(projectRoot, taskId);
+  const workDir = inspirationDir(projectRoot, account, taskId);
   log(`开始抓取 5 源（并行直连）…`);
 
   // 后端直连并行抓取（不经过 agent，几秒完成）

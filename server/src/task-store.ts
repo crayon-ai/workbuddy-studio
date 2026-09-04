@@ -13,6 +13,8 @@ export interface Task {
   /** 累积的步骤日志（最近 N 条） */
   logs?: string[];
   updatedAt?: number;
+  /** 归属账号（3.0 多账号，仅记录用于日志/排查） */
+  accountId?: string;
 }
 
 /** 内存任务表（重启丢失，前端可重提）。 */

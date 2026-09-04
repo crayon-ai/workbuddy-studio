@@ -249,7 +249,7 @@ describe("POST /api/inspiration/personalized", () => {
     const taskId = JSON.parse(post.body).data.taskId;
     // 画像阶段完成后、radar 崩溃前，agent 已把产物写到 workDir —— 这里在轮询到
     // radar 阶段后补写（简化：任务提交后立即写，因为 workDir 路径可预知）
-    const workDir = join(projectRoot, "data", "personalized", taskId);
+    const workDir = join(projectRoot, "data", "accounts", "default", "personalized", taskId);
     mkdirSync(workDir, { recursive: true });
     writeFileSync(
       join(workDir, "inspirations.md"),

@@ -29,7 +29,7 @@ vi.mock("../skill-runner.js", async (importOriginal) => {
 });
 
 const { buildApp } = await import("../app.js");
-const { rmSync, mkdtempSync, mkdirSync, writeFileSync } = await import("node:fs");
+const { rmSync, mkdtempSync, mkdirSync, writeFileSync, existsSync } = await import("node:fs");
 const { tmpdir } = await import("node:os");
 const { join } = await import("node:path");
 
@@ -206,7 +206,7 @@ describe("GET /api/task/:id（异步轮询）", () => {
     });
     const taskId = JSON.parse(post.body).data.taskId;
     // agent 已把产物写到 workDir
-    const workDir = join(projectRoot, "data", "teardowns", taskId, "AI拆解");
+    const workDir = join(projectRoot, "data", "accounts", "default", "teardowns", taskId, "AI拆解");
     mkdirSync(workDir, { recursive: true });
     writeFileSync(
       join(workDir, "AI爆款拆解-测试笔记.md"),
@@ -228,6 +228,100 @@ describe("GET /api/teardown/:id/folder", () => {
       url: "/api/teardown/nonexistent-id/folder",
     });
     expect(JSON.parse(r.body).success).toBe(false);
+    await app.close();
+  });
+});
+
+// ===== 3.0 多账号：产物目录按账号隔离 =====
+describe("多账号目录隔离", () => {
+  beforeEach(() => {
+    delete process.env.ANTHROPIC_API_KEY;
+    delete process.env.ANTHROPIC_AUTH_TOKEN;
+    process.env.ANTHROPIC_API_KEY = "sk-test";
+  });
+
+  it("带 accountId 提交，产物落在 data/accounts/<account>/teardowns/<taskId>/，reparse 按账号解析", async () => {
+    const { runSkill } = await import("../skill-runner.js");
+    const artifacts = {
+      "笔记信息.md": [
+        "# 账号测试笔记",
+        "## 作者",
+        "- 昵称：账号作者",
+        "## 笔记元数据",
+        "- 发布时间戳：1784876760000（2026-08）",
+        "## 话题标签",
+        "- #账号[话题]#",
+        "## 互动数据",
+        "- 点赞：100",
+      ].join("\n"),
+      "AI爆款拆解-账号测试笔记.md": "# 账号测试笔记\n\n## 标题为什么吸引人\n账号隔离内容",
+    };
+    // mock 同时把产物真实落盘到 workDir，模拟 agent 写文件
+    vi.mocked(runSkill).mockImplementationOnce(async (_s, _p, workDir: string) => {
+      mkdirSync(workDir, { recursive: true });
+      for (const [name, text] of Object.entries(artifacts)) {
+        writeFileSync(join(workDir, name), text);
+      }
+      return { ok: true, text: "done", artifacts };
+    });
+
+    const projectRoot = mkdtempSync(join(tmpdir(), "wb-acc-"));
+    const app = await buildApp({ envPath, projectRoot });
+    const post = await app.inject({
+      method: "POST",
+      url: "/api/teardown",
+      payload: { url: "https://www.xiaohongshu.com/explore/acc1", accountId: "acc1" },
+    });
+    const taskId = JSON.parse(post.body).data.taskId;
+    const body = await waitDone(app, taskId);
+    expect(body.data.status).toBe("done");
+
+    // 产物目录落在账号空间而非 2.0 旧路径
+    expect(existsSync(join(projectRoot, "data", "accounts", "acc1", "teardowns", taskId))).toBe(true);
+    expect(existsSync(join(projectRoot, "data", "teardowns", taskId))).toBe(false);
+
+    // 同账号 reparse 能解析到
+    const rp = await app.inject({
+      method: "POST",
+      url: `/api/teardown/${taskId}/reparse?account=acc1`,
+    });
+    const rpBody = JSON.parse(rp.body);
+    expect(rpBody.success).toBe(true);
+    expect(rpBody.data.result.meta.title).toBe("账号测试笔记");
+
+    // 换别的账号查 → 目录不存在（数据不串号）
+    const rp2 = await app.inject({
+      method: "POST",
+      url: `/api/teardown/${taskId}/reparse?account=other`,
+    });
+    expect(JSON.parse(rp2.body).success).toBe(false);
+
+    rmSync(projectRoot, { recursive: true, force: true });
+    await app.close();
+  });
+
+  it("不带 accountId 落到 default 账号目录，2.0 旧目录记录仍可解析（回退兼容）", async () => {
+    const projectRoot = mkdtempSync(join(tmpdir(), "wb-legacy-"));
+    const app = await buildApp({ envPath, projectRoot });
+
+    // 造一条 2.0 时代的旧产物（data/teardowns/<id>/）
+    const legacyId = "old-legacy-task";
+    const legacyDir = join(projectRoot, "data", "teardowns", legacyId);
+    mkdirSync(legacyDir, { recursive: true });
+    writeFileSync(
+      join(legacyDir, "笔记信息.md"),
+      ["# 旧记录", "## 作者", "- 昵称：旧作者", "## 笔记元数据", "- 发布时间戳：1784876760000（2026-08）", "## 互动数据", "- 点赞：1"].join("\n")
+    );
+
+    const rp = await app.inject({
+      method: "POST",
+      url: `/api/teardown/${legacyId}/reparse?account=default`,
+    });
+    const rpBody = JSON.parse(rp.body);
+    expect(rpBody.success).toBe(true);
+    expect(rpBody.data.result.meta.title).toBe("旧记录");
+
+    rmSync(projectRoot, { recursive: true, force: true });
     await app.close();
   });
 });

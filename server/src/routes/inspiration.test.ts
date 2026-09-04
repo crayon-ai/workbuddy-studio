@@ -182,7 +182,7 @@ describe("GET /api/task/:id（灵感轮询）", () => {
       payload: { keywords: "AI 工作台" },
     });
     const taskId = JSON.parse(post.body).data.taskId;
-    const workDir = join(projectRoot, "data", "inspirations", taskId);
+    const workDir = join(projectRoot, "data", "accounts", "default", "inspirations", taskId);
     mkdirSync(workDir, { recursive: true });
     writeFileSync(
       join(workDir, "inspirations.md"),
