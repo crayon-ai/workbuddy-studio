@@ -4,6 +4,7 @@ import path from "node:path";
 import { configRoutes } from "./routes/config.js";
 import { titleRoutes } from "./routes/title.js";
 import { teardownRoutes } from "./routes/teardown.js";
+import { precheckRoutes } from "./routes/precheck.js";
 import { noteRoutes } from "./routes/note.js";
 import { inspirationRoutes } from "./routes/inspiration.js";
 import { personalizedRoutes } from "./routes/personalized.js";
@@ -30,6 +31,7 @@ export async function buildApp(opts: BuildAppOpts = {}): Promise<FastifyInstance
   await app.register(configRoutes, routeOpts);
   await app.register(titleRoutes, routeOpts);
   await app.register(teardownRoutes, routeOpts);
+  await app.register(precheckRoutes, routeOpts);
   await app.register(noteRoutes, routeOpts);
   await app.register(inspirationRoutes, routeOpts);
   await app.register(personalizedRoutes, routeOpts);

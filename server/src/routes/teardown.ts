@@ -1,9 +1,11 @@
 import type { FastifyPluginCallback } from "fastify";
 import { exec } from "node:child_process";
-import { existsSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
+import path from "node:path";
 import { createTask, updateTask, getTask } from "../task-store.js";
 import { runSkill, collectMarkdown } from "../skill-runner.js";
 import { parseTeardown } from "../parse.js";
+import { mdToReportHtml } from "../report-html.js";
 import { getApiKey } from "../config.js";
 import { taskLog } from "../log.js";
 import { accountTaskDir, resolveTaskDir, accountSlug } from "../account-dirs.js";
@@ -29,6 +31,25 @@ function openFolder(dir: string): void {
   exec(cmd, (err) => {
     if (err) console.error("open folder failed:", err);
   });
+}
+
+/** 在任务目录下递归找第一个名字满足条件的文件，返回绝对路径。 */
+function findFileDeep(dir: string, match: (name: string) => boolean): string | undefined {
+  for (const name of readdirSync(dir)) {
+    const p = path.join(dir, name);
+    if (statSync(p).isDirectory()) {
+      const hit = findFileDeep(p, match);
+      if (hit) return hit;
+    } else if (match(name)) {
+      return p;
+    }
+  }
+  return undefined;
+}
+
+/** 拆解报告 md 的绝对路径（skill 约定：AI拆解/AI爆款拆解-<标题>.md）。 */
+function reportMdPath(taskDir: string): string | undefined {
+  return findFileDeep(taskDir, (n) => /^AI爆款拆解.*\.md$/.test(n));
 }
 
 export const teardownRoutes: FastifyPluginCallback<TeardownRoutesOpts> = (
@@ -83,6 +104,93 @@ export const teardownRoutes: FastifyPluginCallback<TeardownRoutesOpts> = (
     }
     const artifacts = collectMarkdown(dir);
     return { success: true, data: { result: parseTeardown(artifacts) } };
+  });
+
+  /**
+   * 报告直读：返回 md 原文（速读/源码视图用）。
+   * ?format=html 时返回已生成的 HTML 版内容（未生成时报错提示先转换）。
+   */
+  app.get("/api/teardown/:id/report", async (req) => {
+    const id = (req.params as { id: string }).id;
+    const { account, format } = (req.query as { account?: string; format?: string }) ?? {};
+    const dir = resolveTaskDir(opts.projectRoot, account, "teardowns", id);
+    if (!existsSync(dir)) {
+      return { success: false, data: null, error: "目录不存在（任务可能未完成或已被清理）" };
+    }
+    const mdPath = reportMdPath(dir);
+    if (!mdPath) {
+      return { success: false, data: null, error: "未找到拆解报告（AI爆款拆解-*.md）" };
+    }
+    const htmlPath = mdPath.replace(/\.md$/, ".html");
+
+    if (format === "html") {
+      if (!existsSync(htmlPath)) {
+        return { success: false, data: null, error: "HTML 版尚未生成，请先在卡片上点「转 HTML」" };
+      }
+      return {
+        success: true,
+        data: {
+          html: readFileSync(htmlPath, "utf8"),
+          htmlFile: path.basename(htmlPath),
+        },
+      };
+    }
+
+    return {
+      success: true,
+      data: {
+        md: readFileSync(mdPath, "utf8"),
+        reportFile: path.basename(mdPath),
+        htmlExists: existsSync(htmlPath),
+      },
+    };
+  });
+
+  /**
+   * 转 HTML：把拆解报告 md 转成自包含 HTML，写到同目录同名 .html（幂等：已存在则直接返回）。
+   * skill 产物约定不变，转换完全在服务端做。
+   */
+  app.post("/api/teardown/:id/html", async (req) => {
+    const id = (req.params as { id: string }).id;
+    const { account } = (req.query as { account?: string }) ?? {};
+    const dir = resolveTaskDir(opts.projectRoot, account, "teardowns", id);
+    if (!existsSync(dir)) {
+      return { success: false, data: null, error: "目录不存在（任务可能未完成或已被清理）" };
+    }
+    const mdPath = reportMdPath(dir);
+    if (!mdPath) {
+      return { success: false, data: null, error: "未找到拆解报告，无法转换" };
+    }
+    const htmlPath = mdPath.replace(/\.md$/, ".html");
+    const htmlFile = path.basename(htmlPath);
+
+    // 幂等：已生成则不重写（md 手工修订后想重转，删掉 .html 再点即可）
+    if (existsSync(htmlPath)) {
+      return {
+        success: true,
+        data: { htmlFile, html: readFileSync(htmlPath, "utf8"), skipped: true },
+      };
+    }
+
+    try {
+      const md = readFileSync(mdPath, "utf8");
+      const parsed = parseTeardown(collectMarkdown(dir));
+      const meta = parsed.meta;
+      const html = mdToReportHtml(md, {
+        title: meta.title || htmlFile.replace(/^AI爆款拆解-|\.md$/g, ""),
+        author: meta.author,
+        date: meta.date,
+        likes: meta.likes,
+        favs: meta.favs,
+        comments: meta.comments,
+        mdFile: path.basename(mdPath),
+      });
+      writeFileSync(htmlPath, html, "utf8");
+      taskLog("teardown", id, `已生成 HTML 版 ${htmlFile}`);
+      return { success: true, data: { htmlFile, html } };
+    } catch (e: any) {
+      return { success: false, data: null, error: e?.message ?? String(e) };
+    }
   });
 
   done();
