@@ -79,3 +79,51 @@ describe("runSkill", () => {
     expect(events.some((e) => e.detail && e.detail.includes("curl"))).toBe(true);
   });
 });
+
+describe("authProblem（API 鉴权错误翻译）", () => {
+  it("识别 DeepSeek/智谱 401 文案，给出可操作的提示", async () => {
+    const { authProblem } = await import("./skill-runner.js");
+    process.env.ANTHROPIC_BASE_URL = "https://api.deepseek.com/anthropic";
+    const msg = authProblem(
+      'API Error: 401 {"error":{"message":"Authentication Fails, Your api key: ****c107 is invalid","type":"authentication_error"}} · Please run /login'
+    );
+    expect(msg).toContain("API key 无效或已过期");
+    expect(msg).toContain("api.deepseek.com");
+    expect(msg).toContain("AI 配置");
+  });
+
+  it("result 为 success 但内容是 401 时，runSkill 返回可读错误而非假成功", async () => {
+    (query as any).mockImplementationOnce(async function* () {
+      yield {
+        type: "result",
+        subtype: "success",
+        result: 'API Error: 401 ... Authentication Fails ... Please run /login',
+      };
+    });
+    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const r = await runSkill("x", "p", tmpDir, { apiKey: "sk", projectRoot: "." });
+    expect(r.ok).toBe(false);
+    expect(r.error).toContain("API key 无效或已过期");
+    spy.mockRestore();
+  });
+
+  it("exit code 1 且 stderr 含鉴权错误时，翻译成可读提示", async () => {
+    (query as any).mockImplementationOnce(async function* () {
+      throw Object.assign(new Error("Claude Code process exited with code 1"), {
+        stderr: "API Error: 401 Authentication Fails, api key invalid · Please run /login",
+      });
+    });
+    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const r = await runSkill("x", "p", tmpDir, { apiKey: "sk", projectRoot: "." });
+    expect(r.ok).toBe(false);
+    expect(r.error).toContain("AI 配置");
+    expect(r.error).not.toContain("stderr=");
+    spy.mockRestore();
+  });
+
+  it("普通错误不受影响", async () => {
+    const { authProblem } = await import("./skill-runner.js");
+    expect(authProblem("boom crashed")).toBeNull();
+    expect(authProblem("")).toBeNull();
+  });
+});

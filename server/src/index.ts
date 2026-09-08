@@ -34,7 +34,8 @@ async function main(): Promise<void> {
   // no-cache：允许缓存但每次需向服务端 revalidate，避免改版后浏览器拿旧页面
   app.get("/", async (_req, reply) => {
     const html = readFileSync(path.join(projectRoot, "自媒体工作台.html"));
-    reply.header("Cache-Control", "no-cache");
+    // no-store：单文件应用改版频繁，彻底禁缓存，保证刷新即最新（no-cache 无验证器时部分浏览器仍用旧缓存）
+    reply.header("Cache-Control", "no-store");
     reply.type("text/html; charset=utf-8").send(html);
   });
 

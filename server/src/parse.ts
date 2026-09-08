@@ -333,3 +333,78 @@ export function parseDeepReview(artifacts: Record<string, string>): DeepReview |
   const [filename, md] = entry;
   return { sections: splitSections(md), raw: md, reportFile: filename };
 }
+
+/* ===== 爆款脚本创作（3.0）：结构拆解与脚本生成的产物解析 ===== */
+
+/** 结构拆解里的一段：段名 / 手法 / 批注 / 原文摘录 */
+export interface TearSegment {
+  nm: string;
+  tag?: string;
+  why?: string;
+  txt: string;
+}
+
+export interface ScriptTear {
+  /** 识别出的赛道（一个词，如 美食 / 职场 / AI工具） */
+  track: string;
+  /** AI 匹配的公式标记（id 或名称，由路由结合公式清单解析成 id） */
+  formula: string;
+  /** 一句话匹配理由 */
+  why?: string;
+  /** 原样提取的原文脚本（口播逐字稿 / 图文正文） */
+  script: string;
+  raw: string;
+  file?: string;
+}
+
+export interface ScriptGen {
+  /** AI 给脚本起的标题 */
+  title?: string;
+  /** 完整正文（自然分段的整篇脚本） */
+  text: string;
+  raw: string;
+  file?: string;
+}
+
+/**
+ * 解析 structure.md（拆解产物，识别+匹配式）。约定格式：
+ *   ## 赛道（一个词）/ ## 公式（清单里的 id 或名称）/ ## 匹配理由（一句话）/ ## 脚本（原文全文）
+ * 兼容：字段带加粗、## 标题与内容之间有空行。脚本段必须非空才算有效产物。
+ */
+export function parseScriptTear(artifacts: Record<string, string>): ScriptTear | null {
+  const entry = Object.entries(artifacts).find(([k]) => k === "structure.md" || k.startsWith("structure"));
+  if (!entry) return null;
+  const [filename, md] = entry;
+  const strip = (v: string) => v.replace(/\*{1,3}/g, "").replace(/^["“「『](.*)["”』]\s*$/, "$1").trim();
+  const track = strip(md.match(/##\s*赛道\s*\n+([^\n#]+)/)?.[1] ?? "");
+  const formula = strip(md.match(/##\s*公式\s*\n+([^\n#]+)/)?.[1] ?? "");
+  const why = strip(md.match(/##\s*匹配理由\s*\n+([\s\S]*?)(?=\n## |\s*$)/)?.[1] ?? "");
+  const script = strip(md.match(/##\s*脚本\s*\n?([\s\S]*?)(?=\n## |\s*$)/)?.[1] ?? "");
+  if (!script || !formula) return null;
+  return { track: track || "未识别", formula, why: why || undefined, script, raw: md, file: filename };
+}
+
+/**
+ * 解析 script.md（生成产物，整篇式）。约定格式：
+ *   ## 标题（一行）/ ## 正文（完整脚本，自然分段，无编号无小标题无批注）
+ * 兼容旧分段格式（## 结构 / ## 段N：段名/套用/正文）：没有「正文」节时把各段正文拼成整篇（段名/套用丢弃）。
+ */
+export function parseScriptGen(artifacts: Record<string, string>): ScriptGen | null {
+  const entry = Object.entries(artifacts).find(([k]) => k === "script.md" || k.startsWith("script"));
+  if (!entry) return null;
+  const [filename, md] = entry;
+  const strip = (v: string) => v.replace(/\*{1,3}/g, "").trim();
+  const title = strip(md.match(/##\s*标题\s*\n+([^\n#]+)/)?.[1] ?? "");
+  const text = strip(md.match(/##\s*正文\s*\n?([\s\S]*?)(?=\n## |\s*$)/)?.[1] ?? "");
+  if (text) return { title: title || undefined, text, raw: md, file: filename };
+  // 旧分段格式：拼接各段正文
+  const segRe = /##\s*段\s*(\d+)\s*\n([\s\S]*?)(?=\n##\s|$)/g;
+  let m: RegExpExecArray | null;
+  const parts: string[] = [];
+  while ((m = segRe.exec(md))) {
+    const t = strip(m[2].match(/-\s*正文[：:]?\s*\n?([\s\S]*?)(?=\n## |$)/)?.[1] ?? "");
+    if (t) parts.push(t);
+  }
+  if (!parts.length) return null;
+  return { title: undefined, text: parts.join("\n\n"), raw: md, file: filename };
+}

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>自媒体创作工作台 · WorkBuddy</title>
+<title>自媒体创作工作台 · WorkBuddy v0905-6</title>
 <style>
 /* ============================================================
    自媒体创作工作台（暖奶油 × 马卡龙治愈系 · SPA）
@@ -215,6 +215,143 @@ button{font-family:inherit;border:none;background:none;cursor:pointer;color:inhe
 /* 账号切换时主内容淡入 */
 .fade-swap{animation:accSwapIn .32s var(--ease)}
 @keyframes accSwapIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* ===== 爆款脚本创作（脚本工坊） ===== */
+.ks-bar{display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow-s);margin-bottom:18px;flex-wrap:wrap}
+.ks-label{font-size:11px;font-weight:700;color:var(--ink-3);flex-shrink:0;letter-spacing:.04em}
+.ks-tchip{display:inline-flex;align-items:center;gap:7px;height:36px;padding:0 13px;border-radius:var(--pill);border:1.5px solid var(--line);background:var(--paper);cursor:pointer;transition:all .18s var(--ease);font-family:inherit}
+.ks-tchip:hover{border-color:var(--line-2);background:var(--paper-2)}
+.ks-tchip.on{border-color:var(--coral);background:var(--coral-bg)}
+.ks-tchip .nm{font-size:12.5px;font-weight:700;color:var(--ink);max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ks-tchip.on .nm{color:var(--coral-d)}
+.ks-tchip .st{font-size:10px;font-weight:600;color:var(--ink-3);padding:1px 8px;border-radius:var(--pill);background:var(--cream-2)}
+.ks-tchip .cnt{font-size:10.5px;color:var(--ink-3);font-weight:600}
+.ks-meta{margin-left:auto;font-size:11px;color:var(--ink-3);font-weight:500;flex-shrink:0}
+.ks-cols{display:grid;grid-template-columns:390px 1fr;gap:16px;align-items:start}
+@media (max-width:1080px){.ks-cols{grid-template-columns:1fr}}
+.ks-colhd{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;padding:0 2px}
+.ks-colhd .t{font-size:13.5px;font-weight:700;display:flex;align-items:center;gap:7px}
+.ks-colhd .t .n{font-size:10.5px;font-weight:800;color:var(--coral-d);background:var(--coral-bg);border-radius:var(--pill);padding:1px 8px}
+.ks-colhd .hint{font-size:10.5px;color:var(--ink-3);font-weight:500}
+.ks-matcard{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:0;overflow:hidden;box-shadow:var(--shadow-s);margin-bottom:9px;transition:all .18s var(--ease);animation:cardIn .4s var(--ease) both}
+.ks-matcard:hover{box-shadow:var(--shadow)}
+.ks-mrow{display:flex;align-items:center;gap:9px;padding:12px 14px;min-width:0}
+.ks-matcard:not(.open) .ks-mrow{cursor:pointer}
+.ks-matcard:not(.open):has(.ks-mrow:hover){background:var(--paper-2)}
+.ks-pdot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.ks-mrow .tt{flex:1;min-width:0;font-size:13px;font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ks-srowchip{display:inline-flex;align-items:center;gap:5px;height:25px;padding:0 11px;border-radius:var(--pill);background:var(--paper);border:1px solid var(--fc,var(--coral));color:var(--fc,var(--coral-d));font-size:10.5px;font-weight:800;flex-shrink:0;max-width:52%}
+.ks-srowchip .s{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ks-srowchip .ar{font-size:10px;flex-shrink:0}
+.ks-mtop{display:flex;align-items:center;gap:7px;margin-bottom:8px;flex-wrap:wrap;row-gap:4px}
+.ks-mtitle{font-size:13px;font-weight:650;line-height:1.5}
+.ks-mdone{margin-left:auto;font-size:10px;font-weight:700;color:var(--matcha-d);background:var(--matcha-bg);padding:2px 9px;border-radius:var(--pill);flex-shrink:0}
+.ks-mtodo{margin-left:auto;font-size:10px;font-weight:700;color:var(--honey);background:var(--honey-bg);padding:2px 9px;border-radius:var(--pill);flex-shrink:0}
+.ks-schip{font-size:10px;font-weight:800;color:var(--coral-d);background:var(--coral-bg);border:1px solid var(--coral);padding:1px 9px;border-radius:var(--pill);flex-shrink:0;margin-left:auto;max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ks-fold{border:none;background:var(--cream-2);color:var(--ink-2);width:24px;height:24px;border-radius:8px;cursor:pointer;font-size:11px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:inherit;transition:all .15s var(--ease)}
+.ks-fold:hover{background:var(--coral);color:#fff}
+.ks-tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:9px}
+.ks-ftag{font-size:10px;font-weight:700;padding:2px 9px;border-radius:var(--pill)}
+.ks-ftag.hook{background:var(--coral-bg);color:var(--coral-d)}
+.ks-ftag.mid{background:var(--matcha-bg);color:var(--matcha-d)}
+.ks-ftag.end{background:var(--lav-bg);color:var(--lav-d)}
+.ks-mdetail{margin-top:0;border-top:1px dashed var(--line-2);padding:11px 13px 12px;display:none}
+.ks-matcard.open .ks-mdetail{display:block}
+/* 流程卡片：拆解详情 / 生成结果按「段→段→段」流程展示 */
+.ks-flow{display:flex;flex-direction:column;align-items:stretch}
+/* 拆解卡片：标题/公式chip + 公式结构 + 原文脚本（样式随命中公式换色） */
+.ks-stlabel{display:flex;align-items:center;gap:6px;font-size:10.5px;font-weight:800;color:var(--ink-3);margin-bottom:6px}
+.ks-fstruct{border:1px solid var(--line);border-radius:12px;background:var(--paper);overflow:hidden;margin-bottom:11px}
+.ks-frow{display:flex;align-items:flex-start;gap:9px;padding:9px 12px}
+.ks-frow+.ks-frow{border-top:1px dashed var(--line)}
+.ks-frow .no{width:19px;height:19px;border-radius:50%;background:var(--fc,var(--coral));color:#fff;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.ks-frow .nm{font-size:12px;font-weight:800;color:var(--ink);flex-shrink:0;margin-top:2px}
+.ks-frow .job{font-size:10.5px;color:var(--ink-3);font-weight:500;line-height:1.6;margin-top:3px}
+.ks-sclabel{display:flex;align-items:center;gap:6px;font-size:10.5px;font-weight:800;color:var(--ink-3);margin-bottom:6px}
+.ks-sclabel .cp{margin-left:auto;border:1px solid var(--line-2);background:var(--paper);color:var(--ink-2);font-size:10px;font-weight:700;font-family:inherit;border-radius:var(--pill);padding:2px 10px;cursor:pointer;transition:all .15s var(--ease)}
+.ks-sclabel .cp:hover{border-color:var(--coral);color:var(--coral-d)}
+.ks-script{border:1px solid var(--line);border-radius:12px;background:var(--paper-2);padding:13px 15px;font-size:12.5px;line-height:1.95;color:var(--ink);white-space:pre-wrap;word-break:break-word;max-height:250px;overflow-y:auto}
+.ks-script::-webkit-scrollbar{width:5px}
+.ks-script::-webkit-scrollbar-thumb{background:var(--line-2);border-radius:3px}
+.ks-plink{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:8px;color:var(--ink-3);text-decoration:none;font-size:13px;flex-shrink:0;transition:all .15s var(--ease)}
+.ks-plink:hover{background:var(--coral-bg);color:var(--coral-d)}
+.ks-todo-note{font-size:10.5px;color:var(--ink-3);font-weight:500;line-height:1.65}
+/* 生成脚本：整篇正文（自然分段，无编号/小标题/批注），像拆解脚本一样整体呈现 */
+.ks-genpaper{font-size:13.5px;line-height:2.05;color:var(--ink);white-space:pre-wrap;word-break:break-word;padding:2px 2px 6px}
+.ks-genedit{width:100%;min-height:46vh;font-family:inherit;font-size:13.5px;line-height:2.05;color:var(--ink);background:var(--paper-2);border:1.5px dashed var(--line-2);border-radius:12px;padding:12px 14px;resize:vertical;outline:none;white-space:pre-wrap;box-sizing:border-box}
+.ks-genedit:focus{border-color:var(--coral)}
+.ks-mfoot{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:12px;flex-wrap:wrap}
+.ks-refcheck{display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;color:var(--ink-3);cursor:pointer;user-select:none}
+.ks-refcheck input{accent-color:var(--coral);width:15px;height:15px;cursor:pointer}
+.ks-refcheck.on{color:var(--coral-d)}
+.ks-tearing{display:flex;align-items:center;gap:10px;padding:14px;border:1.5px dashed var(--coral);border-radius:var(--radius);background:var(--coral-bg);margin-top:10px;font-size:12px;font-weight:600;color:var(--coral-d)}
+.ks-spin{width:14px;height:14px;border:2px solid var(--coral);border-top-color:transparent;border-radius:50%;animation:ksSpin .7s linear infinite;flex-shrink:0}
+@keyframes ksSpin{to{transform:rotate(360deg)}}
+.ks-addmat{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;height:44px;border:1.5px dashed var(--line-2);border-radius:var(--radius);background:transparent;color:var(--ink-3);font-size:12.5px;font-weight:600;cursor:pointer;transition:all .18s var(--ease);font-family:inherit}
+.ks-addmat:hover{border-color:var(--coral);color:var(--coral-d);background:var(--coral-bg)}
+.ks-wizard{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow-s);overflow:hidden}
+.ks-wzhd{padding:15px 18px 13px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:9px}
+.ks-wzhd .t{font-size:14px;font-weight:700;font-family:var(--serif)}
+.ks-wzhd .s{font-size:10.5px;color:var(--ink-3);font-weight:500;margin-left:auto;max-width:45%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ks-wzbd{padding:16px 18px 18px;display:flex;flex-direction:column;gap:14px}
+.ks-wzlabel{font-size:11.5px;font-weight:700;color:var(--ink-2);display:flex;align-items:center;gap:7px;margin-bottom:7px}
+.ks-wzlabel .no{width:17px;height:17px;border-radius:50%;background:var(--coral-bg);color:var(--coral-d);font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+textarea.ks-ks{width:100%;min-height:110px;border:1.5px solid var(--line);border-radius:12px;background:var(--paper-2);padding:12px 13px;font-size:13px;font-family:inherit;color:var(--ink);line-height:1.8;resize:vertical;outline:none;transition:all .18s var(--ease)}
+textarea.ks-ks:focus{border-color:var(--coral);background:#fff;box-shadow:0 0 0 3px var(--coral-bg)}
+textarea.ks-ks::placeholder{color:var(--ink-3)}
+.ks-optrows{display:flex;flex-direction:column;gap:9px;background:var(--paper-2);border:1px solid var(--line);border-radius:12px;padding:12px 13px}
+.ks-optrow{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.ks-optk{width:56px;flex-shrink:0;font-size:11px;font-weight:700;color:var(--ink-3);display:flex;align-items:center;gap:5px}
+.ks-segctl{display:inline-flex;background:var(--cream-2);border-radius:var(--pill);padding:3px;gap:2px;flex-wrap:wrap}
+.ks-segctl button{height:27px;padding:0 13px;border:none;border-radius:var(--pill);background:transparent;color:var(--ink-2);font-size:11.5px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s var(--ease);white-space:nowrap}
+.ks-segctl button:hover{color:var(--ink)}
+.ks-segctl button.on{background:#fff;color:var(--coral-d);box-shadow:0 1px 4px rgba(122,90,50,.16);font-weight:700}
+.ks-refbox{border:1.5px dashed var(--line-2);border-radius:12px;padding:10px 12px;background:var(--paper-2)}
+.ks-refempty{font-size:11.5px;color:var(--ink-3);font-weight:500;line-height:1.7}
+.ks-refpill{display:inline-flex;align-items:center;gap:6px;height:27px;padding:0 11px;border-radius:var(--pill);background:var(--coral-bg);color:var(--coral-d);font-size:11px;font-weight:700;margin:0 6px 6px 0;max-width:100%}
+.ks-refpill .xt{max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ks-refpill button{border:none;background:none;color:inherit;cursor:pointer;font-size:12px;padding:0;font-family:inherit;line-height:1;flex-shrink:0}
+.ks-genbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.ks-btngen{height:46px;padding:0 26px;border:none;border-radius:var(--pill);background:var(--grad-btn);color:var(--on-grad,#fff);font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 8px 20px rgba(239,126,76,.32);font-family:inherit;transition:all .18s var(--ease);flex-shrink:0}
+.ks-btngen:hover{transform:translateY(-1px);box-shadow:0 12px 26px rgba(239,126,76,.38)}
+.ks-btngen:disabled{opacity:.55;cursor:not-allowed;transform:none}
+.ks-result{margin-top:16px;background:var(--paper);border:1.5px solid var(--coral);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;animation:cardIn .45s var(--ease)}
+.ks-rshd{padding:14px 18px;background:linear-gradient(120deg,var(--coral-bg),var(--rose-bg));display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.ks-rshd .t{font-size:13.5px;font-weight:700;font-family:var(--serif)}
+.ks-rshd .m{font-size:10.5px;color:var(--ink-2);font-weight:600;margin-left:auto}
+.sv-foot{display:flex;align-items:center;gap:8px;padding:12px 18px 14px;border-top:1px solid var(--line);background:var(--paper-2);flex-wrap:wrap}
+.sv-foot .src{margin-left:auto;font-size:10.5px;color:var(--ink-3);font-weight:600}
+.ks-rseg{display:flex;gap:11px;margin-bottom:14px}
+.ks-rseg:last-child{margin-bottom:0}
+.ks-rseg .rail{width:3px;border-radius:99px;flex-shrink:0}
+.ks-rseg .box{flex:1;min-width:0}
+.ks-rseg .hd{display:flex;align-items:center;gap:8px;margin-bottom:5px;flex-wrap:wrap}
+.ks-rseg .nm{font-size:11.5px;font-weight:800}
+.ks-rseg .tip{font-size:10px;color:var(--ink-3);font-weight:600;background:var(--cream-2);padding:1px 8px;border-radius:var(--pill)}
+.ks-rseg .tx{font-size:13px;line-height:1.9;color:var(--ink);white-space:pre-wrap}
+.ks-rsfoot{display:flex;align-items:center;gap:8px;padding:12px 18px;border-top:1px solid var(--line);background:var(--paper-2);flex-wrap:wrap}
+.ks-rsfoot .src{margin-left:auto;font-size:10.5px;color:var(--ink-3);font-weight:600}
+.ks-generating{margin-top:16px;border:1.5px dashed var(--coral);border-radius:var(--radius);background:var(--coral-bg);padding:20px;display:flex;flex-direction:column;gap:10px;align-items:flex-start}
+.ks-generating .gl{display:flex;align-items:center;gap:10px;font-size:13px;font-weight:700;color:var(--coral-d)}
+.ks-sk{height:12px;border-radius:6px;background:linear-gradient(90deg,var(--cream-2) 25%,var(--cream-3) 50%,var(--cream-2) 75%);background-size:200% 100%;animation:ksSkl 1.2s linear infinite;width:100%}
+@keyframes ksSkl{to{background-position:-200% 0}}
+.ks-mys{margin-top:18px}
+.ks-myscard{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:13px 15px;box-shadow:var(--shadow-s);margin-bottom:10px;display:flex;align-items:center;gap:13px;animation:cardIn .4s var(--ease) both}
+.ks-myscard .ic{width:38px;height:38px;border-radius:12px;background:linear-gradient(135deg,var(--coral-bg),var(--honey-bg));display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+.ks-myscard .mid{flex:1;min-width:0}
+.ks-myscard .t{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ks-myscard .m{font-size:10.5px;color:var(--ink-3);margin-top:4px;font-weight:500;display:flex;gap:8px;flex-wrap:wrap}
+.ks-myscard .ops{display:flex;gap:6px;flex-shrink:0}
+.ks-empty{text-align:center;color:var(--ink-3);font-size:12.5px;padding:30px 20px;border:1.5px dashed var(--line-2);border-radius:var(--radius);line-height:2}
+.ks-mini{height:29px;padding:0 12px;border-radius:var(--pill);border:1px solid var(--line);background:var(--paper);color:var(--ink-2);font-size:11.5px;font-weight:600;cursor:pointer;transition:all .15s var(--ease);font-family:inherit;flex-shrink:0}
+.ks-mini:hover{border-color:var(--coral);color:var(--coral-d)}
+.ks-mini.coral{border:none;background:var(--grad-btn);color:var(--on-grad,#fff);box-shadow:0 4px 12px rgba(239,126,76,.28)}
+.ks-mini.coral:hover{transform:translateY(-1px)}
+/* 素材选择弹窗 */
+.ks-pickrow{display:flex;align-items:center;gap:11px;padding:11px 13px;border:1px solid var(--line);border-radius:12px;background:var(--paper);transition:all .15s var(--ease)}
+.ks-pickrow:hover{border-color:var(--line-2);background:var(--paper-2)}
+.ks-pickrow .pt{flex:1;min-width:0;font-size:12.5px;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ks-pickrow .pa{font-size:10.5px;color:var(--ink-3);font-weight:500;flex-shrink:0}
 .sb-nav{flex:1;overflow-y:auto;padding:6px 4px 4px;display:flex;flex-direction:column;gap:1px}
 .sb-nav::-webkit-scrollbar{width:0}
 .sb-cat{font-size:10.5px;font-weight:700;color:var(--ink-3);letter-spacing:.06em;padding:14px 11px 6px;display:flex;align-items:center;gap:7px}
@@ -978,6 +1115,10 @@ button{font-family:inherit;border:none;background:none;cursor:pointer;color:inhe
         <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></span>
         <span class="txt">爆款笔记拆解</span><span class="badge" id="hitBadge">0</span>
       </div>
+      <div class="sb-item" data-view="script">
+        <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></span>
+        <span class="txt">爆款脚本创作</span><span class="badge" id="scriptBadge">0</span>
+      </div>
       <div class="sb-item" data-view="title">
         <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7V4h16v3M9 20h6M12 4v16"/></svg></span>
         <span class="txt">笔记标题生成</span>
@@ -1323,6 +1464,75 @@ button{font-family:inherit;border:none;background:none;cursor:pointer;color:inhe
       </div></div>
     </section>
 
+    <!-- ========== 爆款脚本创作 ========== -->
+    <section class="view" id="v-script">
+      <div class="scroll"><div class="wrap">
+        <div class="page-hd">
+          <div class="ph-row">
+            <div>
+              <div class="ph-eyebrow">创作辅助 · 爆款脚本创作</div>
+              <h1 class="ph-title">提取爆款<em>钩子</em>与<em>文案结构</em>，生成你自己的爆款脚本</h1>
+              <div class="ph-sub">把爆款素材的脚本拆解出来 → 填入你的素材/口水话 → 参考它的情绪、结构、爆点，产出一篇属于你自己的内容脚本</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="ks-bar">
+          <span class="ks-label">当前选题</span>
+          <div id="ksTopics" style="display:flex;gap:8px;flex-wrap:wrap"></div>
+          <span class="ks-meta" id="ksMeta"></span>
+        </div>
+
+        <div class="ks-cols">
+          <section>
+            <div class="ks-colhd">
+              <div class="t">📚 素材的钩子与结构 <span class="n" id="ksMatN">0</span></div>
+              <div class="hint">从爆款素材提取 · 勾选作参考</div>
+            </div>
+            <div id="ksMats"></div>
+            <button class="ks-addmat" onclick="ksOpenMatPicker()">＋ 从素材库关联素材到本选题</button>
+          </section>
+
+          <section>
+            <div class="ks-wizard">
+              <div class="ks-wzhd"><span>✨</span><span class="t">生成我的爆款脚本</span><span class="s" id="ksWzTopic"></span></div>
+              <div class="ks-wzbd">
+                <div>
+                  <div class="ks-wzlabel"><span class="no">1</span>填入你的素材/口水话（想到啥说啥，不用组织语言）</div>
+                  <textarea class="ks-ks" id="ksMouth" placeholder="例：今天想写极简晚餐，我平时下班七点多到家，实在不想点外卖，就琢磨了几个 15 分钟搞定的晚饭……"></textarea>
+                </div>
+                <div>
+                  <div class="ks-wzlabel"><span class="no">2</span>方向与思路</div>
+                  <div class="ks-optrows">
+                    <div class="ks-optrow"><span class="ks-optk">🎭 风格</span><div class="ks-segctl" id="ksStyle"></div></div>
+                    <div class="ks-optrow"><span class="ks-optk">🎬 形式</span><div class="ks-segctl" id="ksForm"></div></div>
+                    <div class="ks-optrow"><span class="ks-optk">⏱ 时长</span><div class="ks-segctl" id="ksLen"></div></div>
+                  </div>
+                </div>
+                <div>
+                  <div class="ks-wzlabel"><span class="no">3</span>套用哪个爆款结构（来自左侧提取的钩子与结构）</div>
+                  <div class="ks-refbox" id="ksRefs"></div>
+                </div>
+                <div class="ks-genbar">
+                  <button class="ks-btngen" id="ksGenBtn" onclick="ksGen()">🚀 生成爆款脚本</button>
+                </div>
+              </div>
+            </div>
+
+            <div id="ksGenArea"></div>
+
+            <div class="ks-mys">
+              <div class="ks-colhd">
+                <div class="t">📝 我的脚本 <span class="n" id="ksMyN">0</span></div>
+                <div class="hint">已保存到本选题 · 可复制去拍摄/排版</div>
+              </div>
+              <div id="ksMyList"></div>
+            </div>
+          </section>
+        </div>
+      </div></div>
+    </section>
+
     <!-- ========== 笔记标题生成 ========== -->
     <section class="view" id="v-title">
       <div class="scroll"><div class="wrap">
@@ -1596,6 +1806,31 @@ button{font-family:inherit;border:none;background:none;cursor:pointer;color:inhe
   </div>
 </div>
 
+<!-- ============ 素材选择弹窗（脚本工坊关联素材） ============ -->
+<div class="modal-mask" id="matPickModal" onclick="ksCloseMatPicker(event)">
+  <div class="modal" onclick="event.stopPropagation()" style="max-width:560px">
+    <div class="modal-head">
+      <div><div class="modal-eyebrow">🔗 关联素材</div><div class="modal-title">把素材库素材挂到本选题</div></div>
+      <button class="modal-close" onclick="ksCloseMatPicker()">✕</button>
+    </div>
+    <div class="modal-sub">已关联的素材可再次点击移除；关联后可在「爆款脚本创作」里拆解结构与生成脚本</div>
+    <div class="modal-body" id="matPickList" style="max-height:52vh"></div>
+  </div>
+</div>
+
+<!-- 脚本查看弹层：生成的爆款脚本在这里嵌套阅读，不再平铺拉长页面 -->
+<div class="modal-mask" id="scriptViewModal" onclick="ksCloseScriptView(event)">
+  <div class="modal" onclick="event.stopPropagation()" style="max-width:720px">
+    <div class="modal-head">
+      <div><div class="modal-eyebrow">✨ 爆款脚本</div><div class="modal-title" id="svTitle"></div></div>
+      <button class="modal-close" onclick="ksCloseScriptView()" aria-label="关闭">✕</button>
+    </div>
+    <div class="modal-sub" id="svMeta"></div>
+    <div class="modal-body" id="svBody" style="max-height:60vh;padding-top:16px"></div>
+    <div class="sv-foot" id="svFoot"></div>
+  </div>
+</div>
+
 <!-- 运营目标：录入收入 弹窗 -->
 <div class="modal-mask" id="incomeFormModal" onclick="closeIncomeForm(event)">
   <div class="modal" onclick="event.stopPropagation()" style="max-width:440px">
@@ -1768,13 +2003,13 @@ button{font-family:inherit;border:none;background:none;cursor:pointer;color:inhe
     </div>
   </div>
 </div>
-<div id="toast" style="position:fixed;left:50%;bottom:32px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:11px 20px;border-radius:var(--pill);font-size:13px;font-weight:600;opacity:0;pointer-events:none;transition:all .3s var(--ease);z-index:99;box-shadow:var(--shadow-l)"></div>
+<div id="toast" style="position:fixed;left:50%;bottom:32px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:11px 22px;border-radius:18px;font-size:13px;font-weight:600;opacity:0;pointer-events:none;transition:all .3s var(--ease);z-index:99;box-shadow:var(--shadow-l);max-width:min(86vw,560px);white-space:normal;text-align:center;line-height:1.6;word-break:break-word"></div>
 
 <script>
 /* ===== 工具 ===== */
 const $=s=>document.querySelector(s),$$=s=>Array.from(document.querySelectorAll(s));
 let toastTimer;
-function toast(msg){const t=$('#toast');t.textContent=msg;t.style.opacity='1';t.style.transform='translateX(-50%) translateY(0)';clearTimeout(toastTimer);toastTimer=setTimeout(()=>{t.style.opacity='0';t.style.transform='translateX(-50%) translateY(20px)';},2200);}
+function toast(msg){const t=$('#toast');const m=String(msg||'');t.textContent=m.length>66?m.slice(0,64)+'…':m;t.style.opacity='1';t.style.transform='translateX(-50%) translateY(0)';clearTimeout(toastTimer);toastTimer=setTimeout(()=>{t.style.opacity='0';t.style.transform='translateX(-50%) translateY(20px)';},2400);}
 const MC1={coral:'var(--coral)',lav:'var(--lav)',matcha:'var(--matcha)',honey:'var(--honey)',rose:'var(--rose)',sky:'var(--sky)'};
 const MC2={coral:'var(--coral-d)',lav:'var(--lav-d)',matcha:'var(--matcha-d)',honey:'var(--honey)',rose:'var(--rose)',sky:'var(--sky)'};
 /* ===== 账号体系（3.0：多账号数据隔离） ===== */
@@ -1783,7 +2018,7 @@ const ACC_EMOJIS=['🌟','🍜','🧸','✈️','📷','📚','🌱','🎮','�
 const ACC_BG=['var(--coral-bg)','var(--rose-bg)','var(--sky-bg)','var(--honey-bg)','var(--lav-bg)','var(--matcha-bg)'];
 /** 账号内数据 key（2.0 全局 key → 账号内 suffix），迁移与备份共用 */
 const ACC_OLD2NEW={'workbuddy_v3':'main','wb_insp':'insp','wb_insp_topic':'insp_topic','wb_mats':'mats','wb_hits':'hits','wb_goals':'goals','wb_profile_url':'profile_url','wb_avatar':'avatar','wb_user':'user','wb_first_use':'first_use','wb_running_task':'running_task','wb_running_insp_task':'running_insp_task'};
-const ACC_SUFFIXES=[...new Set(Object.values(ACC_OLD2NEW))];
+const ACC_SUFFIXES=[...new Set(Object.values(ACC_OLD2NEW)),'script'];
 let CUR_ACC=null,ACCOUNTS=[];
 /** 账号内命名空间 key：wb:<账号id>:<suffix> */
 function ak(k){return 'wb:'+CUR_ACC+':'+k}
@@ -1922,6 +2157,7 @@ function stopAllPolling(){
   [_inspPollTimer,_hitPollTimer,_titlePollTimer,_rvPollTimer].forEach(t=>{if(t)clearInterval(t)});
   _inspPollTimer=_hitPollTimer=_titlePollTimer=_rvPollTimer=null;
   _runningTitle=null;_rvDeepTask=null;
+  Object.values(_ksPolls).forEach(t=>{if(t)clearInterval(t)});
 }
 /** 把内存态整体换成 CUR_ACC 账号的数据 */
 function reloadAllData(){
@@ -1930,6 +2166,7 @@ function reloadAllData(){
   INSP=loadInsp();MATS=loadMats();HITS=loadHits();
   _runningTask=loadRunningTask();_runningInspTask=loadRunningInspTask();
   _revIdx=-1;_revRating=0;_rvBenches=[];
+  SD=loadScriptData();
 }
 /** 按启动序列全量重渲染（界面偏好是全局的，沿用当前值） */
 function renderAllViews(){
@@ -1939,6 +2176,7 @@ function renderAllViews(){
   renderMat();renderHit();renderToday();
   setTodoView((()=>{try{return localStorage.getItem('wb_todo_view')||'today'}catch(e){return 'today'}})());
   renderCal();renderReview();renderGoal();renderProfile();renderDateChip();initProfileUrl();
+  renderScript();
   updateStats();
   const v=$('.view.active');
   if(v){v.classList.remove('fade-swap');void v.offsetWidth;v.classList.add('fade-swap');}
@@ -1952,6 +2190,7 @@ function switchAccount(id,silent){
   $$('.modal-mask.open').forEach(m=>m.classList.remove('open'));
   if(_runningInspTask)pollInspiration(_runningInspTask.taskId);
   if(_runningTask)pollTeardown(_runningTask.taskId,_runningTask.url);
+  ksResumePolls();
   if(!silent)toast('已切换到「'+a.name+'」，栏目数据已全部切换 ✨');
 }
 /** 账号数据占用估算（KB） */
@@ -1964,6 +2203,509 @@ function accStorageKB(){
     }
   }catch(e){}
   return Math.round(n/1024);
+}
+/* ===== 爆款脚本创作（脚本工坊）===== */
+/* 内置公式库：拆解时 AI 必须匹配其中一条，卡片展示对应预置结构（单源维护，改这里即可） */
+const KS_FORMULAS={
+ f1:{id:'f1',name:'极简三段式引流',icon:'🧲',c:'var(--coral-d)',b:'var(--coral-bg)',struct:[['钩子 · 0-3s','一句戳痛点或给结果，先留人'],['主体','1-3 个干货点直给，节奏快不铺垫'],['CTA','一句互动引导（关注/评论/私信）+ 一个理由']]},
+ f2:{id:'f2',name:'清单体种草',icon:'📋',c:'var(--matcha-d)',b:'var(--matcha-bg)',struct:[['总起锚点','一句话给总量/结果/适用人群，先立预期'],['并列 N 点','每点固定格式：名字 + 一句话点评 + 价格/难度'],['收藏钩','先收藏，你选东西/买东西/照着做的时候直接用']]},
+ f3:{id:'f3',name:'反差开场式',icon:'⚡',c:'var(--honey-d)',b:'var(--honey-bg)',struct:[['身份/结果反差','自曝身份或数字，和结果硬碰出冲突'],['摊开方法','把反差背后的做法一条条摊开直给'],['金句 + 互动','一句可转发的观点收口，再抛问题引评论']]},
+ f4:{id:'f4',name:'故事起承转合',icon:'📖',c:'var(--lav-d)',b:'var(--lav-bg)',struct:[['起 · 悬念','用反常识结果或数字开场'],['承 · 展开','按时间线/分项把干货铺开，密度要够'],['转 · 转折','数字之外的情绪故事或意外'],['合 · 金句','一句升华 + 开放式提问收口']]},
+ f5:{id:'f5',name:'保姆级教程',icon:'🧑‍🏫',c:'var(--sky-d)',b:'var(--sky-bg)',struct:[['成品前置','先晒做好的成品/结果，利益先给'],['步骤直给','第 1 步…第 N 步，每步只讲一个动作'],['降门槛 + 号召','一句话把门槛打下来，扣字/关键词做互动']]},
+ f6:{id:'f6',name:'避坑劝退式',icon:'🛡',c:'var(--ink-2)',b:'var(--cream-2)',struct:[['劝退立信','「别再 XX 了」反向开场，和满屏种草形成反差'],['分类直给','分 2-3 类，每类一句结论 + 一句理由'],['替代行动','给一个可执行的替代方案收尾']]},
+ f7:{id:'f7',name:'账单实证型',icon:'💰',c:'var(--rose-d)',b:'var(--rose-bg)',struct:[['结果前置','总价/总时长数字直接开场'],['分项清单','每一项：价格 + 一句话做法'],['情绪转折','账单之外的故事，全片记忆点'],['金句收口','一句态度 + 一个提问']]},
+ f8:{id:'f8',name:'情绪共鸣型',icon:'💗',c:'var(--coral-d)',b:'var(--rose-bg)',struct:[['痛点共鸣','「你是不是也…」，一句话圈住目标人群'],['场景堆叠','叠 2-3 个具体场景，越具体越戳'],['观点输出','亮态度，一句话给立场'],['互动提问','把话题抛给评论区收尾']]}
+};
+const KS_STYLES=['真诚分享','干货教程','情绪共鸣'];
+const KS_FORMS=['口播视频','图文脚本'];
+const KS_LENS=['30秒','60秒','不限'];
+const KS_SEGCOLORS=['var(--coral)','var(--matcha)','var(--lav)','var(--honey)','var(--sky)','var(--rose)'];
+const _ksPolls={}; // taskId → timer（拆解/生成进行中，按账号隔离，切账号即停）
+let SD=loadScriptData();
+function loadScriptData(){
+  try{
+    const r=JSON.parse(lsG('script')||'null');
+    if(r&&typeof r==='object'){
+      const tears={};
+      for(const [u,t] of Object.entries(r.tears||{})){if(t&&t.fId)tears[u]=t;} // 旧版拆解（无公式字段）直接丢弃
+      const topics={};
+      for(const [id,d] of Object.entries(r.topics||{}))topics[id]={...d,refs:Array.isArray(d.refs)?d.refs.slice(0,1):[]}; // 参考单选：旧多选数据只留第一条
+      return{cur:r.cur||'',topics,tears};
+    }
+  }catch(e){}
+  return{cur:'',topics:{},tears:{}}
+}
+function saveSD(){try{lsS('script',JSON.stringify(SD))}catch(e){}}
+function ksEsc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+/** AI 产物里常带 Markdown 记号（**加粗**、行首 #），展示与复制前清洗掉 */
+function ksClean(s){return String(s==null?'':s).replace(/\*\*/g,'').replace(/^\s*#{1,4}\s+/gm,'')}
+/** 脚本工坊只处理「还没发布」的选题；已发布的回「选题池」看数据 */
+function ksActiveTopics(){return TOPICS.filter(t=>t.stage<(FLOW[t.type]||FLOW.image).steps.length-1)}
+function ksTid(){
+  if(SD.cur&&ksActiveTopics().some(t=>t.id===SD.cur))return SD.cur;
+  const act=ksActiveTopics();
+  SD.cur=act.length?act[0].id:'';
+  return SD.cur;
+}
+function ksTopic(){const id=ksTid();return TOPICS.find(t=>t.id===id)}
+function ksData(){
+  const id=ksTid();if(!id)return null;
+  if(!SD.topics[id])SD.topics[id]={mouth:'',style:'真诚分享',form:'口播视频',len:'60秒',refs:[],scripts:[],runningTear:null,runningGen:null};
+  if(!Array.isArray(SD.topics[id].refs))SD.topics[id].refs=[];
+  if(!Array.isArray(SD.topics[id].scripts))SD.topics[id].scripts=[];
+  return SD.topics[id];
+}
+function ksMats(){const t=ksTopic();return t?((t.mats||[]).map(i=>MATS[i]).filter(Boolean)):[]}
+/** 新形态拆解（赛道+公式+脚本）才有效；旧格式视为不存在（待拆解） */
+function ksTearOf(mat){const t=SD.tears[mat.url];return t&&t.fId&&t.script?t:null}
+function ksFName(t){const f=t&&KS_FORMULAS[t.fId];return f?f.icon+' '+f.name:''}
+
+/* ---- 渲染 ---- */
+function renderScript(){
+  const bar=$('#ksTopics');if(!bar)return; // 视图不存在时静默返回
+  const act=ksActiveTopics();
+  bar.innerHTML=act.length?act.map(t=>{
+    const d=SD.topics[t.id]||{};
+    const fl=FLOW[t.type]||FLOW.image;
+    return `<button class="ks-tchip${t.id===ksTid()?' on':''}" onclick="ksPickTopic('${t.id}')"><span class="nm">${ksEsc(t.t)}</span><span class="st">${ksEsc(fl.txt[t.stage]||'')}</span><span class="cnt">脚本${(d.scripts||[]).length}</span></button>`;
+  }).join(''):'<span style="font-size:12px;color:var(--ink-3);align-self:center">没有进行中的选题（已发布的不会出现在这里），去「选题池」新建一个 →</span>';
+  const t=ksTopic();
+  if(!t){
+    $('#ksMeta').textContent='';$('#ksWzTopic').textContent='';
+    $('#ksMats').innerHTML='<div class="ks-empty">没有进行中的选题<br>已发布的选题不会出现在这里；去「选题池」新建一个，再回来写脚本</div>';
+    $('#ksRefs').innerHTML='';$('#ksMyList').innerHTML='';$('#ksGenArea').innerHTML='';
+    renderKsBadge();return;
+  }
+  const d=ksData()||{refs:[],scripts:[]};
+  $('#ksMeta').textContent='素材 '+ksMats().length+' 条（已拆解 '+ksMats().filter(m=>ksTearOf(m)).length+'）· 我的脚本 '+d.scripts.length;
+  $('#ksWzTopic').textContent='为「'+t.t+'」创作';
+  if(document.activeElement!==$('#ksMouth'))$('#ksMouth').value=d.mouth||'';
+  renderKsStyle();renderKsMats();renderKsRefs();renderKsMy();renderKsBadge();
+}
+function renderKsStyle(){
+  const d=ksData();if(!d)return;
+  const row=(id,opts,cur)=>{$('#'+id).innerHTML=opts.map(o=>`<button class="${o===cur?'on':''}" onclick="ksPickOpt(this,'${id}')">${o}</button>`).join('')};
+  row('ksStyle',KS_STYLES,d.style||'真诚分享');
+  row('ksForm',KS_FORMS,d.form||'口播视频');
+  row('ksLen',KS_LENS,d.len||'60秒');
+}
+function renderKsMats(){
+  const mats=ksMats(),d0=ksData();
+  $('#ksMatN').textContent=mats.length;
+  const firstTorn=mats.findIndex(m=>ksTearOf(m));
+  $('#ksMats').innerHTML=mats.length?mats.map((m,i)=>{
+    const gi=MATS.indexOf(m); // 按钮回调里用的是素材库全局下标，别传本选题列表里的位置
+    const running=d0&&d0.runningTear&&d0.runningTear.url===m.url;
+    const tear=ksTearOf(m);
+    const on=d0&&d0.refs.includes(m.url);
+    const opened=i===firstTorn; // 首张已拆解的卡片默认展开，进页面即看到完整拆解效果
+    const f=tear?KS_FORMULAS[tear.fId]:null;
+    const row=`<div class="ks-mrow"${tear&&!running?' onclick="ksToggleRow(this)"':''}>
+      <span class="ks-pdot" style="background:${m.pcol||'var(--coral)'}"></span>
+      <span class="tt" title="${ksEsc(m.title)}">${ksEsc(m.title)}</span>
+      ${running?'<span class="ks-mtodo">拆解中…</span>':tear&&f
+        ?`<span class="ks-srowchip" style="--fc:${f.c}" title="AI 匹配的爆款公式：${ksEsc(f.name)}"><span>${f.icon}</span><span class="s">${ksEsc(f.name)}</span><span class="ar">${opened?'▴':'▾'}</span></span>`
+        :`<span class="ks-mtodo">待拆解</span><button class="ks-mini coral" style="height:26px" onclick="event.stopPropagation();ksTear(this,${JSON.stringify(gi)})">✨ AI 拆解</button>`}
+      ${m.url?`<a class="ks-plink" href="${ksEsc(m.url)}" target="_blank" rel="noopener" title="打开原文链接" onclick="event.stopPropagation()">🔗</a>`:''}
+    </div>`;
+    if(running)return `<div class="ks-matcard open">${row}
+      <div class="ks-mdetail"><div class="ks-tearing"><span class="ks-spin"></span>${ksEsc(d0.runningTear.step||'正在读原文：识别赛道 → 匹配公式 → 提取原文脚本…')}</div></div></div>`;
+    if(!tear||!f)return `<div class="ks-matcard" style="animation-delay:${i*60}ms">${row}
+      <div class="ks-mdetail"><div class="ks-mfoot" style="margin-top:0">
+        <span class="ks-todo-note">AI 会先读原文（图文正文 / 视频逐字稿），识别赛道、匹配一条内置公式，并把原文脚本原样提取出来。</span>
+        <button class="ks-mini" onclick="event.stopPropagation();ksDropMat(${JSON.stringify(gi)})" title="从本选题移除">移除</button>
+      </div></div></div>`;
+    return `<div class="ks-matcard${opened?' open':''}" style="animation-delay:${i*60}ms;--fc:${f.c};--fbg:${f.b}">${row}
+      <div class="ks-mdetail">
+        <div class="ks-stlabel">🏗 公式结构</div>
+        <div class="ks-fstruct">${f.struct.map((s,k)=>`<div class="ks-frow"><span class="no">${k+1}</span><span class="nm">${ksEsc(s[0])}</span><span class="job">${ksEsc(s[1])}</span></div>`).join('')}</div>
+        <div class="ks-sclabel">📜 原文脚本<button class="cp" onclick="ksCopyTear('${ksEsc(m.url)}')">📋 复制脚本</button></div>
+        <div class="ks-script">${ksEsc(ksClean(tear.script||''))}</div>
+        <div class="ks-mfoot">
+          <label class="ks-refcheck${on?' on':''}" onclick="event.stopPropagation()"><input type="checkbox" ${on?'checked':''} onchange="ksToggleRef('${ksEsc(m.url)}')">作为参考</label>
+          <span style="display:flex;gap:7px">
+            <button class="ks-mini" onclick="event.stopPropagation();ksTear(this,${JSON.stringify(gi)})">重新拆解</button>
+            <button class="ks-mini" onclick="event.stopPropagation();ksDropMat(${JSON.stringify(gi)})">移除</button>
+          </span>
+        </div>
+      </div></div>`;
+  }).join(''):'<div class="ks-empty">这个选题还没有关联素材<br>点下方按钮，从素材库挑几条爆款挂进来</div>';
+}
+function ksToggleRow(el){
+  const card=el.closest('.ks-matcard');if(!card)return;
+  card.classList.toggle('open');
+  const ar=card.querySelector('.ks-srowchip .ar');
+  if(ar)ar.textContent=card.classList.contains('open')?'▴':'▾';
+}
+function renderKsRefs(){
+  const d=ksData();if(!d)return;
+  const picked=d.refs.map(u=>({u,m:ksMats().find(m=>m.url===u),tear:SD.tears[u]})).filter(x=>x.tear);
+  $('#ksRefs').innerHTML=picked.length
+    ?picked.map(x=>`<span class="ks-refpill" title="${ksEsc(x.m?x.m.title:x.u)}">📄 ${ksEsc((x.m?x.m.title:x.u).slice(0,12))}… · ${ksEsc(ksFName(x.tear))}<button onclick="ksToggleRef('${ksEsc(x.u)}')">✕</button></span>`).join('')
+    :`<div class="ks-refempty">还没有勾选参考——去左栏给素材「✨ AI 拆解」后勾「作为参考」。<br>不勾也能生成，会按通用爆款节奏写。</div>`;
+}
+function renderKsMy(){
+  const d=ksData();const list=d?d.scripts:[];
+  $('#ksMyN').textContent=list.length;
+  $('#ksMyList').innerHTML=list.length?list.map((s,i)=>`<div class="ks-myscard">
+    <div class="ic">📝</div>
+    <div class="mid"><div class="t">${ksEsc(s.title)}</div>
+    <div class="m"><span>约 ${s.words} 字</span><span>参考 ${s.refs||0} 条</span><span>${ksEsc(s.at)}</span></div></div>
+    <div class="ops"><button class="ks-mini" onclick="ksViewScript(${i})">查看</button><button class="ks-mini" onclick="ksCopyScript(${i})">复制</button><button class="ks-mini" onclick="ksDelScript(${i})">删除</button></div></div>`).join('')
+  :'<div class="ks-empty">这个选题还没有自己的脚本<br>在上面填入素材/口水话，点「生成爆款脚本」试试 →</div>';
+}
+function renderKsBadge(){
+  const n=Object.values(SD.topics).reduce((a,d)=>a+((d.scripts)||[]).length,0);
+  const b=$('#scriptBadge');if(b)b.textContent=n;
+}
+
+/* ---- 交互 ---- */
+function ksPickTopic(id){
+  if(SD.cur!==id){SD.cur=id;saveSD();$('#ksGenArea').innerHTML='';}
+  renderScript();
+}
+function ksSaveMouth(v){const d=ksData();if(d){d.mouth=v;saveSD()}}
+function ksPickOpt(btn,id){
+  Array.from(btn.parentElement.children).forEach(c=>c.classList.remove('on'));
+  btn.classList.add('on');
+  const d=ksData();if(!d)return;
+  if(id==='ksStyle')d.style=btn.textContent;
+  else if(id==='ksForm')d.form=btn.textContent;
+  else d.len=btn.textContent;
+  saveSD();
+}
+function ksToggleRef(url){
+  const d=ksData();if(!d)return;
+  const i=d.refs.indexOf(url);
+  if(i>=0)d.refs.splice(i,1); // 取消勾选
+  else d.refs=[url]; // 单选：勾新的自动换掉旧的
+  saveSD();renderKsMats();renderKsRefs();
+}
+function ksDropMat(mi){
+  const t=ksTopic();if(!t)return;
+  const m=MATS[mi];if(!m)return;
+  t.mats=(t.mats||[]).filter(x=>x!==mi);
+  const d=ksData();if(d)d.refs=d.refs.filter(u=>u!==m.url);
+  saveState();saveSD();renderScript();
+  toast('已从本选题移除这条素材');
+}
+function openScriptFor(idx){
+  const t=TOPICS[idx];if(!t)return;
+  if(t.stage>=(FLOW[t.type]||FLOW.image).steps.length-1){switchView('script');renderScript();toast('这个选题已发布，脚本工坊只处理进行中的选题');return;}
+  SD.cur=t.id;saveSD();
+  switchView('script');
+  renderScript();
+}
+function ksOpenMatPicker(){
+  const t=ksTopic();
+  if(!t){toast('先去「选题池」创建选题');return;}
+  ksRenderMatPicker();$('#matPickModal').classList.add('open');
+}
+function ksCloseMatPicker(e){if(e&&e.target!==e.currentTarget)return;$('#matPickModal').classList.remove('open');}
+function ksRenderMatPicker(){
+  const t=ksTopic();if(!t)return;
+  t.mats=t.mats||[];
+  $('#matPickList').innerHTML=MATS.length?MATS.map((m,i)=>{
+    const on=t.mats.includes(i);
+    return `<div class="ks-pickrow"><span class="plat-chip" style="background:${m.pcol||'var(--coral)'}">${ksEsc(m.pn||'')}</span>
+      <span class="pt" title="${ksEsc(m.title)}">${ksEsc(m.title)}</span><span class="pa">${ksEsc(m.author||'')}</span>
+      <button class="ks-mini ${on?'':'coral'}" onclick="ksToggleMat(${i})">${on?'已关联 ✓':'＋ 关联'}</button></div>`;
+  }).join(''):'<div class="ks-empty">素材库还是空的，先去「素材库」添加素材</div>';
+}
+function ksToggleMat(i){
+  const t=ksTopic();if(!t)return;
+  t.mats=t.mats||[];
+  const at=t.mats.indexOf(i);
+  if(at>=0){t.mats.splice(at,1);const m=MATS[i];const d=ksData();if(d&&m)d.refs=d.refs.filter(u=>u!==m.url);}
+  else t.mats.push(i);
+  saveState();saveSD();
+  ksRenderMatPicker();renderScript();
+}
+function ksCopyText(text,okMsg){
+  const done=()=>toast(okMsg||'已复制 📋');
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(text).then(done).catch(()=>ksFallbackCopy(text,done));}
+  else ksFallbackCopy(text,done);
+}
+function ksFallbackCopy(text,done){
+  const ta=document.createElement('textarea');
+  ta.value=text;ta.style.position='fixed';ta.style.opacity='0';
+  document.body.appendChild(ta);ta.select();
+  try{document.execCommand('copy');done()}catch(e){toast('复制失败，请手动选择文本')}
+  ta.remove();
+}
+function ksCopyTear(url){
+  const tear=SD.tears[url];if(!tear||!tear.script)return;
+  ksCopyText(ksClean(tear.script),'原文脚本已复制 📋');
+}
+/* ---- AI 拆解 ---- */
+function ksTear(btn,mi){
+  const t=ksTopic(),m=MATS[mi],d=ksData();
+  if(!t||!m||!d)return;
+  if(!m.url){toast('这条素材没有原文链接，无法拆解');return;}
+  const submit=()=>{
+    if(btn)btn.disabled=true;
+    // 同一素材若已做过爆款拆解（HITS 有记录），带上任务 id 让后端直接复用已下载的原文
+    const hit=HITS.find(h=>h.url===m.url);
+    fetch('/api/script/tear',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:m.url,title:m.title,author:m.author,accountId:CUR_ACC,reuseTaskId:hit?hit.id:undefined,formulas:Object.values(KS_FORMULAS).map(f=>({id:f.id,name:f.name}))})})
+      .then(r=>r.json()).then(j=>{
+        if(!j.success){toast(j.error||'提交失败');if(btn)btn.disabled=false;return;}
+        d.runningTear={taskId:j.data.taskId,url:m.url,step:'已提交，正在读素材原文…'};
+        saveSD();renderKsMats();
+        ksPoll(j.data.taskId,t.id,'tear');
+      }).catch(e=>{toast('网络错误：'+e.message);if(btn)btn.disabled=false;});
+  };
+  if(!d.runningTear){submit();return;}
+  // 本地还挂着旧任务时先和服务器对账：真在跑才拦；已结束/已丢失就清掉直接开新的，避免误报「已有拆解在进行中」
+  fetch('/api/task/'+d.runningTear.taskId).then(r=>r.json()).then(j=>{
+    const st=j&&j.success?j.data.status:null;
+    if(st==='pending'||st==='running'){toast('已有拆解在进行中，请等它完成');return;}
+    d.runningTear=null;saveSD();renderKsMats();
+    submit();
+  }).catch(()=>{toast('网络错误：请检查后端是否在运行');});
+}
+/* ---- 生成 ---- */
+function ksGen(){
+  const t=ksTopic(),d=ksData();
+  if(!t||!d)return;
+  const mouth=($('#ksMouth').value||'').trim();
+  if(!mouth){toast('先填入素材/口水话，想到啥写啥');$('#ksMouth').focus();return;}
+  if(mouth.length>4000){toast('口水话太长了（限 4000 字）');return;}
+  const submit=()=>{
+    d.mouth=mouth;saveSD();
+    const ru=d.refs[0]; // 单选：只取当前勾选的一条
+    const m0=ru?ksMats().find(x=>x.url===ru):null,t0=ru?SD.tears[ru]:null;
+    const refs=(m0&&t0&&t0.script)?[{title:m0.title,author:m0.author,track:t0.track,formula:KS_FORMULAS[t0.fId]?KS_FORMULAS[t0.fId].name:'',why:t0.why||'',script:t0.script}]:[];
+    d.runningGen={taskId:null,step:'已提交，正在按参考结构重写口水话…'};
+    saveSD();
+    fetch('/api/script/gen',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({topic:t.t,mouth,style:d.style,form:d.form,len:d.len,refs,accountId:CUR_ACC})})
+      .then(r=>r.json()).then(j=>{
+        if(!j.success){toast(j.error||'提交失败');d.runningGen=null;saveSD();return;}
+        d.runningGen={taskId:j.data.taskId,step:'已提交，正在按参考结构重写口水话…'};
+        saveSD();ksRenderGenerating(refs.length);
+        ksPoll(j.data.taskId,t.id,'gen');
+      }).catch(e=>{toast('网络错误：'+e.message);d.runningGen=null;saveSD();});
+  };
+  if(!d.runningGen){submit();return;}
+  // 与服务器对账：旧任务真在跑才拦，已结束/丢失就清掉直接重发
+  fetch('/api/task/'+d.runningGen.taskId).then(r=>r.json()).then(j=>{
+    const st=j&&j.success?j.data.status:null;
+    if(st==='pending'||st==='running'){toast('已有脚本在生成中，请等它完成');return;}
+    d.runningGen=null;saveSD();
+    submit();
+  }).catch(()=>{toast('网络错误：请检查后端是否在运行');});
+}
+function ksRenderGenerating(refN){
+  $('#ksGenArea').innerHTML=`<div class="ks-generating">
+    <div class="gl"><span class="ks-spin"></span><span id="ksGenStep">${ksEsc((ksData()||{}).runningGen?.step||'生成中…')}</span></div>
+    <div class="ks-sk" style="width:88%"></div><div class="ks-sk" style="width:70%"></div><div class="ks-sk" style="width:94%"></div><div class="ks-sk" style="width:60%"></div>
+    <div style="font-size:11px;color:var(--ink-3);font-weight:600">${refN?'参考素材脚本：学习它的情绪、结构、爆点':'未勾选 · 按通用爆款节奏写'}</div>
+  </div>`;
+  $('#ksGenArea').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+/** 生成完成后的紧凑入口卡：不再整篇平铺拉长页面，点「查看脚本」弹层阅读 */
+function ksResultEntry(sc){
+  $('#ksGenArea').innerHTML=`<div class="ks-result">
+    <div class="ks-rshd"><span>✨</span><span class="t">${ksEsc(sc.title)}</span><span class="m">约 ${sc.words} 字 · 参考 ${sc.refs||0} 条</span></div>
+    <div class="ks-rsfoot" style="margin-top:0;padding:12px 18px">
+      <button class="btn btn-coral" style="height:34px" onclick="ksOpenScriptView('${sc.id}')">📄 查看脚本</button>
+      <button class="ks-mini" onclick="ksGen()">↻ 换一版</button>
+      <span class="src">已自动保存到本选题 · 下方「我的脚本」里也可随时查看</span>
+    </div></div>`;
+  $('#ksGenArea').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+/** 脚本正文统一口径：旧分段拼接 + 空行折叠为单个换行（段与段之间就是正常换行，不拉开距离） */
+function ksScriptTextOf(sc){
+  const t=sc.text||((sc.segs||[]).map(s=>ksClean(s.txt||'')).filter(Boolean).join('\n\n'));
+  return String(t).replace(/\n{2,}/g,'\n');
+}
+/** 弹层里嵌套阅读一篇生成的脚本（整篇正文，不分节） */
+function ksOpenScriptView(id){
+  const d=ksData();const sc=d&&d.scripts.find(x=>x.id===id);if(!sc)return;
+  const t=ksTopic();
+  $('#svTitle').textContent=sc.title||((t?t.t+' · ':'')+'爆款脚本');
+  $('#svMeta').textContent=`约 ${sc.words} 字 · 参考 ${sc.refs||0} 条 · ${ksEsc(sc.at)}`;
+  $('#svBody').innerHTML=`<div class="ks-genpaper">${ksEsc(ksScriptTextOf(sc))}</div>`;
+  $('#svFoot').innerHTML=`
+    <button class="btn btn-coral" style="height:34px" onclick="ksCopyScriptById('${sc.id}')">📋 复制全文</button>
+    <button class="ks-mini" onclick="ksEditScriptView('${sc.id}')">✏️ 编辑</button>
+    <button class="ks-mini" onclick="ksDelScriptById('${sc.id}');ksCloseScriptView()">删除</button>
+    <span class="src">${ksEsc(t?t.t:'')} · 已自动保存到本选题</span>`;
+  $('#scriptViewModal').classList.add('open');
+}
+/** 弹层内直接微调脚本 */
+function ksEditScriptView(id){
+  const d=ksData();const sc=d&&d.scripts.find(x=>x.id===id);if(!sc)return;
+  $('#svBody').innerHTML=`<textarea class="ks-genedit" id="svEdit" spellcheck="false">${ksEsc(ksScriptTextOf(sc))}</textarea>`;
+  $('#svFoot').innerHTML=`
+    <button class="btn btn-coral" style="height:34px" onclick="ksSaveScriptView('${sc.id}')">💾 保存修改</button>
+    <button class="ks-mini" onclick="ksOpenScriptView('${sc.id}')">取消</button>
+    <span class="src">微调后保存 · 字数自动重算</span>`;
+  const ta=$('#svEdit');ta.focus();ta.setSelectionRange(ta.value.length,ta.value.length);
+}
+function ksSaveScriptView(id){
+  const d=ksData();const sc=d&&d.scripts.find(x=>x.id===id);if(!sc)return;
+  const ta=$('#svEdit');if(!ta)return;
+  const text=ta.value.trim();
+  if(!text){toast('正文不能为空');return;}
+  sc.text=text;
+  sc.words=text.replace(/\s/g,'').length;
+  sc.at=new Date().toTimeString().slice(0,5);
+  saveSD();renderScript();
+  ksOpenScriptView(id);
+  toast('微调已保存 ✍️');
+}
+function ksCloseScriptView(e){
+  if(e&&e.target!==e.currentTarget)return;
+  const ta=document.querySelector('#svBody textarea');
+  if(ta&&!confirm('编辑尚未保存，确定关闭？'))return;
+  $('#scriptViewModal').classList.remove('open');
+}
+function ksScriptText(sc){
+  const body=ksScriptTextOf(sc);
+  return sc.text&&sc.title?`${sc.title}\n\n${body}`:body;
+}
+function ksCopyScript(i){const d=ksData();if(!d||!d.scripts[i])return;ksCopyText(ksScriptText(d.scripts[i]),'脚本已复制 📋')}
+function ksCopyScriptById(id){const d=ksData();const sc=d&&d.scripts.find(x=>x.id===id);if(sc)ksCopyText(ksScriptText(sc),'脚本已复制 📋')}
+function ksViewScript(i){const d=ksData();if(!d||!d.scripts[i])return;ksOpenScriptView(d.scripts[i].id)}
+function ksDelScriptById(id){
+  const d=ksData();if(!d)return;
+  const i=d.scripts.findIndex(x=>x.id===id);if(i<0)return;
+  if(!confirm('删除这篇脚本？不可恢复。'))return;
+  d.scripts.splice(i,1);saveSD();renderScript();$('#ksGenArea').innerHTML='';
+  toast('脚本已删除');
+}
+function ksDelScript(i){const d=ksData();if(!d||!d.scripts[i])return;ksDelScriptById(d.scripts[i].id)}
+
+/* ---- 轮询（与拆解/生成同款：2s 一次，15 分钟超时） ---- */
+function ksPoll(taskId,tid,kind){
+  let n=0;
+  const key=kind+':'+tid;
+  if(_ksPolls[key])clearInterval(_ksPolls[key]);
+  _ksPolls[key]=setInterval(async()=>{
+    n++;
+    const finish=()=>{clearInterval(_ksPolls[key]);delete _ksPolls[key];};
+    if(n>450){
+      finish();
+      const d=SD.topics[tid];
+      if(d){const cur=kind==='tear'?d.runningTear:d.runningGen;if(cur&&cur.taskId===taskId){if(kind==='tear')d.runningTear=null;else d.runningGen=null;saveSD();}}
+      renderScript();
+      toast(kind==='tear'?'拆解超时（15分钟），稍后重试':'生成超时（15分钟），稍后重试');
+      return;
+    }
+    try{
+      const j=await fetch('/api/task/'+taskId).then(r=>r.json());
+      if(!j.success){
+        finish();const d=SD.topics[tid];
+        if(d){const cur=kind==='tear'?d.runningTear:d.runningGen;if(cur&&cur.taskId===taskId){if(kind==='tear')d.runningTear=null;else d.runningGen=null;saveSD();}}
+        renderScript();toast('任务已失效（后端可能重启）');return;
+      }
+      const s=j.data.status;
+      const d=SD.topics[tid];if(!d){finish();return;}
+      if(kind==='tear'&&d.runningTear&&d.runningTear.taskId===taskId)d.runningTear.step=j.data.step||d.runningTear.step;
+      if(kind==='gen'&&d.runningGen&&d.runningGen.taskId===taskId){d.runningGen.step=j.data.step||d.runningGen.step;const el=$('#ksGenStep');if(el)el.textContent=d.runningGen.step;}
+      if(s==='running'&&kind==='tear')renderKsMats();
+      else if(s==='done'){
+        finish();
+        if(kind==='tear'){
+          // 只处理「自己那份」状态：迟到的旧轮询不许动新任务的状态
+          const mine=d.runningTear&&d.runningTear.taskId===taskId;
+          if(!mine)return;
+          const tear=j.data.result;
+          if(tear&&tear.fId)SD.tears[d.runningTear.url]={track:tear.track,fId:tear.fId,why:tear.why,script:tear.script,at:Date.now()};
+          d.runningTear=null;saveSD();renderScript();
+          const tf=tear&&KS_FORMULAS[tear.fId];
+          toast('拆解完成：'+(tf?`${tear.track||''} · ${tf.icon} ${tf.name}`:'?')+' 🎉');
+        }else{
+          const mine=d.runningGen&&d.runningGen.taskId===taskId;
+          if(!mine)return;
+          const gen=j.data.result;
+          const text=ksClean(gen.text||'');
+          const words=text.replace(/\s/g,'').length;
+          const sc={id:'ks'+Date.now(),title:ksClean(gen.title||'')||(ksTopic()?ksTopic().t:'脚本'),text,words,refs:(d.refs||[]).length,at:new Date().toTimeString().slice(0,5)};
+          d.scripts.unshift(sc);d.runningGen=null;saveSD();renderScript();
+          ksResultEntry(sc);ksOpenScriptView(sc.id);
+          toast('脚本生成完毕 ✨ 已保存到本选题');
+        }
+      }else if(s==='failed'){
+        finish();
+        const mine=kind==='tear'?(d.runningTear&&d.runningTear.taskId===taskId):(d.runningGen&&d.runningGen.taskId===taskId);
+        if(mine){if(kind==='tear')d.runningTear=null;else d.runningGen=null;saveSD();renderScript();}
+        toast((kind==='tear'?'拆解失败：':'生成失败：')+(j.data.error||'未知'));
+      }
+    }catch(e){}
+  },2000);
+}
+function ksResumePolls(){
+  for(const tid of Object.keys(SD.topics)){
+    const d=SD.topics[tid];
+    if(d.runningTear)ksPoll(d.runningTear.taskId,tid,'tear');
+    if(d.runningGen&&d.runningGen.taskId)ksPoll(d.runningGen.taskId,tid,'gen');
+  }
+}
+/* ---- 演示数据：为「素材的钩子与结构」补齐一套完整的编造拆解（素材 + 拆解结果 + 选题），仅首次注入 ----
+   说明：正式流程里 tear 由 /api/script/tear 的 AI 产出写入 SD.tears；这里手工补齐示例，
+   让你在接真实 AI 之前就能看到卡片铺满数据后的效果。已有同 URL 拆解且正文非空时不覆盖。 */
+const KS_DEMO_MOUTH='今天想写极简晚餐。我平时下班七点多到家，实在不想点外卖，就琢磨了几个 15 分钟就能搞定的晚饭：番茄肥牛面最快，水开下面就行；还有一个电饭煲焖饭，早上放料晚上开盖；周末 batch 一锅肉酱，工作日煮个面挖一勺。越写越觉得可以按「公式」讲，不用按菜谱讲，观众要的是「今晚就能做」的安全感。';
+const KS_DEMO_MATS=[
+  {url:'https://www.bilibili.com/video/BV11v3w6jEr9',plat:'bili',pn:'B站',pcol:'var(--p-bili)',ava:'甜',author:'年轻朋友–阿甜',title:'自媒体起号 skill 我终于搞定了！',like:'750 赞',fav:'286',date:'07.27',
+   summary:'把「让 AI 认识我 → 封装成 skill → 定时任务连成任务链」的起号方法做成保姆级教程，核心是先晒可抄成品，再讲步骤。',
+   points:['成品前置：封面直接晒真实 prompt 截图','两个定时任务实证：早 8:30 选题 / 下午 2:00 出稿','反复强调「决定权在人」，AI 只做草稿']},
+  {url:'https://www.xiaohongshu.com/explore/late-night-noodles',plat:'xhs',pn:'小红书',pcol:'var(--p-xhs)',ava:'食',author:'@小食堂日记',title:'下班 10 分钟搞定！3 碗让人上头的深夜面条',like:'5.2w',fav:'1.3w',date:'09.01',
+   summary:'三碗 10 分钟出锅的深夜面条清单文，每碗固定「食材→3 步→口感」节奏，结尾提问拉互动，是清单体干货的教科书样本。',
+   points:['数字冲击开头：10 分钟 + 只洗一个锅','清单体降低理解成本，每碗一个记忆点','提问式结尾 + 点赞过千出教程的预告钩']},
+  {url:'https://www.bilibili.com/video/dali-7days-bill',plat:'bili',pn:'B站',pcol:'var(--p-bili)',ava:'猫',author:'@独自旅行的猫',title:'一个人旅行 7 天，我的真实账单',like:'6.4w',fav:'2.1w',date:'08.18',
+   summary:'大理 7 天全账单，起承转合的故事型结构：总价悬念开场、分项账单、人情转折、金句收尾，适合做叙事类选题的参考骨架。',
+   points:['具体数字 + 反常识对比（比一个月房租还便宜）','账单外的情绪转折是全片记忆点','金句收尾 + 开放式提问引评论']}
+];
+const KS_DEMO_TEARS={
+ 'https://www.bilibili.com/video/BV11v3w6jEr9':{track:'AI 工具',fId:'f5',why:'先晒「早选题 / 下午交稿」的成品和结果承诺，再把起号方法按步骤直给，结尾「几篇日记也行」降门槛 + 扣字号召——标准保姆级教程。',script:`给大家分享一个起号 skill：早上找热点，下午按照我的语气来交稿。我一个人做了十几个账号，不用每天从一个空白页开始。
+
+但先别急着抄——第一步不是去找什么万能指令，是先让 AI 认识你。我把账号定位、过往稿子全部喂给它，它比我还懂我的账号。
+
+第二步，把常用做法存成一个 skill：定位、风格、素材库、判断标准，全都存进去。下次喊一句就能用，不用重新教。
+
+现在它每天跑两个定时任务：早上 8:30 给我 3 个选题，下午 2:00 按我的语气出稿。发什么、怎么发，决定权在我手里，AI 只做草稿。
+
+你不用一上来就搞多大，几篇日记也行。想抄我这套搭法的，评论区扣「起号」。`},
+ 'https://www.xiaohongshu.com/explore/late-night-noodles':{track:'美食',fId:'f2',why:'数字痛点开场先立预期 → 三碗面并列直给（每碗固定「名字+做法」节奏）→ 提问拉评论 + 点赞过千出教程的收藏钩，典型清单体种草。',script:`打工人下班是不是只想瘫着？今天这 3 碗面，从开火到上桌 10 分钟，锅都只用洗一个。
+
+第一碗，番茄肥牛面：番茄炒出沙，肥牛扔进去，水开下面，8 分钟齐活。
+第二碗，葱油拌面：灵魂是提前炸好的一勺葱油，面煮好一拌，撒葱花，收工。
+第三碗，酸汤馄饨面：现成的酸汤料包做底，馄饨和面一起扔，连汤带面就是一顿。
+
+你最想先试哪一碗？评论区告诉我，点赞过千，明天出保姆级教程～`},
+ 'https://www.bilibili.com/video/dali-7days-bill':{track:'旅行',fId:'f7',why:'2680 总价数字前置 → 机票/住宿/吃饭分项直给 → 转到「账单没算的是不敢进店、和老板拼桌」的情绪故事 → 金句提问收口，完整账单实证型。',script:`一个人在大理躺了 7 天，总共花了 2680——比我一个月房租还便宜。
+
+给你拆开看：机票 900，周二错峰飞；住宿 700，青旅 6 晚，平均一晚 116；吃饭 600，一半是路边摊；剩下的交通加门票，不到 500。每一项我都记了账，完整表格放评论区。
+
+但账单没算的是：第一天，我端着米线在店门口站了十分钟，不敢进去。
+第三天开始，我天天和青旅老板拼桌，蹭了他三顿家常菜。
+
+所以一个人旅行，贵的从来不是钱，是迈出第一步的勇气。你的第一站，想是哪？`}
+};
+const KS_DEMO_TOPIC={id:'wb-tp-demo-dinner',t:'打工人的 15 分钟极简晚餐',type:'video',stage:2,cat:'美食',plat:'小红书',due:'2026-09-07',update:'09.05'};
+function seedKsDemo(){
+  try{
+    if(lsG('ksdemo')==='v2')return;
+    const idx={};
+    KS_DEMO_MATS.forEach(dm=>{
+      let i=MATS.findIndex(m=>m.url===dm.url);
+      if(i<0){MATS.push({...dm});i=MATS.length-1;}
+      else{const m=MATS[i];if(!m.like||m.like==='-'||m.like==='—')m.like=dm.like;if(!m.summary)m.summary=dm.summary;if(!m.points||!m.points.length)m.points=dm.points;if(!m.pn)m.pn=dm.pn;if(!m.pcol)m.pcol=dm.pcol;if(!m.ava)m.ava=dm.ava;if(!m.fav)m.fav=dm.fav;if(!m.date)m.date=dm.date;}
+      idx[dm.url]=i;
+    });
+    const urls=KS_DEMO_MATS.map(dm=>dm.url);
+    let t=TOPICS.find(x=>x.id===KS_DEMO_TOPIC.id);
+    if(!t){TOPICS.push({...KS_DEMO_TOPIC,mats:urls.map(u=>idx[u])});}
+    else{const merged=[...(t.mats||[]),...urls.map(u=>idx[u])];t.mats=[...new Set(merged)];}
+    for(const [u,tear] of Object.entries(KS_DEMO_TEARS)){
+      const old=SD.tears[u];
+      if(!(old&&old.fId))SD.tears[u]={...tear,at:Date.now()}; // 旧格式已在加载时丢弃，这里直接补新形态
+    }
+    if(!SD.topics[KS_DEMO_TOPIC.id])SD.topics[KS_DEMO_TOPIC.id]={mouth:KS_DEMO_MOUTH,style:'真诚分享',form:'口播视频',len:'60秒',refs:[urls[1]],scripts:[],runningTear:null,runningGen:null};
+    saveMats();saveState();saveSD();
+    lsS('ksdemo','v2');
+  }catch(e){}
 }
 /* ===== view 切换 ===== */
 function switchView(v){
@@ -2530,7 +3272,7 @@ function renderTopicGrid(){
       <div class="flow">${flow}</div>
       <div class="c-foot">
         <button class="topic-link" onclick="openTopicMat(${origIdx})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 7a2 2 0 012-2h4l2 3h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/></svg>查看选题素材 <b>${matN}</b></button>
-        <div style="margin-left:auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><button class="mini pri" onclick="advanceTopic(${origIdx})">${t.stage>=last?'查看数据':'继续推进'}</button></div>
+        <div style="margin-left:auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><button class="mini" onclick="openScriptFor(${origIdx})" title="去爆款脚本创作，基于本选题的素材写脚本">✍️ 写脚本</button><button class="mini pri" onclick="advanceTopic(${origIdx})">${t.stage>=last?'查看数据':'继续推进'}</button></div>
       </div>
     </article>`;
   }).join('');
@@ -3967,9 +4709,10 @@ async function cfgSave(){
     else{toast(j.error||'保存失败');}
   }catch(e){toast('网络错误：'+e.message);}
 }
-renderAccSwitch();touchFirstUse();loadState();renderInsp();setTopicView((()=>{const q=new URLSearchParams(location.search).get('view');if(q==='table'||q==='card')return q;try{return localStorage.getItem('wb_topic_view')||'card'}catch(e){return 'card'}})());renderMat();renderHit();renderToday();setTodoView((()=>{try{return localStorage.getItem('wb_todo_view')||'today'}catch(e){return 'today'}})());renderCal();renderReview();renderGoal();renderProfile();renderDateChip();checkConfig();initProfileUrl();
+renderAccSwitch();touchFirstUse();loadState();seedKsDemo();renderInsp();setTopicView((()=>{const q=new URLSearchParams(location.search).get('view');if(q==='table'||q==='card')return q;try{return localStorage.getItem('wb_topic_view')||'card'}catch(e){return 'card'}})());renderMat();renderHit();renderToday();setTodoView((()=>{try{return localStorage.getItem('wb_todo_view')||'today'}catch(e){return 'today'}})());renderCal();renderReview();renderGoal();renderScript();renderProfile();renderDateChip();checkConfig();initProfileUrl();
 if(_runningInspTask)pollInspiration(_runningInspTask.taskId);
 if(_runningTask){pollTeardown(_runningTask.taskId,_runningTask.url);}
+ksResumePolls();
 updateStats();
 const _mat=new URLSearchParams(location.search).get('mat');
 if(_mat!==null)openTopicMat(+_mat||0);

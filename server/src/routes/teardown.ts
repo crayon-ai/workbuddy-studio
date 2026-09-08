@@ -7,6 +7,7 @@ import { parseTeardown } from "../parse.js";
 import { getApiKey } from "../config.js";
 import { taskLog } from "../log.js";
 import { accountTaskDir, resolveTaskDir, accountSlug } from "../account-dirs.js";
+import { recordTeardownSource } from "./script.js";
 
 export interface TeardownRoutesOpts {
   envPath: string;
@@ -184,6 +185,8 @@ async function runTeardown(
     step: "完成",
     updatedAt: Date.now(),
   });
+  // 记录 url→任务 索引：脚本工坊拆解同一素材时可直接复用这里已下载的爆款原文
+  recordTeardownSource(projectRoot, account, url, taskId);
 }
 
 /**

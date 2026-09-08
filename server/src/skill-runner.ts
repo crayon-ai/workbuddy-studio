@@ -90,15 +90,43 @@ export async function runSkill(
   } catch (e: any) {
     const detail = serializeError(e);
     console.error(`[skill:${skillName}] 调用异常：${detail}`);
+    // CLI 有时先把 401 文案作为 result 吐出、随后才 exit 1：text 和异常详情都要查
+    const authHint = authProblem(detail) || authProblem(text);
+    if (authHint) return { ok: false, text, artifacts: {}, error: authHint };
     return { ok: false, text: "", artifacts: {}, error: detail };
   }
 
   if (agentError) {
     console.error(`[skill:${skillName}] ${agentError}`);
+    const authHint = authProblem(agentError);
+    if (authHint) return { ok: false, text, artifacts: {}, error: authHint };
     return { ok: false, text: "", artifacts: {}, error: agentError };
   }
 
+  // result 是 success 但内容是 API 错误文案（CLI 有时把 401 当结果输出再退出）
+  const authHint = authProblem(text);
+  if (authHint) {
+    console.error(`[skill:${skillName}] ${authHint}`);
+    return { ok: false, text, artifacts: {}, error: authHint };
+  }
+
   return { ok: true, text, artifacts: collectMarkdown(workDir) };
+}
+
+/**
+ * 识别 API 鉴权/余额类失败，把底层 401 文案翻译成用户能操作的提示。
+ * CLI 遇到 401 会重试约 3 分钟后 exit 1，裸报 "exit code 1" 用户无法定位。
+ */
+export function authProblem(text: string): string | null {
+  if (!text) return null;
+  const endpoint = (process.env.ANTHROPIC_BASE_URL || "默认端点").trim();
+  const suffix = `（鉴权失败，端点：${endpoint}）。请在侧边栏「AI 配置」重新配置有效的 API key`;
+  if (/API Error:\s*401|authentication_error|Authentication Fails|invalid.{0,30}api key/i.test(text)) {
+    return "API key 无效或已过期" + suffix;
+  }
+  if (/Please run \/login/i.test(text)) return "API key 未配置或已失效" + suffix;
+  if (/Insufficient Balance|Credit balance|余额不足|quota/i.test(text)) return "API 余额/额度不足" + suffix;
+  return null;
 }
 
 /**
