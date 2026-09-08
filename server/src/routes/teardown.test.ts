@@ -325,3 +325,111 @@ describe("多账号目录隔离", () => {
     await app.close();
   });
 });
+
+// ===== 报告直读 / 转 HTML（GET :id/report · POST :id/html）=====
+describe("报告直读与 HTML 版", () => {
+  const MD = [
+    "---",
+    "title: AI爆款拆解-测试报告",
+    "---",
+    "## 一、标题为什么吸引人？",
+    "**类型**：`承诺型` + 数字清单",
+    "",
+    "> 数据速览：赞 100 / 藏 50",
+    "",
+    "## 二、正文结构是什么？",
+    "| 维度 | 内容 |",
+    "| --- | --- |",
+    "| 钩子 | 踩坑自白 |",
+    "",
+    "1. 开头建立共情",
+    "2. 主体交付干货",
+    "",
+    "```",
+    "共鸣（我也是） → 希望 → 收藏冲动",
+    "```",
+    "",
+    "## 一句话总结",
+    "获得感供给型爆款。",
+  ].join("\n");
+
+  function seed(projectRoot: string): string {
+    const taskId = "seed-report-task";
+    const dir = join(projectRoot, "data", "accounts", "default", "teardowns", taskId, "AI拆解");
+    mkdirSync(dir, { recursive: true });
+    writeFileSync(join(dir, "AI爆款拆解-测试报告.md"), MD);
+    return taskId;
+  }
+
+  it("GET report 返回 md 原文，htmlExists=false；format=html 未生成时报错", async () => {
+    const projectRoot = mkdtempSync(join(tmpdir(), "wb-report-"));
+    const app = await buildApp({ projectRoot });
+    const id = seed(projectRoot);
+
+    const r = await app.inject({ method: "GET", url: `/api/teardown/${id}/report` });
+    const body = JSON.parse(r.body);
+    expect(body.success).toBe(true);
+    expect(body.data.md).toContain("标题为什么吸引人");
+    expect(body.data.reportFile).toBe("AI爆款拆解-测试报告.md");
+    expect(body.data.htmlExists).toBe(false);
+
+    const rh = await app.inject({ method: "GET", url: `/api/teardown/${id}/report?format=html` });
+    expect(JSON.parse(rh.body).success).toBe(false);
+
+    rmSync(projectRoot, { recursive: true, force: true });
+    await app.close();
+  });
+
+  it("POST html 生成自包含 HTML 落到同目录，幂等再点 skipped=true；GET format=html 可读", async () => {
+    const projectRoot = mkdtempSync(join(tmpdir(), "wb-report-"));
+    const app = await buildApp({ projectRoot });
+    const id = seed(projectRoot);
+
+    const r = await app.inject({ method: "POST", url: `/api/teardown/${id}/html` });
+    const body = JSON.parse(r.body);
+    expect(body.success).toBe(true);
+    expect(body.data.htmlFile).toBe("AI爆款拆解-测试报告.html");
+    expect(body.data.html).toContain("<!DOCTYPE html>");
+    expect(body.data.html).toContain("标题为什么吸引人");
+    expect(body.data.skipped).toBeUndefined();
+    // 落盘在 AI拆解/ 同目录
+    expect(existsSync(join(projectRoot, "data", "accounts", "default", "teardowns", id, "AI拆解", "AI爆款拆解-测试报告.html"))).toBe(true);
+
+    // 幂等：再转一次直接返回已有内容
+    const r2 = await app.inject({ method: "POST", url: `/api/teardown/${id}/html` });
+    const body2 = JSON.parse(r2.body);
+    expect(body2.success).toBe(true);
+    expect(body2.data.skipped).toBe(true);
+
+    // format=html 能读到
+    const rh = await app.inject({ method: "GET", url: `/api/teardown/${id}/report?format=html` });
+    const bodyH = JSON.parse(rh.body);
+    expect(bodyH.success).toBe(true);
+    expect(bodyH.data.html).toContain("<!DOCTYPE html>");
+
+    // htmlExists 同步翻转
+    const r3 = await app.inject({ method: "GET", url: `/api/teardown/${id}/report` });
+    expect(JSON.parse(r3.body).data.htmlExists).toBe(true);
+
+    rmSync(projectRoot, { recursive: true, force: true });
+    await app.close();
+  });
+
+  it("目录不存在 / 无拆解报告时报错", async () => {
+    const projectRoot = mkdtempSync(join(tmpdir(), "wb-report-"));
+    const app = await buildApp({ projectRoot });
+
+    const r1 = await app.inject({ method: "GET", url: "/api/teardown/no-such/report" });
+    expect(JSON.parse(r1.body).success).toBe(false);
+
+    // 目录存在但没有 AI爆款拆解-*.md
+    const emptyId = "empty-task";
+    mkdirSync(join(projectRoot, "data", "accounts", "default", "teardowns", emptyId), { recursive: true });
+    const r2 = await app.inject({ method: "POST", url: `/api/teardown/${emptyId}/html` });
+    expect(JSON.parse(r2.body).success).toBe(false);
+    expect(JSON.parse(r2.body).error).toContain("未找到拆解报告");
+
+    rmSync(projectRoot, { recursive: true, force: true });
+    await app.close();
+  });
+});

@@ -1,8 +1,8 @@
 import path from "node:path";
 import { existsSync, mkdirSync, renameSync } from "node:fs";
 
-/** 4 个 skill 产物模块（与 data/ 下的目录名一致）。 */
-export const DATA_MODULES = ["inspirations", "teardowns", "deep-reviews", "personalized"] as const;
+/** 5 个 skill 产物模块（与 data/ 下的目录名一致）。 */
+export const DATA_MODULES = ["inspirations", "teardowns", "deep-reviews", "personalized", "prechecks"] as const;
 /** 3.0 新增：脚本工坊产物（只出现在 accounts/ 新布局，无 2.0 旧目录） */
 export type DataModule = (typeof DATA_MODULES)[number] | "scripts";
 
