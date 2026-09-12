@@ -1082,7 +1082,9 @@ textarea.ks-ks::placeholder{color:var(--ink-3)}
 .tp-grp-t{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .tp-grp-no{font-size:10.5px;color:var(--ink-3);font-weight:600;flex-shrink:0}
 .tp-btns{display:flex;flex-wrap:wrap;gap:7px}
-.tp-btn{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;padding:6px 12px;border-radius:var(--pill);background:var(--paper);color:var(--ink);border:1.5px dashed var(--line-2);cursor:grab;transition:all .18s var(--ease);user-select:none;-webkit-touch-callout:none}
+.tp-btn{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;padding:6px 12px;border-radius:var(--pill);background:var(--paper);color:var(--ink);border:1.5px dashed var(--line-2);cursor:grab;transition:all .18s var(--ease);user-select:none;-webkit-touch-callout:none;touch-action:none}
+/* 触屏「点选待放置」状态（点卡片 → 点日历格子） */
+.tp-btn.tp-sel{border-style:solid;border-color:var(--coral);color:var(--coral-d);background:var(--coral-bg);transform:scale(1.04)}
 .tp-btn:hover{border-color:var(--coral);color:var(--coral-d);background:var(--coral-bg);transform:translateY(-1px)}
 .tp-btn:active{cursor:grabbing;transform:scale(.96)}
 /* 触屏拖拽的跟随「拖影」（手机端长按阶段卡片排期用） */
@@ -5059,7 +5061,7 @@ function renderCalGrid(){
     const isToday=ds===today;
     const tasks=byDay[String(d).padStart(2,'0')]||[];
     const tels=tasks.map(taskEl).join('');
-    html+=`<div class="cal-day ${isToday?'today':''}" data-ds="${ds}" ondragover="calOver(event)" ondragleave="calLeave(event)" ondrop="calDrop(event,'${ds}')" onclick="toast('${m+1} 月 ${d} 号：${tasks.length?tasks.length+' 项创作任务':'暂无安排'}')"><div class="dn ${isToday?'today-mark':''}">${d}</div>${tels}</div>`;
+    html+=`<div class="cal-day ${isToday?'today':''}" data-ds="${ds}" ondragover="calOver(event)" ondragleave="calLeave(event)" ondrop="calDrop(event,'${ds}')" onclick="calDayTap('${ds}','${m+1} 月 ${d} 号：${tasks.length?tasks.length+' 项创作任务':'暂无安排'}')"><div class="dn ${isToday?'today-mark':''}">${d}</div>${tels}</div>`;
   }
   $('#calGrid').innerHTML=html;
   const mt=$('#calMonth');if(mt)mt.textContent=y+' 年 '+(m+1)+' 月 ';
@@ -5087,22 +5089,33 @@ function calDrop(e,ds){
   const tk=e.dataTransfer.getData('text/task');if(!tk)return;
   assignTaskToDate(tk,ds);
 }
-/* ===== 触屏拖拽排期（手机端：长按阶段卡片 → 拖到日历格子 → 松手） =====
-   HTML5 drag/drop 在触屏上不触发，用 Pointer Events 自实现：
-   - 长按 260ms 激活（生成「拖影」跟随手指，上移 42px 避免被手指挡住）
-   - 未激活就移动 >8px 视为滚动意图，放弃拖拽（页面正常滚）
-   - 激活后 touchmove preventDefault 锁滚动（iOS 必须）
-   - 落点用 elementFromPoint 命中 .cal-day（复用 .dragover 高亮） */
-let _touchDrag=null,_tapHintAt=0;
+/* ===== 手机端排期：长按/直接拖拽 + 点选放置 双通道 =====
+   HTML5 drag/drop 触屏不触发，用 Pointer Events 自实现：
+   - .tp-btn 设了 touch-action:none，触屏从卡片发起的手势不会被浏览器滚动抢走
+   - 按住 240ms 或移动超 10px 即激活拖拽（拖影跟随手指，上移 42px 防遮挡）
+   - 落点用 elementFromPoint 按手指位置命中 .cal-day（复用 .dragover 高亮）
+   - 只点一下不拖 → 进入「点选待放置」：再点日历格子完成排期（小白兜底） */
+let _touchDrag=null,_selTask=null;
 document.addEventListener('pointerdown',e=>{
   if(e.pointerType==='mouse')return; /* 桌面走原生 HTML5 拖放 */
   const btn=e.target.closest('.tp-btn');if(!btn)return;
   const r=btn.getBoundingClientRect();
   _touchDrag={tk:btn.dataset.task,btn,startX:e.clientX,startY:e.clientY,offX:e.clientX-r.left,offY:e.clientY-r.top,timer:null,active:false,ghost:null,day:null};
-  _touchDrag.timer=setTimeout(()=>{if(_touchDrag)startTouchDrag(e);},260);
+  _touchDrag.timer=setTimeout(()=>{if(_touchDrag&&!_touchDrag.active)startTouchDrag(_touchDrag.lastE||{clientX:_touchDrag.startX,clientY:_touchDrag.startY});},240);
+},{passive:true});
+document.addEventListener('pointermove',e=>{
+  const d=_touchDrag;if(!d)return;
+  d.lastE=e;
+  if(!d.active){
+    if(Math.hypot(e.clientX-d.startX,e.clientY-d.startY)>10)startTouchDrag(e);
+    return;
+  }
+  moveTouchDrag(e);
 },{passive:true});
 function startTouchDrag(e){
-  const d=_touchDrag;d.active=true;
+  const d=_touchDrag;if(!d)return;
+  d.active=true;
+  if(_selTask)clearSelTask();
   const g=d.btn.cloneNode(true);g.classList.add('tp-ghost');g.style.width=d.btn.offsetWidth+'px';
   document.body.appendChild(g);d.ghost=g;
   d.btn.style.opacity='.4';
@@ -5113,21 +5126,14 @@ function moveTouchDrag(e){
   const d=_touchDrag;if(!d||!d.active)return;
   const x=e.clientX-d.offX,y=e.clientY-d.offY-42;
   d.ghost.style.left=x+'px';d.ghost.style.top=y+'px';
-  const el=document.elementFromPoint(x+d.ghost.offsetWidth/2,y+d.ghost.offsetHeight/2);
+  /* 命中以手指位置为准（用户用手指瞄准），拖影只是视觉提示 */
+  const el=document.elementFromPoint(e.clientX,e.clientY);
   const day=el&&el.closest?el.closest('.cal-day'):null;
   if(d.day&&d.day!==day)d.day.classList.remove('dragover');
   if(day&&day!==d.day)day.classList.add('dragover');
   d.day=day;
 }
-document.addEventListener('pointermove',e=>{
-  const d=_touchDrag;if(!d)return;
-  if(!d.active){
-    if(Math.abs(e.clientX-d.startX)>8||Math.abs(e.clientY-d.startY)>8)clearTimeout(d.timer);
-    return;
-  }
-  moveTouchDrag(e);
-},{passive:true});
-function endTouchDrag(){
+function endTouchDrag(e){
   const d=_touchDrag;if(!d)return;_touchDrag=null;
   clearTimeout(d.timer);
   if(d.ghost)d.ghost.remove();
@@ -5135,15 +5141,27 @@ function endTouchDrag(){
   if(d.day){
     d.day.classList.remove('dragover');
     if(d.day.dataset.ds)assignTaskToDate(d.tk,d.day.dataset.ds);
-  }else if(!d.active){ /* 纯点击：给出操作提示（限频） */
-    const now=Date.now();
-    if(now-_tapHintAt>6000){_tapHintAt=now;toast('手机上排期：长按住卡片，拖到日历格子上 📅');}
+  }else if(!d.active){ /* 纯点击：进入点选待放置 */
+    if(_selTask&&_selTask.btn===d.btn){clearSelTask();toast('已取消选择');}
+    else{clearSelTask();_selTask={tk:d.tk,btn:d.btn};d.btn.classList.add('tp-sel');toast('已选中 ✓ 点日历格子上放置');}
   }
 }
 document.addEventListener('pointerup',endTouchDrag,{passive:true});
 document.addEventListener('pointercancel',endTouchDrag,{passive:true});
 document.addEventListener('touchmove',e=>{if(_touchDrag&&_touchDrag.active)e.preventDefault();},{passive:false});
+/* 点选待放置：点其他区域取消 */
+document.addEventListener('click',e=>{
+  if(!_selTask)return;
+  if(e.target.closest('.tp-btn')||e.target.closest('.cal-day'))return;
+  clearSelTask();
+});
+function clearSelTask(){if(_selTask){_selTask.btn.classList.remove('tp-sel');_selTask=null;}}
 function removeTask(tk){delete CAL_TASKS[tk];saveState();renderCal();toast('已移出排期');}
+/** 日历格子点击：有「点选待放置」的卡片则完成排期，否则照旧显示当天信息 */
+function calDayTap(ds,info){
+  if(_selTask){const tk=_selTask.tk;clearSelTask();assignTaskToDate(tk,ds);return;}
+  toast(info);
+}
 /* 转选题录入 */
 function openTopicForm(idx,candIdx){
   const insp=(idx!=null&&idx>=0)?INSP[idx]:null;
