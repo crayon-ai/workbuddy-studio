@@ -1,0 +1,17 @@
+{
+  "name": "WorkBuddy 自媒体工作台",
+  "short_name": "WorkBuddy",
+  "description": "个人自媒体博主的内容生产全流程工作台",
+  "lang": "zh-CN",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#FAF4EA",
+  "theme_color": "#F0895A",
+  "icons": [
+    { "src": "/assets/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/assets/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/assets/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

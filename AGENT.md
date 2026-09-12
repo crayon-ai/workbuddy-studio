@@ -8,6 +8,8 @@
 - **标题生成**：输入主题 → 调 `xhs-title-psych` skill → 5 个小红书爆款标题。
 - **爆款拆解**：粘贴小红书链接 → 调 `baokuan-chaijie` skill → 9 维度拆解。
 
+另外支持**手机在同一 WiFi 下扫码访问**（见下方「手机访问」），启动后无需额外操作。
+
 ## 前置条件（缺什么补什么，自动装）
 
 按顺序检测，缺失就装：
@@ -18,6 +20,7 @@
 
 2. **后端 npm 依赖**
    - 命令：`cd server && npm install`
+   - 依赖含 `qrcode`（手机访问二维码生成用），必须装齐。
 
 3. **Anthropic API key**
    - 检测：`server/.env` 是否含 `ANTHROPIC_API_KEY=sk-...`
@@ -54,6 +57,15 @@
 - 手动开发调试：`cd server && npm run dev`，再打开 http://127.0.0.1:7788
 - **任何平台都不要**用 `npm run dev` 起常驻服务——那是开发热重载模式，且作为你会话的子进程，会话结束服务就死；tsx watch 还会挡住守护层的崩溃自愈。
 
+## 手机访问（局域网，启动后自动可用）
+
+- 服务默认监听 `0.0.0.0:7788`（可用环境变量 `WB_HOST=127.0.0.1` 关掉局域网模式）。
+- **门禁机制**：本机访问免鉴权；其他设备必须带 token——`data/lan-token.txt`（首启自动生成，长期有效）。首次通过 `/?t=<token>` 进入会种 HttpOnly cookie（一年），之后直接访问即可。无凭证的局域网请求一律 401（API 返回 `WB_LAN_TOKEN_REQUIRED`，页面返回引导页）。
+- **用户入口**：电脑端工作台侧边栏「设置 → 手机访问」弹窗，展示二维码 + 链接 + 步骤指引，`GET /api/lan-info` 提供。
+- 手机端可「添加到主屏幕」当 App 用（PWA：`/manifest.webmanifest` + `assets/icon-*`）。
+- 注意：数据存在各设备浏览器的 localStorage，手机端与电脑端数据不互通；电脑换 WiFi/重启后局域网 IP 可能变化，重新扫码即可。
+- Windows 首次启动若弹防火墙放行询问，选「允许」。
+
 ## 验收（确认跑通了）
 
 - 浏览器打开 http://127.0.0.1:7788 见工作台，控制台无报错。
@@ -61,10 +73,12 @@
 - 标题生成：输入主题，3~8 秒出 5 个标题。
 - 图文拆解：粘一个小红书图文链接，1~3 分钟出拆解卡片。
 - 视频拆解：装了 ffmpeg+whisper 后，粘视频链接能出含逐字稿的拆解。
+- 手机访问：电脑端点「手机访问」能出二维码；手机（同 WiFi）扫码能打开工作台；直接输 IP 不带 token 显示引导页。
 
 ## 关键路径与机制（出问题时看）
 
-- **后端入口**：`server/src/index.ts`（Fastify，只听 127.0.0.1:7788）。
+- **后端入口**：`server/src/index.ts`（Fastify，监听 0.0.0.0:7788；本机免 token，局域网走 `data/lan-token.txt` 门禁，见 `server/src/lan.ts` 与 `app.ts` 的 lanAuthHook）。
+- **静态资源只开放 `assets/`**：不要恢复整项目根 wildcard 静态服务——那会把 `server/.env`（API key）暴露给局域网。
 - **skill 加载**：后端用 `@anthropic-ai/claude-agent-sdk` 的 `query()`，`settingSources:["project"]` + `cwd=项目根` → 自动加载 `.claude/skills/` 下的 skill。两个 skill：`baokuan-chaijie`（爆款拆解）、`xhs-title-psych`（标题）。
 - **skill 里的 `analyze_image` / `parse_link` 等工具不用配**：agent 会用原生能力智能替代——图片走模型 vision（用 Read 读图）、链接解析走 Bash+curl。
 - **skill 产物**：拆解结果写到临时目录的 `AI拆解/AI爆款拆解-*.md`，后端读取解析后返回前端。
@@ -81,7 +95,8 @@
 | skill 没被调用 | 确认 `.claude/skills/baokuan-chaijie/SKILL.md` 与 `xhs-title-psych/SKILL.md` 存在；后端 `cwd` 是项目根 |
 | 图文拆解图片文字没提取 | agent 应自动用 vision；若没提取，在后端 `routes/teardown.ts` 的 prompt 里加一句"用 Read 工具读取图片" |
 | 视频拆解卡住 | 确认 ffmpeg + whisper server(:2022) 已起；没装就提示用户图文拆解可用、视频需装工具 |
-| API key 401 | 重新配 `server/.env`，或前端设置入口重配 |
+| API key 401 | 重新配 `server/.env`，或前端设置入口重配（注意与手机访问 401 区分：后者提示「WB_LAN_TOKEN_REQUIRED」，重新扫码即可） |
+| 手机扫码打不开 | 确认手机与电脑同一 WiFi；`curl http://127.0.0.1:7788/api/lan-info` 看返回的地址；电脑防火墙放行 Node（macOS 系统设置→网络→防火墙；Windows 首启弹窗选允许）；路由器开了「AP 隔离」时同 WiFi 设备互不可见，需关闭 |
 | Windows 无 curl | 用 Win10+（自带 curl.exe）或装 git bash |
 
 ## 合规

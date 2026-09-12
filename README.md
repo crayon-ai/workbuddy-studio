@@ -37,6 +37,14 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\workbuddy-daemon.ps1
 
 **没有 Node.js 也不用先装**：两个平台的守护脚本检测到缺失时都会自动下载用户级便携版 Node（macOS → `~/.workbuddy-node`，Windows → `~\.workbuddy-node`，国内镜像优先，免管理员/免安装向导），装完继续自动启动。
 
+### 手机访问（同一 WiFi 扫码即用）
+
+服务启动后自动监听局域网，电脑端工作台侧边栏点 **「手机访问」**，手机扫二维码即可打开（已自动授权，可「添加到主屏幕」当 App 用）。
+
+- 安全：随机 token 门禁（`data/lan-token.txt`，长期有效），同 WiFi 他人无法直接访问。
+- 本机使用不受任何影响；想彻底关掉局域网模式：启动前设 `WB_HOST=127.0.0.1`。
+- 注意：数据存在各设备浏览器 localStorage，手机端与电脑端不互通；电脑换 WiFi 后 IP 可能变化，重新扫码即可。
+
 服务日志：`logs/server.log`（应用，任何平台任何启动方式都落盘）/ `logs/launchd.log`（macOS 守护层）。
 
 ### 方式 B：手动启动

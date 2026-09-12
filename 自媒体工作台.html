@@ -3,6 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#F0895A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="WorkBuddy">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
+<link rel="icon" type="image/png" href="/assets/icon-192.png">
 <title>自媒体创作工作台 · WorkBuddy v0905-6</title>
 <style>
 /* ============================================================
@@ -1276,6 +1283,16 @@ textarea.ks-ks::placeholder{color:var(--ink-3)}
 .heat-cell.lbl{background:transparent;font-size:10px;aspect-ratio:auto;height:auto;display:flex;align-items:center}
 .heat-cell.h1{background:var(--coral-bg);color:var(--coral-d)} .heat-cell.h2{color:var(--on-grad);background:linear-gradient(135deg,var(--coral-bg),var(--coral))} .heat-cell.h3{background:var(--coral);color:var(--on-grad)} .heat-cell.h4{background:var(--grad-btn);color:var(--on-grad)}
 
+/* ===== 手机访问弹层 ===== */
+.lan-card{display:flex;gap:16px;align-items:center;padding:14px;border:1.5px dashed var(--line-2);border-radius:16px;margin-bottom:12px}
+.lan-qr{width:132px;height:132px;border-radius:12px;flex:none;background:#fff;box-shadow:0 2px 10px rgba(58,50,44,.06)}
+.lan-info{flex:1;min-width:0;display:flex;flex-direction:column;gap:7px;align-items:flex-start}
+.lan-url{font-family:ui-monospace,Menlo,monospace;font-size:12px;font-weight:600;color:var(--ink-2);word-break:break-all}
+.lan-net{font-size:11px;color:var(--ink-3);background:var(--cream-2);padding:2px 9px;border-radius:var(--pill)}
+.lan-steps{font-size:12.5px;color:var(--ink-2);line-height:2;padding:4px 2px;border-top:1px dashed var(--line);margin-top:2px}
+.lan-steps b{color:var(--coral-d)}
+.lan-note{font-size:11.5px;color:var(--ink-3);line-height:1.7;margin-top:8px;background:var(--cream-2);border-radius:10px;padding:8px 12px}
+
 /* ===== 响应式 ===== */
 @media (max-width:1024px){
   :root{--sb-w:78px}
@@ -1304,20 +1321,44 @@ textarea.ks-ks::placeholder{color:var(--ink-3)}
 }
 @media (max-width:680px){
   .app{flex-direction:column}
-  .sidebar{position:sticky;top:0;height:auto;flex-direction:row;width:100%;min-width:0;padding:10px 12px;gap:0;border-right:none;border-bottom:1px solid var(--line);overflow-x:auto;background:linear-gradient(90deg,#FCF6EC,#F5EBDA)}
+  .sidebar{position:sticky;top:0;height:auto;flex-direction:row;width:100%;min-width:0;padding:10px 12px;gap:0;border-right:none;border-bottom:1px solid var(--line);overflow-x:auto;background:linear-gradient(90deg,#FCF6EC,#F5EBDA);z-index:50}
   .sb-brand{padding:0;flex-shrink:0}
-  .sb-nav{flex-direction:row;padding:0 4px;gap:2px;overflow-x:auto}
-  .sb-item{padding:8px 11px;flex-shrink:0}
+  .sb-nav{flex-direction:row;padding:0 4px;gap:2px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .sb-nav::-webkit-scrollbar{display:none}
+  .sb-item{padding:8px 10px;flex-shrink:0}
+  /* 手机端顶栏显示文字标签（覆盖 ≤1024 的纯图标模式，小白看得懂） */
+  .sb-item .txt{display:inline;font-size:12px;font-weight:600}
+  .sb-item{gap:6px}
   .wrap{padding:20px 16px 56px}
   .ph-title,.hero-line{font-size:22px}
   .ph-row{flex-direction:column;align-items:flex-start;gap:14px}
   .kpis{grid-template-columns:repeat(2,1fr)}
-  .filters,.cal-grid{overflow-x:auto;flex-wrap:nowrap;padding-bottom:4px;-webkit-overflow-scrolling:touch}
-  .cal-grid{display:flex;gap:7px}
-  .cal-day{min-width:64px}
+  .filters{overflow-x:auto;flex-wrap:nowrap;padding-bottom:4px;-webkit-overflow-scrolling:touch}
+  /* 日历手机端：保持 7 列周结构，整块横向滚动（align-items:flex-start 会让
+     cal-wrap 收缩适配内容被日格子撑到 2400px+，必须改 stretch + 定宽） */
+  .cal-layout{align-items:stretch}
+  .cal-layout .cal-wrap{width:100%;max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .cal-grid{grid-template-columns:repeat(7,minmax(76px,1fr));min-width:602px}
+  .cal-head{flex-wrap:wrap;gap:8px}
   .nc-cover{aspect-ratio:1/1}
   .c-foot{flex-wrap:wrap}
   .mini.ghost{margin-left:0}
+  /* 脚本工坊手机端：允许网格列收缩；pre-wrap 脚本里的长链接可断行；行内按钮换行 */
+  .ks-cols>*{min-width:0}
+  .ks-script{overflow-wrap:anywhere}
+  .ks-mrow,.ks-stlabel{flex-wrap:wrap}
+  /* 手机访问卡片纵向排布 */
+  .lan-card{flex-direction:column;text-align:center}
+  .lan-info{align-items:center}
+}
+/* 触屏设备：文本输入控件 ≥16px，防止 iOS Safari 聚焦时自动放大页面（须 !important 压过各组件字号） */
+@media (pointer:coarse){
+  input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]),textarea,select{font-size:16px!important}
+}
+/* iOS「添加到主屏幕」独立运行时，底部避开 Home 指示条 */
+@supports (padding: max(0px)){
+  .wrap{padding-bottom:max(56px, calc(env(safe-area-inset-bottom) + 56px))}
+  .modal-mask{padding:max(20px, calc(env(safe-area-inset-top) + 20px)) 16px max(20px, calc(env(safe-area-inset-bottom) + 20px))}
 }
 </style>
 </head>
@@ -1405,6 +1446,10 @@ textarea.ks-ks::placeholder{color:var(--ink-3)}
       <div class="sb-item" onclick="event.stopPropagation();openThemeModal()" title="切换外观主题">
         <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3a9 9 0 109 9c0-.46-.04-.92-.11-1.36A5.39 5.39 0 0112 13.5a5.39 5.39 0 01-3.89-1.86A9 9 0 0112 3z"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/><circle cx="19" cy="10" r="1" fill="currentColor" stroke="none"/></svg></span>
         <span class="txt">外观主题</span><span style="display:inline-flex;gap:3px;flex-shrink:0" id="sbThemeDots"></span>
+      </div>
+      <div class="sb-item" onclick="event.stopPropagation();openLanModal()" title="手机访问">
+        <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18.5h2"/></svg></span>
+        <span class="txt">手机访问</span>
       </div>
       <div class="sb-item" onclick="event.stopPropagation();openSettings()" title="AI 模型配置">
         <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></span>
@@ -2234,6 +2279,20 @@ textarea.ks-ks::placeholder{color:var(--ink-3)}
   </div>
 </div>
 
+<!-- 手机访问弹层（局域网扫码，body 级任何视图都能弹） -->
+<div class="modal-mask" id="lanModal" onclick="closeLanModal(event)">
+  <div class="modal" onclick="event.stopPropagation()" style="max-width:440px">
+    <div class="modal-head">
+      <div><div class="modal-eyebrow">📱 手机访问</div><div class="modal-title">手机扫码，随时随地用</div></div>
+      <button class="modal-close" onclick="closeLanModal()">✕</button>
+    </div>
+    <div class="modal-sub">手机和这台电脑连<strong>同一个 WiFi</strong>，扫下方二维码即可打开工作台（已自动授权）</div>
+    <div class="modal-body" id="lanBody">
+      <div style="text-align:center;color:var(--ink-3);padding:24px 0;font-size:13px">正在获取访问地址…</div>
+    </div>
+  </div>
+</div>
+
 <!-- 素材关联选题弹窗 -->
 <div class="modal-mask" id="linkMatModal" onclick="closeLinkMat(event)">
   <div class="modal" onclick="event.stopPropagation()" style="max-width:460px">
@@ -2401,6 +2460,40 @@ textarea.ks-ks::placeholder{color:var(--ink-3)}
 <div id="toast" style="position:fixed;left:50%;bottom:32px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:11px 22px;border-radius:18px;font-size:13px;font-weight:600;opacity:0;pointer-events:none;transition:all .3s var(--ease);z-index:99;box-shadow:var(--shadow-l);max-width:min(86vw,560px);white-space:normal;text-align:center;line-height:1.6;word-break:break-word"></div>
 
 <script>
+/* ===== 手机端（局域网）授权兜底 =====
+   服务端用 cookie 门禁；若手机端 cookie 失效（如更换设备/清 cookie），
+   所有 API 会 401 WB_LAN_TOKEN_REQUIRED。这里统一拦截并给出易懂的引导，
+   避免各功能各自报错让小白摸不着头脑。 */
+(function(){
+  var _fetch=window.fetch.bind(window);
+  window.fetch=function(input,init){
+    return _fetch(input,init).then(function(res){
+      if(res.status===401){
+        try{
+          res.clone().json().then(function(j){
+            if(j&&j.error==='WB_LAN_TOKEN_REQUIRED')lanShowReauth();
+          }).catch(function(){});
+        }catch(e){}
+      }
+      return res;
+    });
+  };
+  window.lanShowReauth=function(){
+    var box=document.getElementById('lanReauth');
+    if(box)return;
+    box=document.createElement('div');
+    box.id='lanReauth';
+    box.className='modal-mask open';
+    box.innerHTML='<div class="modal" onclick="event.stopPropagation()" style="max-width:400px">'
+      +'<div class="modal-head"><div><div class="modal-eyebrow">🔒 授权已失效</div><div class="modal-title">需要重新扫码进入</div></div>'
+      +'<button class="modal-close" onclick="document.getElementById(\'lanReauth\').remove()">✕</button></div>'
+      +'<div class="modal-body" style="font-size:13px;color:var(--ink-2);line-height:1.9">'
+      +'<div>1. 回到<strong>电脑端</strong>工作台，点「手机访问」</div>'
+      +'<div>2. 用手机<strong>重新扫码</strong>（需和电脑同一 WiFi）</div>'
+      +'<div>3. 打开后可重新「添加到主屏幕」</div></div></div>';
+    document.body.appendChild(box);
+  };
+})();
 /* ===== 工具 ===== */
 const $=s=>document.querySelector(s),$$=s=>Array.from(document.querySelectorAll(s));
 let toastTimer;
@@ -5640,6 +5733,54 @@ async function openSettings(){
   }catch(e){}
 }
 function closeSettings(e){if(e&&e.target!==e.currentTarget)return;$('#configModal').classList.remove('open');}
+/* ===== 手机访问（局域网）弹窗 ===== */
+let _lanUrls=[];
+async function openLanModal(){
+  document.body.appendChild($('#lanModal')); // 确保脱离 view section
+  $('#lanModal').classList.add('open');
+  const body=$('#lanBody');
+  body.innerHTML='<div style="text-align:center;color:var(--ink-3);padding:24px 0;font-size:13px">正在获取访问地址…</div>';
+  try{
+    const j=await fetch('/api/lan-info').then(r=>r.json());
+    if(!j.success)throw new Error(j.error||'获取失败');
+    const d=j.data;
+    _lanUrls=d.addresses.map(a=>a.url);
+    if(!d.hasLan){
+      body.innerHTML='<div style="font-size:13px;color:var(--ink-2);line-height:1.9;padding:6px 2px">'
+        +'这台电脑当前<strong>没有局域网地址</strong>（可能没连 WiFi/网线）。<br>'
+        +'把电脑连上和手机相同的 WiFi 后，关掉本窗口重新点「手机访问」即可。</div>';
+      return;
+    }
+    body.innerHTML=d.addresses.map((a,i)=>'<div class="lan-card">'
+      +'<img class="lan-qr" src="'+a.qr+'" alt="手机访问二维码">'
+      +'<div class="lan-info">'
+      +'<div class="lan-url">'+a.url.split('?')[0]+'</div>'
+      +'<div class="lan-net">'+a.name+' · 端口 '+d.port+'</div>'
+      +'<button class="btn btn-ghost" style="height:36px;border:1px solid var(--line)" onclick="copyLanUrl('+i+')">复制链接</button>'
+      +'</div></div>').join('')
+      +'<div class="lan-steps">'
+      +'<div><b>1.</b> 手机连和电脑<strong>相同的 WiFi</strong></div>'
+      +'<div><b>2.</b> 用相机 / 微信「扫一扫」扫上方二维码</div>'
+      +'<div><b>3.</b> 打开后建议「添加到主屏幕」，像 App 一样用 📲</div>'
+      +'</div>'
+      +'<div class="lan-note">小提示：电脑换了 WiFi 或重启后地址可能变化，届时重新扫码即可；数据存在各自设备的浏览器里，电脑和手机不互通。</div>';
+  }catch(e){
+    body.innerHTML='<div style="font-size:13px;color:var(--coral-d);padding:12px 2px">获取访问地址失败：'+(e.message||e)+'</div>';
+  }
+}
+function closeLanModal(e){if(e&&e.target!==e.currentTarget)return;$('#lanModal').classList.remove('open');}
+function copyLanUrl(i){
+  const u=_lanUrls[i];if(!u)return;
+  const done=()=>toast('链接已复制，发给手机打开即可');
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(u).then(done).catch(()=>fallbackCopyLan(u,done));}
+  else fallbackCopyLan(u,done);
+}
+function fallbackCopyLan(u,done){
+  const ta=document.createElement('textarea');ta.value=u;ta.style.position='fixed';ta.style.opacity='0';
+  document.body.appendChild(ta);ta.select();
+  try{document.execCommand('copy');done();}catch(e){toast('复制失败，请手动记录地址');}
+  ta.remove();
+}
 async function cfgTest(){
   const btn=$('#cfgTestBtn'),st=$('#cfgStatus');
   const provider=cfgProv(),apiKey=$('#cfgKey').value.trim(),baseUrl=$('#cfgUrl').value.trim();
