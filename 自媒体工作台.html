@@ -1293,6 +1293,22 @@ textarea.ks-ks::placeholder{color:var(--ink-3)}
 .lan-steps b{color:var(--coral-d)}
 .lan-note{font-size:11.5px;color:var(--ink-3);line-height:1.7;margin-top:8px;background:var(--cream-2);border-radius:10px;padding:8px 12px}
 
+/* ===== 手机端抽屉导航：汉堡按钮 / 遮罩 / 抽屉内关闭 ===== */
+.sb-burger{display:none;position:fixed;top:calc(14px + env(safe-area-inset-top));left:14px;z-index:90;
+  width:42px;height:42px;border-radius:13px;border:1px solid var(--line);
+  background:rgba(255,252,246,.92);backdrop-filter:blur(8px);
+  box-shadow:0 3px 12px rgba(58,50,24,.10);flex-direction:column;align-items:center;justify-content:center;
+  gap:4px;cursor:pointer;transition:transform .15s var(--ease)}
+.sb-burger:active{transform:scale(.92)}
+.sb-burger span{width:17px;height:2px;border-radius:2px;background:var(--coral-d)}
+.sb-backdrop{display:none;position:fixed;inset:0;background:rgba(42,32,24,.42);z-index:115;
+  opacity:0;pointer-events:none;transition:opacity .3s;-webkit-tap-highlight-color:transparent}
+.sb-backdrop.show{opacity:1;pointer-events:auto}
+.sb-close{display:none;flex:none;width:30px;height:30px;margin-left:auto;border-radius:10px;border:none;
+  background:var(--cream-2);color:var(--ink-2);font-size:13px;align-items:center;justify-content:center;cursor:pointer}
+.sb-close:active{background:var(--cream-3)}
+body.sb-lock{overflow:hidden}
+
 /* ===== 响应式 ===== */
 @media (max-width:1024px){
   :root{--sb-w:78px}
@@ -1320,16 +1336,26 @@ textarea.ks-ks::placeholder{color:var(--ink-3)}
   .hit-metrics{grid-template-columns:repeat(2,1fr)}
 }
 @media (max-width:680px){
-  .app{flex-direction:column}
-  .sidebar{position:sticky;top:0;height:auto;flex-direction:row;width:100%;min-width:0;padding:10px 12px;gap:0;border-right:none;border-bottom:1px solid var(--line);overflow-x:auto;background:linear-gradient(90deg,#FCF6EC,#F5EBDA);z-index:50}
-  .sb-brand{padding:0;flex-shrink:0}
-  .sb-nav{flex-direction:row;padding:0 4px;gap:2px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
-  .sb-nav::-webkit-scrollbar{display:none}
-  .sb-item{padding:8px 10px;flex-shrink:0}
-  /* 手机端顶栏显示文字标签（覆盖 ≤1024 的纯图标模式，小白看得懂） */
-  .sb-item .txt{display:inline;font-size:12px;font-weight:600}
-  .sb-item{gap:6px}
-  .wrap{padding:20px 16px 56px}
+  /* 手机端：左侧抽屉导航（覆盖 ≤1024 图标栏模式） */
+  .sidebar{position:fixed;left:0;top:0;bottom:0;height:100dvh;width:266px;min-width:0;
+    flex-direction:column;padding:18px 13px 14px;gap:6px;
+    transform:translateX(-106%);transition:transform .32s var(--ease);
+    z-index:120;box-shadow:14px 0 44px rgba(58,50,24,.18);overflow-y:auto;-webkit-overflow-scrolling:touch;
+    background:linear-gradient(180deg,#FCF6EC,#F5EBDA);border-right:1px solid var(--line-2)}
+  .sidebar.open{transform:translateX(0)}
+  .sb-brand{justify-content:flex-start;padding:2px 8px 12px;border-bottom:1px dashed var(--line-2)}
+  .sb-brand .bt{display:block}
+  .sb-close{display:flex}
+  .sb-lib{display:none}
+  .sb-cat{display:flex}
+  .sb-item{justify-content:flex-start;gap:11px;padding:10px 12px;flex-shrink:0}
+  .sb-item .txt{display:inline;font-size:13.5px;font-weight:600}
+  .sb-item .badge{display:inline-flex}
+  .sb-item.active{box-shadow:var(--shadow-s)}
+  .sb-item.active::before{display:block}
+  .sb-mascot{display:block;margin-top:auto}
+  .sb-burger{display:flex}
+  .wrap{padding:70px 16px 56px}
   .ph-title,.hero-line{font-size:22px}
   .ph-row{flex-direction:column;align-items:flex-start;gap:14px}
   .kpis{grid-template-columns:repeat(2,1fr)}
@@ -1373,6 +1399,9 @@ textarea.ks-ks::placeholder{color:var(--ink-3)}
 })();
 </script>
 <div class="app">
+  <!-- 手机端抽屉导航：汉堡按钮 + 遮罩（桌面端不显示） -->
+  <button class="sb-burger" onclick="toggleSidebar()" aria-label="打开导航"><span></span><span></span><span></span></button>
+  <div class="sb-backdrop" onclick="toggleSidebar(false)"></div>
 
   <!-- ============ 侧边栏 ============ -->
   <aside class="sidebar">
@@ -1382,6 +1411,7 @@ textarea.ks-ks::placeholder{color:var(--ink-3)}
         <div class="sb-brand-name">WorkBuddy</div>
         <div class="sb-brand-sub">自媒体创作工作台</div>
       </div>
+      <button class="sb-close" onclick="toggleSidebar(false)" aria-label="关闭导航">✕</button>
     </div>
 
     <div class="acc-switch" id="accSwitch" onclick="openAccModal()" title="切换 / 管理账号">
@@ -3205,6 +3235,8 @@ function switchView(v){
   window.scrollTo({top:0,behavior:'instant'});
 }
 $('#sbNav').addEventListener('click',e=>{const it=e.target.closest('.sb-item');if(!it||!it.dataset.view)return;switchView(it.dataset.view);});
+/* 手机端抽屉：点任何侧边栏菜单项（含主题/设置/备份/手机访问）后自动收起 */
+$('.sidebar').addEventListener('click',e=>{if(e.target.closest('.sb-item'))toggleSidebar(false);});
 
 /* ===== 今日灵感 ===== */
 const PF_META={bili:{name:'B站',color:'#f88eaa',cc:'var(--rose)'},web:{name:'全网',color:'#3a5a40',cc:'var(--matcha)'},bing:{name:'全网',color:'#0c8484',cc:'var(--lav)'},xhs:{name:'小红书',color:'#ff5c7a',cc:'var(--p-xhs)'},x:{name:'X',color:'#1d9bf0',cc:'var(--coral)'},douyin:{name:'抖音',color:'#2a2a2a',cc:'var(--ink-2)'},weixin:{name:'微信',color:'#07c160',cc:'var(--matcha)'},wechat:{name:'微信',color:'#62b870',cc:'var(--matcha)'},ph:{name:'Product Hunt',color:'#da552f',cc:'var(--honey)'},hn:{name:'HackerNews',color:'#ff6600',cc:'var(--coral)'}};
@@ -5733,6 +5765,16 @@ async function openSettings(){
   }catch(e){}
 }
 function closeSettings(e){if(e&&e.target!==e.currentTarget)return;$('#configModal').classList.remove('open');}
+/* ===== 手机端抽屉导航 ===== */
+function toggleSidebar(force){
+  const sb=$('.sidebar'),bd=$('.sb-backdrop');
+  if(!sb||!bd)return;
+  const open=typeof force==='boolean'?force:!sb.classList.contains('open');
+  sb.classList.toggle('open',open);
+  bd.classList.toggle('show',open);
+  document.body.classList.toggle('sb-lock',open);
+}
+window.addEventListener('resize',()=>{if(window.innerWidth>680&&document.body.classList.contains('sb-lock'))toggleSidebar(false);});
 /* ===== 手机访问（局域网）弹窗 ===== */
 let _lanUrls=[];
 async function openLanModal(){
