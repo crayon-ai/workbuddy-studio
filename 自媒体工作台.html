@@ -775,6 +775,7 @@ textarea.ks-ks::placeholder{color:var(--ink-3)}
 .opt-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px;padding-top:16px;border-top:1px dashed var(--line)}
 .opt-field label{font-size:11.5px;font-weight:700;color:var(--ink-2);display:flex;align-items:center;gap:5px;margin-bottom:6px}
 .opt-field label .opt-tag{font-size:10px;font-weight:600;color:var(--ink-3);background:var(--cream-2);padding:1px 8px;border-radius:var(--pill)}
+.opt-field label .opt-tag.req{color:var(--coral-d);background:var(--coral-bg);font-weight:800}
 .opt-input{width:100%;height:38px;border:1.5px solid var(--line);border-radius:10px;padding:0 13px;font-size:12.5px;font-family:inherit;background:var(--paper-2);color:var(--ink);transition:all .2s var(--ease)}
 .opt-input:focus{outline:none;border-color:var(--lav-d);box-shadow:0 0 0 4px var(--lav-bg)}
 .in-actions{display:flex;align-items:center;gap:12px;margin-top:16px}
@@ -1373,7 +1374,7 @@ textarea.ks-ks::placeholder{color:var(--ink-3)}
       </div>
       <div class="sb-item" data-view="script">
         <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></span>
-        <span class="txt">爆款脚本创作</span><span class="badge" id="scriptBadge">0</span>
+        <span class="txt">爆款脚本创作</span><span class="tag-new">新</span><span class="badge" id="scriptBadge">0</span>
       </div>
       <div class="sb-item" data-view="title">
         <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7V4h16v3M9 20h6M12 4v16"/></svg></span>
@@ -1381,7 +1382,7 @@ textarea.ks-ks::placeholder{color:var(--ink-3)}
       </div>
       <div class="sb-item" data-view="precheck">
         <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 11l3 3 8-8"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2h9"/></svg></span>
-        <span class="txt">内容检查</span><span class="tag-new">新</span>
+        <span class="txt">笔记内容检查</span><span class="tag-new">新</span>
       </div>
       <div class="sb-cat c3"><span class="ci"></span><span class="cs">发布复盘</span></div>
       <div class="sb-item" data-view="note">
@@ -1731,8 +1732,7 @@ textarea.ks-ks::placeholder{color:var(--ink-3)}
           <div class="ph-row">
             <div>
               <div class="ph-eyebrow">创作辅助 · 爆款脚本创作</div>
-              <h1 class="ph-title">提取爆款<em>钩子</em>与<em>文案结构</em>，生成你自己的爆款脚本</h1>
-              <div class="ph-sub">把爆款素材的脚本拆解出来 → 填入你的素材/口水话 → 参考它的情绪、结构、爆点，产出一篇属于你自己的内容脚本</div>
+              <h1 class="ph-title">参考<em>爆款素材</em>，提炼你自己的<em>创作脚本</em></h1>
             </div>
           </div>
         </div>
@@ -1840,7 +1840,7 @@ textarea.ks-ks::placeholder{color:var(--ink-3)}
 
         <div class="page-hd">
           <div class="ph-eyebrow lav"><span class="ci" style="width:6px;height:6px;border-radius:2px;background:var(--lav);display:inline-block"></span>创作辅助技能</div>
-          <h1 class="ph-title">内容<em>检查</em></h1>
+          <h1 class="ph-title">笔记内容<em>检查</em></h1>
           <div class="ph-sub">发布前把内容粘进来，AI 按标题、钩子、整体节奏、痛点、情绪、风险合规 6 个维度打分，指出哪里可能有问题、哪里值得优化。</div>
         </div>
 
@@ -1853,7 +1853,7 @@ textarea.ks-ks::placeholder{color:var(--ink-3)}
           <div class="in-body on" id="pcPanePaste">
             <textarea class="content-area" id="pcContent" placeholder="把笔记全文粘进来：图文正文或视频逐字稿都可以。
 
-小技巧：第一行写标题（没有标题也能检查，只是标题维度会跳过）；有目标读者/赛道说明的话，评分会更准。"></textarea>
+小技巧：标题在下方输入框填写（必填）；正文粘图文正文或视频逐字稿都可以。"></textarea>
             <div class="in-foot">
               <span class="char-count" id="pcCharCount">0 字</span>
               <div class="samples">
@@ -1880,12 +1880,8 @@ textarea.ks-ks::placeholder{color:var(--ink-3)}
 
           <div class="opt-row">
             <div class="opt-field">
-              <label>笔记标题 <span class="opt-tag">选填</span></label>
-              <input class="opt-input" id="pcTitle" placeholder="没填就从内容第一行识别；纯逐字稿可留空">
-            </div>
-            <div class="opt-field">
-              <label>目标读者 / 赛道 <span class="opt-tag">选填</span></label>
-              <input class="opt-input" id="pcReader" placeholder="如：职场新手、母婴赛道——填了评分更准">
+              <label>笔记标题 <span class="opt-tag req">必填</span></label>
+              <input class="opt-input" id="pcTitle" placeholder="给笔记起个标题，标题维度按它评分">
             </div>
           </div>
 
@@ -4223,7 +4219,6 @@ function pcUpdateCount(){
 function pcLoadSample(k){
   $('#pcContent').value=PC_SAMPLES[k].content;
   $('#pcTitle').value=PC_SAMPLES[k].content.split('\n')[0];
-  $('#pcReader').value='';
   pcUpdateCount();
   toast('已加载示例：'+PC_SAMPLES[k].label+'，点「开始自检」看报告');
 }
@@ -4254,6 +4249,8 @@ function pcStart(){
   const pasteMode=$('#pcTabPaste').classList.contains('on');
   const content=(pasteMode?$('#pcContent').value:(_pcFileContent||'')).trim();
   if(!content){toast(pasteMode?'先粘贴内容，或加载一个示例':'先选择一个 .txt / .md 文件');return;}
+  const title=($('#pcTitle').value||'').trim();
+  if(!title){toast('先填笔记标题（必填）');$('#pcTitle').focus();return;}
   if(content.replace(/\s/g,'').length<30){toast('内容太短（至少 30 字），无法有效评分');return;}
   _pcRunning=true;
   $('#pcStartBtn').disabled=true;$('#pcStartTxt').textContent='自检中…';
@@ -4267,7 +4264,7 @@ function pcStart(){
       const cur=$('#pcRt'+i);if(cur)cur.classList.add('doing');
     },300+i*1400);
   });
-  fetch('/api/precheck',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({content,title:($('#pcTitle').value||'').trim()||undefined,reader:($('#pcReader').value||'').trim()||undefined,accountId:CUR_ACC})}).then(r=>r.json()).then(j=>{
+  fetch('/api/precheck',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({content,title,accountId:CUR_ACC})}).then(r=>r.json()).then(j=>{
     if(!j.success){pcFail(j.error||'提交失败');return;}
     _pcTask={taskId:j.data.taskId,startedAt:Date.now()};
     pcSaveTask();
