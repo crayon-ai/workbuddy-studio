@@ -1082,9 +1082,13 @@ textarea.ks-ks::placeholder{color:var(--ink-3)}
 .tp-grp-t{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .tp-grp-no{font-size:10.5px;color:var(--ink-3);font-weight:600;flex-shrink:0}
 .tp-btns{display:flex;flex-wrap:wrap;gap:7px}
-.tp-btn{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;padding:6px 12px;border-radius:var(--pill);background:var(--paper);color:var(--ink);border:1.5px dashed var(--line-2);cursor:grab;transition:all .18s var(--ease);user-select:none}
+.tp-btn{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;padding:6px 12px;border-radius:var(--pill);background:var(--paper);color:var(--ink);border:1.5px dashed var(--line-2);cursor:grab;transition:all .18s var(--ease);user-select:none;-webkit-touch-callout:none}
 .tp-btn:hover{border-color:var(--coral);color:var(--coral-d);background:var(--coral-bg);transform:translateY(-1px)}
 .tp-btn:active{cursor:grabbing;transform:scale(.96)}
+/* 触屏拖拽的跟随「拖影」（手机端长按阶段卡片排期用） */
+.tp-btn.tp-ghost{position:fixed;left:0;top:0;z-index:210;pointer-events:none;margin:0;cursor:grabbing;
+  transform:scale(1.07) rotate(-1.5deg);box-shadow:0 12px 30px rgba(58,50,24,.28);
+  border-style:solid;border-color:var(--coral);color:var(--coral-d);background:var(--paper);opacity:.96}
 .tp-btn svg{width:12px;height:12px;opacity:.55}
 .tp-empty{font-size:11.5px;color:var(--ink-3);padding:22px;text-align:center;background:var(--cream-2);border-radius:var(--radius-s)}
 .cal-day.dragover{border:2px dashed var(--coral)!important;background:var(--coral-bg)!important;transform:scale(1.05)}
@@ -5055,7 +5059,7 @@ function renderCalGrid(){
     const isToday=ds===today;
     const tasks=byDay[String(d).padStart(2,'0')]||[];
     const tels=tasks.map(taskEl).join('');
-    html+=`<div class="cal-day ${isToday?'today':''}" ondragover="calOver(event)" ondragleave="calLeave(event)" ondrop="calDrop(event,'${ds}')" onclick="toast('${m+1} 月 ${d} 号：${tasks.length?tasks.length+' 项创作任务':'暂无安排'}')"><div class="dn ${isToday?'today-mark':''}">${d}</div>${tels}</div>`;
+    html+=`<div class="cal-day ${isToday?'today':''}" data-ds="${ds}" ondragover="calOver(event)" ondragleave="calLeave(event)" ondrop="calDrop(event,'${ds}')" onclick="toast('${m+1} 月 ${d} 号：${tasks.length?tasks.length+' 项创作任务':'暂无安排'}')"><div class="dn ${isToday?'today-mark':''}">${d}</div>${tels}</div>`;
   }
   $('#calGrid').innerHTML=html;
   const mt=$('#calMonth');if(mt)mt.textContent=y+' 年 '+(m+1)+' 月 ';
@@ -5071,15 +5075,74 @@ function renderCal(){renderCalPool();renderCalGrid();}
 function dragTask(e){e.dataTransfer.setData('text/task',e.currentTarget.dataset.task);e.currentTarget.style.opacity='.5';}
 function calOver(e){e.preventDefault();e.currentTarget.classList.add('dragover');}
 function calLeave(e){e.currentTarget.classList.remove('dragover');}
-function calDrop(e,ds){
-  e.preventDefault();e.currentTarget.classList.remove('dragover');
-  const tk=e.dataTransfer.getData('text/task');if(!tk)return;
-  // 顺序守卫：后面阶段的日期不得早于前面阶段，逆序拒收并提醒
+/** 排期赋值（桌面拖放与手机触屏拖拽共用）：顺序守卫 + 写入 + 重渲染 */
+function assignTaskToDate(tk,ds){
   const seg=tk.split('-');const si=parseInt(seg[seg.length-1],10);
   const t=TOPICS.find(x=>x.id===seg.slice(0,-1).join('-'));
   if(t){const g=guardPlanDate(t,si,ds);if(!g.ok){toast(g.msg);renderCal();return;}}
   CAL_TASKS[tk]=ds;saveState();renderCal();const p=ds.split('-');toast('已排期到 '+Number(p[1])+' 月 '+Number(p[2])+' 号 ✅');
 }
+function calDrop(e,ds){
+  e.preventDefault();e.currentTarget.classList.remove('dragover');
+  const tk=e.dataTransfer.getData('text/task');if(!tk)return;
+  assignTaskToDate(tk,ds);
+}
+/* ===== 触屏拖拽排期（手机端：长按阶段卡片 → 拖到日历格子 → 松手） =====
+   HTML5 drag/drop 在触屏上不触发，用 Pointer Events 自实现：
+   - 长按 260ms 激活（生成「拖影」跟随手指，上移 42px 避免被手指挡住）
+   - 未激活就移动 >8px 视为滚动意图，放弃拖拽（页面正常滚）
+   - 激活后 touchmove preventDefault 锁滚动（iOS 必须）
+   - 落点用 elementFromPoint 命中 .cal-day（复用 .dragover 高亮） */
+let _touchDrag=null,_tapHintAt=0;
+document.addEventListener('pointerdown',e=>{
+  if(e.pointerType==='mouse')return; /* 桌面走原生 HTML5 拖放 */
+  const btn=e.target.closest('.tp-btn');if(!btn)return;
+  const r=btn.getBoundingClientRect();
+  _touchDrag={tk:btn.dataset.task,btn,startX:e.clientX,startY:e.clientY,offX:e.clientX-r.left,offY:e.clientY-r.top,timer:null,active:false,ghost:null,day:null};
+  _touchDrag.timer=setTimeout(()=>{if(_touchDrag)startTouchDrag(e);},260);
+},{passive:true});
+function startTouchDrag(e){
+  const d=_touchDrag;d.active=true;
+  const g=d.btn.cloneNode(true);g.classList.add('tp-ghost');g.style.width=d.btn.offsetWidth+'px';
+  document.body.appendChild(g);d.ghost=g;
+  d.btn.style.opacity='.4';
+  try{navigator.vibrate&&navigator.vibrate(12)}catch(_){}
+  moveTouchDrag(e);
+}
+function moveTouchDrag(e){
+  const d=_touchDrag;if(!d||!d.active)return;
+  const x=e.clientX-d.offX,y=e.clientY-d.offY-42;
+  d.ghost.style.left=x+'px';d.ghost.style.top=y+'px';
+  const el=document.elementFromPoint(x+d.ghost.offsetWidth/2,y+d.ghost.offsetHeight/2);
+  const day=el&&el.closest?el.closest('.cal-day'):null;
+  if(d.day&&d.day!==day)d.day.classList.remove('dragover');
+  if(day&&day!==d.day)day.classList.add('dragover');
+  d.day=day;
+}
+document.addEventListener('pointermove',e=>{
+  const d=_touchDrag;if(!d)return;
+  if(!d.active){
+    if(Math.abs(e.clientX-d.startX)>8||Math.abs(e.clientY-d.startY)>8)clearTimeout(d.timer);
+    return;
+  }
+  moveTouchDrag(e);
+},{passive:true});
+function endTouchDrag(){
+  const d=_touchDrag;if(!d)return;_touchDrag=null;
+  clearTimeout(d.timer);
+  if(d.ghost)d.ghost.remove();
+  d.btn.style.opacity='';
+  if(d.day){
+    d.day.classList.remove('dragover');
+    if(d.day.dataset.ds)assignTaskToDate(d.tk,d.day.dataset.ds);
+  }else if(!d.active){ /* 纯点击：给出操作提示（限频） */
+    const now=Date.now();
+    if(now-_tapHintAt>6000){_tapHintAt=now;toast('手机上排期：长按住卡片，拖到日历格子上 📅');}
+  }
+}
+document.addEventListener('pointerup',endTouchDrag,{passive:true});
+document.addEventListener('pointercancel',endTouchDrag,{passive:true});
+document.addEventListener('touchmove',e=>{if(_touchDrag&&_touchDrag.active)e.preventDefault();},{passive:false});
 function removeTask(tk){delete CAL_TASKS[tk];saveState();renderCal();toast('已移出排期');}
 /* 转选题录入 */
 function openTopicForm(idx,candIdx){
