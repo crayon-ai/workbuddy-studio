@@ -55,3 +55,6 @@ data/lan-token.txt
 
 # vim 交换文件
 *.swp
+
+# 数据同步档（用户数据，每人不同，不入库）
+data/sync.json*

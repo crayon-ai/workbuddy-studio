@@ -42,6 +42,6 @@ describe("teeToFile", () => {
 
 describe("logFilePath", () => {
   it("默认指向项目根 logs/server.log", () => {
-    expect(logFilePath()).toMatch(/WorkBuddy\/logs\/server\.log$/);
+    expect(logFilePath()).toMatch(/logs[/\\]server\.log$/);
   });
 });

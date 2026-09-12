@@ -1623,7 +1623,7 @@ body.sb-lock{overflow:hidden}
             <div><div class="modal-eyebrow">个人资料</div><div class="modal-title">设置头像与昵称</div></div>
             <button class="modal-close" onclick="closeProfile()">✕</button>
           </div>
-          <div class="modal-sub">仅保存在本地浏览器（localStorage），换设备需重新设置</div>
+          <div class="modal-sub">保存在你自己的电脑上（随账号自动同步到手机端）</div>
           <div class="modal-body">
             <div style="display:flex;flex-direction:column;align-items:center;gap:12px;margin:4px 0 8px">
               <img id="profileAvatarPrev" src="assets/avatar.png" alt="头像预览" style="width:96px;height:96px;border-radius:50%;object-fit:cover;border:3px solid var(--cream-3);background:var(--cream-2)">
@@ -2189,7 +2189,7 @@ body.sb-lock{overflow:hidden}
       <div><div class="modal-eyebrow">💾 数据备份</div><div class="modal-title">数据导出与导入</div></div>
       <button class="modal-close" onclick="closeBackupModal()">✕</button>
     </div>
-    <div class="modal-sub">工作台数据保存在浏览器本地，清缓存会丢失。定期导出备份（含全部账号），需要时一键恢复</div>
+    <div class="modal-sub">数据自动保存在这台电脑上（清浏览器缓存不丢）。导出备份文件可留底或迁移到别的电脑，需要时一键恢复</div>
     <div class="modal-body">
       <div class="backup-box">
         <div style="flex:1">
@@ -2547,10 +2547,230 @@ let CUR_ACC=null,ACCOUNTS=[];
 /** 账号内命名空间 key：wb:<账号id>:<suffix> */
 function ak(k){return 'wb:'+CUR_ACC+':'+k}
 function lsG(k){try{return localStorage.getItem(ak(k))}catch(e){return null}}
-function lsS(k,v){try{localStorage.setItem(ak(k),v)}catch(e){}}
-function lsD(k){try{localStorage.removeItem(ak(k))}catch(e){}}
+function lsS(k,v){try{localStorage.setItem(ak(k),v)}catch(e){}wbTouchData(k,v)}
+function lsD(k){try{localStorage.removeItem(ak(k))}catch(e){}wbTouchData(k,null)}
 function accById(id){return ACCOUNTS.find(a=>a.id===id)}
-function saveAccounts(){try{localStorage.setItem('wb_accounts',JSON.stringify({currentId:CUR_ACC,accounts:ACCOUNTS}))}catch(e){}}
+function saveAccounts(){try{localStorage.setItem('wb_accounts',JSON.stringify({currentId:CUR_ACC,accounts:ACCOUNTS}))}catch(e){}wbTouchList()}
+/* ===== 数据同步（手机/电脑互通；本机后端 = 唯一真源，localStorage = 缓存/离线兜底） =====
+   写：任何栏目保存后自动防抖推送（800ms）；读：启动拉取水合、回到页面时拉取刷新。
+   后端不可达时静默退回纯本地模式（横幅提示），恢复后自动补推。
+   冲突策略：栏目级后到推送覆盖（单一用户场景下「最后用的设备」即最新意图）；
+   账号清单按 id 并集；删除账号走墓碑，迟到的旧数据不会复活它。 */
+const WB_SYNC_ON=(location.protocol==='http:'||location.protocol==='https:');
+const WB_SYNC_GLOBAL_KEYS=['wb_theme','wb_prechecks','wb_pc_task'];
+const WB_ACC_KEY_RE=/^wb:([A-Za-z0-9_-]{1,64}):([a-z0-9_]{1,32})$/;
+let _wbDirty={},_wbTombs={},_wbBase=null,_wbRev=-1;
+let _wbHydrating=false,_wbFlushTimer=null,_wbOfflineCnt=0,_wbPushing=false;
+function wbAccMeta(a){return {id:a.id,name:a.name,plat:a.plat,emoji:a.emoji,bg:a.bg,createdAt:a.createdAt}}
+function wbScheduleFlush(){
+  if(!WB_SYNC_ON)return;
+  if(_wbFlushTimer)clearTimeout(_wbFlushTimer);
+  _wbFlushTimer=setTimeout(wbFlush,800);
+}
+function wbTouchData(suf,val){
+  if(!WB_SYNC_ON||_wbHydrating||!CUR_ACC)return;
+  _wbDirty['a:'+CUR_ACC+':'+suf]={kind:'suffix',accountId:CUR_ACC,suffix:suf,value:val};
+  wbScheduleFlush();
+}
+function wbTouchGlobal(key,val){
+  if(!WB_SYNC_ON||_wbHydrating)return;
+  _wbDirty['g:'+key]={kind:'global',key,value:val};
+  wbScheduleFlush();
+}
+function wbTouchMeta(acc){
+  if(!WB_SYNC_ON||_wbHydrating||!acc||!acc.id)return;
+  _wbDirty['m:'+acc.id]={kind:'meta',accountId:acc.id,account:wbAccMeta(acc)};
+  wbScheduleFlush();
+}
+function wbTouchTomb(accId){
+  if(!WB_SYNC_ON||!accId)return;
+  _wbTombs[accId]=Date.now();
+  for(const k of Object.keys(_wbDirty))if(_wbDirty[k]&&_wbDirty[k].accountId===accId)delete _wbDirty[k];
+  wbScheduleFlush();
+}
+function wbTouchList(){
+  if(!WB_SYNC_ON||_wbHydrating)return;
+  _wbDirty['l:']={kind:'list',accounts:ACCOUNTS.map(wbAccMeta),currentId:CUR_ACC};
+  wbScheduleFlush();
+}
+function wbOffline(on){
+  _wbOfflineCnt=on?_wbOfflineCnt+1:0;
+  const b=document.getElementById('wbSyncBanner');
+  if(!b)return;
+  b.style.display=(_wbOfflineCnt>=2)?'block':'none';
+}
+/** 把服务端文档整体应用到本地（localStorage + 内存清单 + 可选重渲染） */
+function wbApply(doc,opts){
+  if(!doc||!Array.isArray(doc.accounts))return;
+  opts=opts||{};
+  _wbHydrating=true;
+  try{
+    const keep={};
+    for(const a of doc.accounts){
+      const d=(a&&a.data)||{};
+      for(const suf of Object.keys(d))keep['wb:'+a.id+':'+suf]=d[suf];
+    }
+    const junk=[];
+    for(let i=0;i<localStorage.length;i++){
+      const k=localStorage.key(i);
+      if(k&&WB_ACC_KEY_RE.test(k)&&!(k in keep))junk.push(k); // 只清理格式合法的账号键，墓碑账号的残留一并清掉
+    }
+    junk.forEach(k=>{try{localStorage.removeItem(k)}catch(e){}});
+    for(const kv of Object.entries(keep)){try{localStorage.setItem(kv[0],kv[1])}catch(e){}}
+    try{
+      localStorage.setItem('wb_accounts',JSON.stringify({
+        currentId:doc.currentId||(doc.accounts[0]&&doc.accounts[0].id),
+        accounts:doc.accounts.map(wbAccMeta)
+      }))
+    }catch(e){}
+    for(const k of WB_SYNC_GLOBAL_KEYS){
+      if(doc.global&&Object.prototype.hasOwnProperty.call(doc.global,k)){try{localStorage.setItem(k,doc.global[k])}catch(e){}}
+      else{try{localStorage.removeItem(k)}catch(e){}}
+    }
+    const metas=doc.accounts.map(wbAccMeta);
+    ACCOUNTS.splice(0,ACCOUNTS.length,...metas);
+    const want=(opts.current&&doc.currentId)?doc.currentId:CUR_ACC;
+    CUR_ACC=accById(want)?want:((doc.currentId&&accById(doc.currentId))?doc.currentId:(ACCOUNTS[0]&&ACCOUNTS[0].id));
+    if(opts.theme&&doc.global&&typeof doc.global.wb_theme==='string')applyTheme(doc.global.wb_theme||'');
+    if(opts.render!==false){reloadAllData();renderAllViews();}
+  }finally{_wbHydrating=false}
+}
+/** 本地是否有值得上行的存量数据（区分「升级迁移」与「全新用户/清过缓存」） */
+function wbLocalMeaningful(){
+  try{
+    if(ACCOUNTS.length>1)return true;
+    for(let i=0;i<localStorage.length;i++){
+      const k=localStorage.key(i);if(!k)continue;
+      if(WB_SYNC_GLOBAL_KEYS.includes(k)&&localStorage.getItem(k))return true;
+      const m=k.match(WB_ACC_KEY_RE);
+      if(m&&m[2]!=='first_use')return true;
+    }
+  }catch(e){}
+  return false;
+}
+function wbCollectAllChanges(){
+  const changes=[];
+  for(const a of ACCOUNTS)changes.push({kind:'meta',accountId:a.id,account:wbAccMeta(a)});
+  changes.push({kind:'list',accounts:ACCOUNTS.map(wbAccMeta),currentId:CUR_ACC});
+  for(let i=0;i<localStorage.length;i++){
+    const k=localStorage.key(i);if(!k)continue;
+    const m=k.match(WB_ACC_KEY_RE);if(!m)continue;
+    const v=localStorage.getItem(k);if(v==null)continue;
+    changes.push({kind:'suffix',accountId:m[1],suffix:m[2],value:v});
+  }
+  for(const g of WB_SYNC_GLOBAL_KEYS){const v=localStorage.getItem(g);if(v!=null)changes.push({kind:'global',key:g,value:v})}
+  return changes;
+}
+/** 整体重写本地数据后（导入备份）调用：把新数据全部标脏上行，被移除的账号打墓碑 */
+function wbMarkAllDirty(oldAccs){
+  if(!WB_SYNC_ON)return;
+  let nowList=[];
+  try{const s=JSON.parse(localStorage.getItem('wb_accounts')||'{}');if(Array.isArray(s.accounts))nowList=s.accounts}catch(e){}
+  const nowIds=new Set(nowList.map(a=>a&&a.id));
+  for(const a of (oldAccs||[]))if(a&&a.id&&!nowIds.has(a.id))wbTouchTomb(a.id);
+  for(const a of nowList)if(a&&a.id)wbTouchMeta(a);
+  _wbDirty['l:']={kind:'list',accounts:nowList.filter(a=>a&&a.id).map(wbAccMeta),currentId:(CUR_ACC&&nowIds.has(CUR_ACC))?CUR_ACC:(nowList[0]&&nowList[0].id)};
+  for(let i=0;i<localStorage.length;i++){
+    const k=localStorage.key(i);
+    const m=k&&k.match(WB_ACC_KEY_RE);if(!m)continue;
+    const v=localStorage.getItem(k);if(v==null)continue;
+    withAcc(m[1],function(){wbTouchData(m[2],v)});
+  }
+  for(const g of WB_SYNC_GLOBAL_KEYS){const v=localStorage.getItem(g);if(v!=null)wbTouchGlobal(g,v)}
+  wbScheduleFlush();
+}
+/** 首次接入：服务端为空或本端未采纳过 → 把本地存量整体上行（他端独有数据由并集保留） */
+async function wbAdopt(atBoot){
+  const r=await fetch('/api/sync');
+  const j=await r.json();
+  if(!j||!j.success)throw new Error('拉取失败');
+  wbOffline(false);
+  let doc=j.data;
+  const adopted=!!localStorage.getItem('wb_sync_adopted');
+  if((doc.rev===0||!adopted)&&wbLocalMeaningful()){
+    const push=await fetch('/api/sync',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({changes:wbCollectAllChanges(),tombs:{}})});
+    const pj=await push.json();
+    if(pj&&pj.success){doc=pj.data;_wbDirty={};_wbTombs={};}
+  }
+  try{localStorage.setItem('wb_sync_adopted','1')}catch(e){}
+  _wbBase=doc;_wbRev=doc.rev;
+  if(doc.rev>0)wbApply(doc,{current:true,theme:true,render:!atBoot});
+}
+/** 启动同步（带 1.5s 超时保护：拉不动就先用本地渲染，后台再重试采纳） */
+async function wbSyncBoot(){
+  if(!WB_SYNC_ON)return;
+  try{
+    await Promise.race([wbAdopt(true),new Promise((_,rej)=>setTimeout(()=>rej(new Error('boot 同步超时')),1500))]);
+  }catch(e){wbOffline(true)}
+}
+async function wbPushNow(){
+  const changes=Object.values(_wbDirty),tombs={..._wbTombs};
+  if(!changes.length&&!Object.keys(tombs).length)return _wbBase;
+  const r=await fetch('/api/sync',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({changes,tombs})});
+  const j=await r.json();
+  if(!j||!j.success)throw new Error((j&&j.error)||'同步服务返回异常');
+  const sent=new Set(changes),sentTomb=new Set(Object.keys(tombs));
+  for(const k of Object.keys(_wbDirty))if(sent.has(_wbDirty[k]))delete _wbDirty[k];
+  for(const a of Object.keys(_wbTombs))if(sentTomb.has(a))delete _wbTombs[a];
+  _wbBase=j.data;_wbRev=j.data.rev;wbOffline(false);
+  return j.data;
+}
+async function wbFlush(){
+  if(!WB_SYNC_ON||_wbPushing)return;
+  _wbPushing=true;
+  try{await wbPushNow()}
+  catch(e){wbOffline(true)}
+  finally{
+    _wbPushing=false;
+    if(Object.keys(_wbDirty).length||Object.keys(_wbTombs).length)wbScheduleFlush(); // 推送期间又有新改动
+  }
+}
+/** 关页面/切后台时的尽力推送（sendBeacon 优先，失败退 keepalive fetch；不更新基线，重开页面以服务端为准） */
+function wbFlushBeacon(){
+  if(!WB_SYNC_ON)return;
+  const changes=Object.values(_wbDirty),tombs={..._wbTombs};
+  if(!changes.length&&!Object.keys(tombs).length)return;
+  const body=JSON.stringify({changes,tombs});
+  try{
+    if(!navigator.sendBeacon('/api/sync',new Blob([body],{type:'application/json'})))
+      fetch('/api/sync',{method:'POST',headers:{'Content-Type':'application/json'},body,keepalive:true}).catch(function(){});
+  }catch(e){}
+}
+/** 回到页面：有未推改动先推再比对，否则直接拉取；他端有更新则整体水合刷新 */
+async function wbPull(){
+  if(!WB_SYNC_ON||document.visibilityState!=='visible')return;
+  try{
+    if(!localStorage.getItem('wb_sync_adopted')){await wbAdopt(false);return}
+    const hasLocal=Object.keys(_wbDirty).length>0||Object.keys(_wbTombs).length>0;
+    if(hasLocal){
+      const before=_wbRev;
+      const doc=await wbPushNow();
+      if(doc&&typeof doc.baseRev==='number'&&doc.baseRev!==before)wbApply(doc,{current:false,theme:false});
+    }else{
+      const r=await fetch('/api/sync');
+      const j=await r.json();
+      if(!j||!j.success)throw new Error('拉取失败');
+      wbOffline(false);
+      if(j.data.rev!==_wbRev){wbApply(j.data,{current:false,theme:false});_wbBase=j.data;_wbRev=j.data.rev}
+    }
+  }catch(e){wbOffline(true)}
+}
+if(WB_SYNC_ON){
+  document.addEventListener('visibilitychange',function(){document.visibilityState==='hidden'?wbFlushBeacon():wbPull()});
+  window.addEventListener('pagehide',wbFlushBeacon);
+  window.addEventListener('focus',function(){wbPull()}); // 窗口可见但失焦（旁边开着电脑端）也能拿到手机端的最新数据
+  setInterval(function(){ // 兜底：可见状态下定期拉取比对 rev（本机请求开销可忽略），兼带离线自愈与补推
+    if(document.visibilityState!=='visible')return;
+    wbPull();
+  },20000);
+  (function(){
+    const b=document.createElement('div');
+    b.id='wbSyncBanner';
+    b.textContent='📴 连不上工作台服务，已临时离线——改动暂存本机，服务恢复后自动同步';
+    b.style.cssText='display:none;position:fixed;left:16px;bottom:16px;z-index:98;max-width:78vw;background:var(--ink);color:#fff;font-size:12.5px;font-weight:600;padding:10px 16px;border-radius:16px;box-shadow:var(--shadow-l);line-height:1.6';
+    document.body.appendChild(b);
+  })();
+}
 function newAccountId(){return 'a'+Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
 /** 临时切到指定账号的命名空间执行同步读取（不触发任何渲染） */
 function withAcc(id,fn){const keep=CUR_ACC;CUR_ACC=id;try{return fn()}finally{CUR_ACC=keep}}
@@ -2645,6 +2865,7 @@ function createAcc(){
   const acc={id:newAccountId(),name,plat,emoji,bg:ACC_BG[ACCOUNTS.length%ACC_BG.length],createdAt:Date.now()};
   ACCOUNTS.push(acc);
   saveAccounts();
+  wbTouchMeta(acc);
   toast('账号「'+name+'」已创建，所有栏目从零开始 🎉');
   switchAccount(acc.id,true);
 }
@@ -2656,6 +2877,7 @@ function editAcc(id){
   if(!n){toast('名称不能为空');return;}
   if(ACCOUNTS.some(x=>x.id!==id&&x.name===n)){toast('已有同名账号，换个名字吧');return;}
   a.name=n;
+  wbTouchMeta(a);
   if(id===CUR_ACC){ // 昵称默认跟随账号名（与 2.0 个人资料语义一致），用户可再在个人资料里改
     try{if(!lsG('user'))lsS('user',n)}catch(e){}
     renderProfile();
@@ -2671,6 +2893,7 @@ function delAcc(id){
   const twice=prompt('二次确认：请输入账号名「'+a.name+'」以确认删除');
   if(twice===null)return;
   if(twice.trim()!==a.name){toast('名称不匹配，已取消删除');return;}
+  wbTouchTomb(id);
   withAcc(id,()=>{for(const s of ACC_SUFFIXES)lsD(s)});
   ACCOUNTS=ACCOUNTS.filter(x=>x.id!==id);
   if(CUR_ACC===id){saveAccounts();switchAccount(ACCOUNTS[0].id,true);toast('账号已删除，已切换到「'+ACCOUNTS[0].name+'」');}
@@ -4324,10 +4547,10 @@ const PC_SAMPLES={
 };
 let _pcRunning=false,_pcPollTimer=null,_pcFileContent=null,_pcTask=null;
 function pcLoadTask(){try{return JSON.parse(localStorage.getItem('wb_pc_task')||'null')}catch(e){return null}}
-function pcSaveTask(){try{localStorage.setItem('wb_pc_task',_pcTask?JSON.stringify(_pcTask):'')}catch(e){}}
+function pcSaveTask(){const v=_pcTask?JSON.stringify(_pcTask):'';try{localStorage.setItem('wb_pc_task',v)}catch(e){}wbTouchGlobal('wb_pc_task',v)}
 /* 已自检记录（跨刷新保留，报告原文可随时从服务端按 taskId 取回） */
 let PC_HITS=(()=>{try{const a=JSON.parse(localStorage.getItem('wb_prechecks')||'[]');return Array.isArray(a)?a:[]}catch(e){return[]}})();
-function pcSaveHits(){try{localStorage.setItem('wb_prechecks',JSON.stringify(PC_HITS))}catch(e){}}
+function pcSaveHits(){const v=JSON.stringify(PC_HITS);try{localStorage.setItem('wb_prechecks',v)}catch(e){}wbTouchGlobal('wb_prechecks',v)}
 const _pcCache={}; // taskId -> 报告 JSON
 let _pcDrawerHit=null,_pcDrawerOpener=null;
 const PC_STEPS=['读取内容并识别类型','推断目标读者画像','六维度逐一评分','风险词逐项排查','生成报告与优化建议'];
@@ -5667,6 +5890,7 @@ function applyTheme(key){
 function setTheme(key){
   applyTheme(key);
   try{key?localStorage.setItem('wb_theme',key):localStorage.removeItem('wb_theme')}catch(e){}
+  wbTouchGlobal('wb_theme',key||'');
 }
 function renderThemePicker(){
   const box=$('#themePicker');if(!box)return;
@@ -5749,6 +5973,7 @@ function importData(input){
     // v2：全账号整体覆盖恢复
     if(!Array.isArray(payload.accounts)||!payload.accounts.length){toast('备份文件缺少账号数据');return}
     if(!confirm(`将导入备份（含 ${payload.accounts.length} 个账号，导出于 ${when}）。\n\n导入会覆盖当前全部账号与数据，确定继续？`))return;
+    const wbOldAccs=ACCOUNTS.slice();
     try{
       // 先清空现有账号数据与清单（wb: 前缀命名空间 + 清单）
       for(let i=localStorage.length-1;i>=0;i--){
@@ -5773,6 +5998,7 @@ function importData(input){
         CUR_ACC=keep;
       }
       if(accs.length)localStorage.setItem('wb_accounts',JSON.stringify({currentId:payload.currentId&&accs.some(a=>a.id===payload.currentId)?payload.currentId:accs[0].id,accounts:accs}));
+      wbMarkAllDirty(wbOldAccs);
       toast('导入成功，正在刷新…');
       setTimeout(()=>location.reload(),600);
     }catch(e){toast('导入失败：'+e.message)}
@@ -5886,7 +6112,7 @@ async function openLanModal(){
       +'<div><b>2.</b> 用相机 / 微信「扫一扫」扫上方二维码</div>'
       +'<div><b>3.</b> 打开后建议「添加到主屏幕」，像 App 一样用 📲</div>'
       +'</div>'
-      +'<div class="lan-note">小提示：电脑换了 WiFi 或重启后地址可能变化，届时重新扫码即可；数据存在各自设备的浏览器里，电脑和手机不互通。</div>';
+      +'<div class="lan-note">小提示：电脑换了 WiFi 或重启后地址可能变化，届时重新扫码即可；手机和电脑的数据自动同步（存在你这台电脑上，不上云）。</div>';
   }catch(e){
     body.innerHTML='<div style="font-size:13px;color:var(--coral-d);padding:12px 2px">获取访问地址失败：'+(e.message||e)+'</div>';
   }
@@ -5932,17 +6158,20 @@ async function cfgSave(){
     else{toast(j.error||'保存失败');}
   }catch(e){toast('网络错误：'+e.message);}
 }
-renderAccSwitch();touchFirstUse();loadState();seedKsDemo();renderInsp();setTopicView((()=>{const q=new URLSearchParams(location.search).get('view');if(q==='table'||q==='card')return q;try{return localStorage.getItem('wb_topic_view')||'card'}catch(e){return 'card'}})());renderMat();renderHit();renderToday();setTodoView((()=>{try{return localStorage.getItem('wb_todo_view')||'today'}catch(e){return 'today'}})());renderCal();renderReview();renderGoal();renderScript();renderProfile();renderDateChip();checkConfig();initProfileUrl();
-if(_runningInspTask)pollInspiration(_runningInspTask.taskId);
-if(_runningTask){pollTeardown(_runningTask.taskId,_runningTask.url);}
-ksResumePolls();
-updateStats();
-const _mat=new URLSearchParams(location.search).get('mat');
-if(_mat!==null)openTopicMat(+_mat||0);
-const _tf=new URLSearchParams(location.search).get('tf');
-if(_tf!==null)openTopicForm(0);
-const _new=new URLSearchParams(location.search).get('new');
-if(_new!==null)openTopicForm();
+(async function(){ // 启动序列：先同步水合（服务端为唯一真源），再用本地渲染
+  await wbSyncBoot();
+  renderAccSwitch();touchFirstUse();reloadAllData();seedKsDemo();renderInsp();setTopicView((()=>{const q=new URLSearchParams(location.search).get('view');if(q==='table'||q==='card')return q;try{return localStorage.getItem('wb_topic_view')||'card'}catch(e){return 'card'}})());renderMat();renderHit();renderToday();setTodoView((()=>{try{return localStorage.getItem('wb_todo_view')||'today'}catch(e){return 'today'}})());renderCal();renderReview();renderGoal();renderScript();renderProfile();renderDateChip();checkConfig();initProfileUrl();
+  if(_runningInspTask)pollInspiration(_runningInspTask.taskId);
+  if(_runningTask){pollTeardown(_runningTask.taskId,_runningTask.url);}
+  ksResumePolls();
+  updateStats();
+  const _mat=new URLSearchParams(location.search).get('mat');
+  if(_mat!==null)openTopicMat(+_mat||0);
+  const _tf=new URLSearchParams(location.search).get('tf');
+  if(_tf!==null)openTopicForm(0);
+  const _new=new URLSearchParams(location.search).get('new');
+  if(_new!==null)openTopicForm();
+})();
 </script>
 </body>
 </html>
