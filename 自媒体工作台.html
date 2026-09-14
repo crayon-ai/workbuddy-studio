@@ -1299,6 +1299,85 @@ textarea.ks-ks::placeholder{color:var(--ink-3)}
 .lan-steps b{color:var(--coral-d)}
 .lan-note{font-size:11.5px;color:var(--ink-3);line-height:1.7;margin-top:8px;background:var(--cream-2);border-radius:10px;padding:8px 12px}
 
+/* ===== 笔记优化 ===== */
+.pl-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:stretch}
+/* 卡片标题 nowrap 的 min-content 会撑破 1fr 轨道（手机上爆到 500px+），必须允许收缩 */
+.pl-grid>*{min-width:0}
+/* 等高以第二步（右卡）为基准：左卡纵向布局，笔记列表吃掉剩余高度 */
+.pl-sample-card{display:flex;flex-direction:column}
+.pl-card-hd{display:flex;align-items:flex-start;gap:10px;margin-bottom:12px}
+.pl-ch-ic{width:34px;height:34px;border-radius:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.pl-ch-ic svg{width:17px;height:17px}
+.pl-ch-ic.lav{background:var(--lav-bg);color:var(--lav-d)}
+.pl-ch-ic.coral{background:var(--coral-bg);color:var(--coral-d)}
+.pl-ch-t{font-size:13px;font-weight:800;color:var(--ink);display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.pl-ch-s{font-size:11px;color:var(--ink-3);margin-top:2px}
+/* 链接收录行 */
+.pl-add{display:flex;gap:8px}
+.pl-add-input{flex:1;height:40px;min-width:0;border:1.5px solid var(--line);border-radius:12px;padding:0 13px;font-size:12.5px;font-family:inherit;background:var(--paper-2);color:var(--ink);transition:all .2s var(--ease)}
+.pl-add-input:focus{outline:none;border-color:var(--lav);box-shadow:0 0 0 4px var(--lav-bg);background:var(--paper)}
+.pl-add-input::placeholder{color:var(--ink-3)}
+.pl-add-hint{display:flex;align-items:center;gap:10px;margin-top:7px;font-size:11px;color:var(--ink-3);flex-wrap:wrap}
+/* 笔记库列表 */
+.pl-notes{margin-top:12px;display:flex;flex-direction:column;gap:8px;flex:1;min-height:150px;max-height:420px;overflow-y:auto;padding-right:2px;-webkit-overflow-scrolling:touch}
+.pl-notes-empty{border:1.5px dashed var(--line-2);border-radius:var(--radius-s);padding:26px 16px;text-align:center;background:var(--paper-2)}
+.pl-notes-empty .pe-ic{width:40px;height:40px;margin:0 auto 8px;border-radius:13px;background:var(--paper);color:var(--ink-3);display:flex;align-items:center;justify-content:center}
+.pl-notes-empty .pe-ic svg{width:19px;height:19px}
+.pl-notes-empty .pe-t{font-size:12.5px;font-weight:800;color:var(--ink-2)}
+.pl-notes-empty .pe-s{font-size:11px;color:var(--ink-3);margin-top:3px}
+.pl-note{display:flex;align-items:center;gap:10px;padding:9px 11px;border:1.5px solid var(--line);border-radius:14px;background:var(--paper);cursor:pointer;transition:all .18s var(--ease);animation:cardIn .3s var(--ease) both}
+.pl-note:hover{border-color:var(--lav);transform:translateY(-1px);box-shadow:var(--shadow-s)}
+.pl-note.on{border-color:var(--coral);box-shadow:0 0 0 3px var(--coral-bg)}
+.pl-cbox{width:20px;height:20px;border-radius:7px;border:1.5px solid var(--line-2);flex-shrink:0;display:flex;align-items:center;justify-content:center;background:var(--paper);color:#fff;transition:all .15s var(--ease)}
+.pl-note.on .pl-cbox,.pl-check-all .pl-cbox.on{background:var(--coral);border-color:var(--coral)}
+.pl-cbox svg{width:12px;height:12px}
+.pl-cover{width:40px;height:40px;border-radius:11px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:19px;box-shadow:inset 0 0 0 1px rgba(58,50,24,.04)}
+.pl-ninfo{flex:1;min-width:0}
+.pl-ntitle{font-size:12.5px;font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pl-nmeta{font-size:10.5px;color:var(--ink-3);margin-top:2px;display:flex;align-items:center;gap:5px}
+.pl-ntype{padding:1px 6px;border-radius:var(--pill);background:var(--cream-2);font-weight:700}
+.pl-ndel{width:26px;height:26px;border-radius:8px;border:none;background:transparent;color:var(--ink-3);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;opacity:0;transition:all .15s var(--ease)}
+.pl-note:hover .pl-ndel{opacity:1}
+.pl-ndel:hover{background:var(--rose-bg);color:var(--rose)}
+.pl-note.parsing{pointer-events:none}
+.pl-note.parsing .pl-ntitle{color:var(--ink-3)}
+.pl-note.parsing .pl-cover{position:relative;overflow:hidden}
+.pl-note.parsing .pl-cover::after{content:"";position:absolute;inset:0;background:linear-gradient(100deg,transparent 30%,rgba(255,255,255,.75) 50%,transparent 70%);animation:plShimmer 1.1s infinite}
+@keyframes plShimmer{from{transform:translateX(-100%)}to{transform:translateX(100%)}}
+/* 笔记库底栏 */
+.pl-notes-bar{display:flex;align-items:center;gap:12px;margin-top:11px;padding-top:11px;border-top:1px dashed var(--line);font-size:11.5px}
+.pl-check-all{display:flex;align-items:center;gap:7px;border:none;background:none;font-size:11.5px;font-weight:700;color:var(--ink-2);cursor:pointer;font-family:inherit;padding:0}
+.pl-check-all:hover{color:var(--coral-d)}
+.pl-bar-count{color:var(--ink-3)}
+.pl-bar-sel{margin-left:auto;color:var(--coral-d);font-weight:800}
+.pl-seg{display:flex;background:var(--paper-2);border:1.5px solid var(--line);border-radius:var(--pill);padding:3px;gap:2px}
+.pl-seg button{flex:1;height:30px;border:none;border-radius:999px;background:transparent;font-size:11.5px;font-weight:700;color:var(--ink-3);cursor:pointer;font-family:inherit;transition:all .18s var(--ease);white-space:nowrap}
+.pl-seg button.on{background:var(--paper);color:var(--lav-d);box-shadow:var(--shadow-s)}
+.pl-empty{background:var(--paper);border:1.5px dashed var(--line-2);border-radius:var(--radius);padding:44px 20px;text-align:center}
+.pl-empty .pe-ic{width:44px;height:44px;margin:0 auto 10px;border-radius:14px;background:var(--lav-bg);color:var(--lav-d);display:flex;align-items:center;justify-content:center}
+.pl-empty .pe-ic svg{width:22px;height:22px}
+.pl-empty .pe-t{font-size:13.5px;font-weight:800;color:var(--ink-2)}
+.pl-empty .pe-s{font-size:12px;color:var(--ink-3);margin-top:4px}
+.pl-style{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow-s);padding:18px 20px;margin-bottom:14px}
+.pl-style-hd{font-size:12px;font-weight:800;color:var(--lav-d);display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.pl-chips{display:flex;flex-wrap:wrap;gap:7px}
+.pl-chip{font-size:11.5px;font-weight:650;color:var(--ink-2);background:var(--lav-bg);padding:4px 12px;border-radius:var(--pill)}
+.pl-stats{display:flex;gap:10px;margin-top:14px}
+.pl-stat{flex:1;min-width:90px;background:var(--paper-2);border:1px solid var(--line);border-radius:12px;padding:10px 8px;text-align:center}
+.pl-stat b{display:block;font-family:var(--serif);font-size:21px;font-weight:800;color:var(--lav-d);line-height:1.2}
+.pl-stat b i{font-style:normal;font-size:11px;margin-left:1px}
+.pl-stat span{display:block;font-size:10.5px;color:var(--ink-3);font-weight:600;margin-top:2px}
+.pl-run-score{font-family:var(--serif);font-size:20px;font-weight:800;color:var(--lav-d);line-height:1.1}
+.pl-run-score .of{font-size:10px;color:var(--ink-3);font-family:var(--sans);font-weight:600}
+.pl-out{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow-s);overflow:hidden}
+.pl-out-hd{display:flex;align-items:center;gap:8px;padding:14px 18px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.pl-out-t{font-size:13.5px;font-weight:800;flex:1;min-width:150px;display:flex;align-items:center;gap:8px}
+.pl-demo{font-size:10px;font-weight:800;padding:2px 8px;border-radius:var(--pill);background:var(--honey-bg);color:#C88A1F;letter-spacing:.05em}
+.pl-mini{height:32px;padding:0 13px;border-radius:var(--pill);border:1px solid var(--line);background:var(--paper-2);font-size:11.5px;font-weight:700;color:var(--ink-2);cursor:pointer;display:inline-flex;align-items:center;gap:5px;font-family:inherit;transition:all .18s var(--ease)}
+.pl-mini:hover{border-color:var(--lav);color:var(--lav-d)}
+.pl-mini.on{background:var(--lav-bg);border-color:var(--lav);color:var(--lav-d)}
+.pl-text{margin:0;padding:18px 20px;font-size:13px;line-height:2;color:var(--ink);white-space:pre-wrap;word-break:break-word;overflow-wrap:anywhere;font-family:inherit;background:var(--paper-2);border-radius:0 0 var(--radius) var(--radius);border-top:1px dashed var(--line)}
+
 /* ===== 手机端抽屉导航：汉堡按钮 / 遮罩 / 抽屉内关闭 ===== */
 .sb-burger{display:none;position:fixed;top:calc(14px + env(safe-area-inset-top));left:14px;z-index:90;
   width:42px;height:42px;border-radius:13px;border:1px solid var(--line);
@@ -1335,7 +1414,9 @@ body.sb-lock{overflow:hidden}
   .note-grid{grid-template-columns:repeat(2,1fr)}
 }
 @media (max-width:860px){
-  .grid,.grid-3,.mode-grid,.note-grid{grid-template-columns:1fr}
+  .grid,.grid-3,.mode-grid,.note-grid,.pl-grid{grid-template-columns:1fr}
+  .pl-grid{align-items:start}
+  .pl-notes{max-height:300px}
   .hero{padding:24px 22px}
   .hero-avatar,.hero-avatar .ha-img{width:88px;height:88px}
   .hero-line{font-size:19px}
@@ -1366,6 +1447,7 @@ body.sb-lock{overflow:hidden}
   .ph-row{flex-direction:column;align-items:flex-start;gap:14px}
   .kpis{grid-template-columns:repeat(2,1fr)}
   .filters{overflow-x:auto;flex-wrap:nowrap;padding-bottom:4px;-webkit-overflow-scrolling:touch}
+  .opt-row{grid-template-columns:1fr}
   /* 日历手机端：保持 7 列周结构，整块横向滚动（align-items:flex-start 会让
      cal-wrap 收缩适配内容被日格子撑到 2400px+，必须改 stretch + 定宽） */
   .cal-layout{align-items:stretch}
@@ -1460,6 +1542,10 @@ body.sb-lock{overflow:hidden}
       <div class="sb-item" data-view="precheck">
         <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 11l3 3 8-8"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2h9"/></svg></span>
         <span class="txt">笔记内容检查</span><span class="tag-new">新</span>
+      </div>
+      <div class="sb-item" data-view="polish">
+        <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M15 4V2M15 10V8M11.5 6.5h-2M20.5 6.5h-2M17.8 3.7l-1.4 1.4M17.8 9.3l-1.4-1.4"/><path d="M3 21l9.5-9.5"/><path d="M12.5 5.5l2 2"/></svg></span>
+        <span class="txt">笔记优化</span><span class="tag-new">新</span>
       </div>
       <div class="sb-cat c3"><span class="ci"></span><span class="cs">发布复盘</span></div>
       <div class="sb-item" data-view="note">
@@ -1987,6 +2073,129 @@ body.sb-lock{overflow:hidden}
       </div></div>
     </section>
 
+    <!-- ========== 笔记优化（AI 学你的文风，改写初稿） ========== -->
+    <section class="view" id="v-polish">
+      <div class="scroll"><div class="wrap">
+
+        <div class="page-hd">
+          <div class="ph-row">
+            <div>
+              <div class="ph-eyebrow lav"><span class="ci" style="width:6px;height:6px;border-radius:2px;background:var(--lav);display:inline-block"></span>创作辅助技能</div>
+              <h1 class="ph-title">笔记<em>优化</em> · 用自己的风格润色</h1>
+              <div class="ph-sub">把你写过的笔记给 AI 学一遍，再把初稿丢进来，用你自己的风格润色初稿</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="pl-grid">
+          <!-- 左：风格笔记库（真实链接收录） -->
+          <div class="input-card pl-sample-card">
+            <div class="pl-card-hd">
+              <div class="pl-ch-ic lav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19.5A2.5 2.5 0 016.5 17H20V4H6.5A2.5 2.5 0 004 6.5v13z"/><path d="M4 19.5A2.5 2.5 0 006.5 22H20v-5"/></svg></div>
+              <div style="flex:1;min-width:0">
+                <div class="pl-ch-t">第一步 · 收录我的真实笔记 <span class="opt-tag">上限 10 篇</span></div>
+                <div class="pl-ch-s">填入你的小红书笔记链接，逐篇解析存进笔记库</div>
+              </div>
+            </div>
+            <div class="pl-add">
+              <input class="pl-add-input" id="plUrl" placeholder="粘贴小红书笔记链接，如 https://www.xiaohongshu.com/explore/…" onkeydown="if(event.key==='Enter')plAddNote()">
+              <button class="btn btn-lav" style="height:40px;flex-shrink:0;padding:0 16px" onclick="plAddNote()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 11-2.64-6.36M21 3v6h-6"/></svg>解析收录</button>
+            </div>
+            <div class="pl-add-hint">
+              <span>支持 xiaohongshu.com / xhslink.com 链接 · 解析后自动存入笔记库</span>
+              <button class="sample-chip" onclick="plAddMockNote()">＋ 收录一篇示例笔记</button>
+            </div>
+            <div class="pl-notes" id="plNotes">
+              <div class="pl-notes-empty">
+                <div class="pe-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg></div>
+                <div class="pe-t">笔记库还是空的</div>
+                <div class="pe-s">收录 2~3 篇你写得最"像你"的笔记，风格学得最准</div>
+              </div>
+            </div>
+            <div class="pl-notes-bar" id="plNotesBar" style="display:none">
+              <button class="pl-check-all" onclick="plToggleAll()"><span class="pl-cbox" id="plAllBox"></span>全选</button>
+              <span class="pl-bar-count" id="plBarCount">已收录 0 篇</span>
+              <span class="pl-bar-sel" id="plBarSel">已勾选 0 篇做参考</span>
+            </div>
+          </div>
+
+          <!-- 右：待优化初稿 + 参数 + 动作 -->
+          <div class="input-card">
+            <div class="pl-card-hd">
+              <div class="pl-ch-ic coral"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></div>
+              <div style="flex:1;min-width:0">
+                <div class="pl-ch-t">第二步 · 待优化的初稿 <span class="opt-tag req">必填</span></div>
+                <div class="pl-ch-s">脚本 / 大纲 / 图文正文都可以</div>
+              </div>
+            </div>
+
+            <div class="in-tabs" role="tablist" aria-label="初稿输入方式">
+              <button id="plTabPaste" class="on" onclick="plSwitchInput('paste')" role="tab" aria-selected="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg>粘贴初稿</button>
+              <button id="plTabFile" onclick="plSwitchInput('file')" role="tab" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/></svg>选择文件</button>
+            </div>
+
+            <div class="in-body on" id="plPanePaste">
+              <textarea class="content-area" id="plDraft" oninput="plUpdateCounts()" placeholder="把要优化的初稿粘进来：
+· 脚本（视频口播稿、分镜大纲）
+· 图文笔记草稿
+· 只有要点的大纲也行"></textarea>
+              <div class="in-foot"><span class="char-count" id="plCharCount">0 字</span></div>
+            </div>
+
+            <div class="in-body" id="plPaneFile">
+              <div class="file-drop" id="plFileDrop" onclick="document.getElementById('plFileInput').click()" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="event.preventDefault();plHandleFiles(event.dataTransfer.files)" role="button" tabindex="0" aria-label="选择或拖入 txt / md 文件">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
+                <div class="fd-t">点击选择，或把文件拖进来</div>
+                <div class="fd-s">支持 .txt / .md，一次一个文件</div>
+              </div>
+              <div class="file-chip" id="plFileChip" style="display:none">
+                <span class="fc-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/></svg></span>
+                <div><div class="fc-name" id="plFcName"></div><div class="fc-meta" id="plFcMeta"></div></div>
+                <button class="fc-x" onclick="plClearFile()" aria-label="移除文件"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+              </div>
+              <input type="file" id="plFileInput" accept=".txt,.md" style="display:none" onchange="plHandleFiles(this.files)">
+            </div>
+
+            <div class="opt-row">
+              <div class="opt-field">
+                <label>优化强度</label>
+                <div class="pl-seg" id="plStrength" role="group" aria-label="优化强度">
+                  <button type="button" data-v="light" onclick="plSegPick(this)">轻润色</button>
+                  <button type="button" data-v="align" class="on" onclick="plSegPick(this)">风格对齐</button>
+                  <button type="button" data-v="deep" onclick="plSegPick(this)">深度重写</button>
+                </div>
+              </div>
+              <div class="opt-field">
+                <label>篇幅</label>
+                <div class="pl-seg" id="plLength" role="group" aria-label="篇幅">
+                  <button type="button" data-v="keep" class="on" onclick="plSegPick(this)">保持原长</button>
+                  <button type="button" data-v="short" onclick="plSegPick(this)">精简一点</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="in-actions">
+              <button class="btn btn-lav" id="plStartBtn" style="height:44px;padding:0 22px" onclick="plStart()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg><span id="plStartTxt">开始优化</span></button>
+              <span class="in-note">通常 1~2 分钟 · 内容仅用于本次优化，不保存</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="running" id="plRunning" aria-live="polite">
+          <div class="rt-title"><span class="spin"></span>AI 正在学习你的文风，改写初稿…<span class="rt-live" id="plRtLive"></span></div>
+          <div class="rt-steps" id="plRtSteps"></div>
+          <div class="rt-hint">完成后结果出现在下方，可复制或下载 .md</div>
+        </div>
+
+        <div class="section-h" style="margin-top:8px">
+          <h2><span class="dotbar" style="background:var(--lav)"></span>优化结果</h2>
+          <span class="more">共 <b id="plRunCount" style="color:var(--lav-d)">0</b> 次 · 点「查看结果」阅读</span>
+        </div>
+        <div class="grid" id="plGrid"></div>
+
+      </div></div>
+    </section>
+
     <!-- ========== 我的笔记 ========== -->
     <section class="view" id="v-note">
       <div class="scroll"><div class="wrap">
@@ -2314,6 +2523,22 @@ body.sb-lock{overflow:hidden}
     </div>
   </div>
 </div>
+
+<!-- 笔记优化结果抽屉（参考爆款拆解的直读抽屉交互） -->
+<aside class="drawer" id="plDrawer" role="dialog" aria-modal="true" aria-labelledby="plDrTitle">
+  <header class="dr-head">
+    <div class="dr-r1">
+      <span class="dr-eyebrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 4V2M15 10V8M11.5 6.5h-2M20.5 6.5h-2M17.8 3.7l-1.4 1.4M17.8 9.3l-1.4-1.4"/><path d="M3 21l9.5-9.5"/></svg>笔记优化结果</span>
+      <span class="dr-file" id="plDrDate"></span>
+      <button class="dr-close" onclick="plCloseDrawer()" aria-label="关闭结果"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    </div>
+    <div class="dr-r2"><div class="dr-title" id="plDrTitle"></div></div>
+    <div class="dr-metas" id="plDrMetas"></div>
+  </header>
+  <div class="dr-main">
+    <div class="dr-body" id="plDrBody" style="padding:22px 20px 40px;max-width:780px;margin:0 auto"></div>
+  </div>
+</aside>
 
 <!-- 手机访问弹层（局域网扫码，body 级任何视图都能弹） -->
 <div class="modal-mask" id="lanModal" onclick="closeLanModal(event)">
@@ -3464,6 +3689,8 @@ function switchView(v){
   window.scrollTo({top:0,behavior:'instant'});
 }
 $('#sbNav').addEventListener('click',e=>{const it=e.target.closest('.sb-item');if(!it||!it.dataset.view)return;switchView(it.dataset.view);});
+/* 支持带 #视图名 的深链接直接打开对应模块（如 /#polish 直达笔记优化） */
+(function(){const h=(location.hash||'').replace(/^#/,'');if(h&&$('.sb-item[data-view="'+h+'"]'))switchView(h);})();
 /* 手机端抽屉：点任何侧边栏菜单项（含主题/设置/备份/手机访问）后自动收起 */
 $('.sidebar').addEventListener('click',e=>{if(e.target.closest('.sb-item'))toggleSidebar(false);});
 
@@ -6082,6 +6309,286 @@ function toggleSidebar(force){
   document.body.classList.toggle('sb-lock',open);
 }
 window.addEventListener('resize',()=>{if(window.innerWidth>680&&document.body.classList.contains('sb-lock'))toggleSidebar(false);});
+/* ===== 笔记优化（真实逻辑：链接收录落库 → writing-dna 蒸馏 → 润色初稿） ===== */
+let _plRunning=false,_plFileContent=null,_plNotes=[],_plRuns=[],_plRun=null;
+let _plTask=null,_plPollTimer=null;
+const PL_STEPS=['读取勾选的笔记','蒸馏文风特征（口吻 · 句式 · 用词）','按你的习惯润色初稿','风格一致性自检'];
+const PL_STRENGTH_LAB={light:'轻润色',align:'风格对齐',deep:'深度重写'};
+const PL_CHECK_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2"><path d="M5 12l5 5L20 7"/></svg>';
+const PL_COVERS=[['📝','linear-gradient(135deg,#FFE8D6,#FFD2AC)'],['🎬','linear-gradient(135deg,#EEEBF7,#DBD4F1)'],['📖','linear-gradient(135deg,#E9F1DD,#D2E4BA)'],['✍️','linear-gradient(135deg,#FBE3EA,#F6C4D2)']];
+function plCover(id,type){let h=0;for(const c of String(id))h+=c.charCodeAt(0);return PL_COVERS[(h+(type==='视频'?1:0))%PL_COVERS.length];}
+function plSelKey(){return 'wb:'+CUR_ACC+':plsel'}
+function plSaveSel(){try{localStorage.setItem(plSelKey(),JSON.stringify(_plNotes.filter(n=>n.checked).map(n=>n.id)))}catch(e){}}
+function plEsc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function plIsXhsUrl(u){return /^https?:\/\/[^\s]*(xiaohongshu\.com|xhslink\.com)/i.test(u||'')}
+function plSegVal(id){const b=document.querySelector('#'+id+' .on');return b?b.dataset.v:null}
+async function plLoadNotes(){
+  try{
+    const j=await fetch('/api/polish/notes?account='+CUR_ACC).then(r=>r.json());
+    if(!j.success)throw new Error(j.error);
+    let sel=[];try{sel=JSON.parse(localStorage.getItem(plSelKey())||'[]')}catch(e){}
+    _plNotes=(j.data.notes||[]).map(n=>Object.assign({},n,{checked:sel.includes(n.id)}));
+    if(!sel.length&&_plNotes.length){_plNotes.forEach(n=>n.checked=true);} /* 首次默认全选 */
+    plRenderNotes();plSaveSel();
+  }catch(e){/* 网络异常保留现状 */}
+}
+function plRenderNotes(){
+  const box=$('#plNotes');if(!box)return;
+  const list=_plNotes.filter(n=>!n.parsing);
+  const parsing=_plNotes.filter(n=>n.parsing);
+  if(!_plNotes.length){
+    box.innerHTML='<div class="pl-notes-empty"><div class="pe-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg></div><div class="pe-t">笔记库还是空的</div><div class="pe-s">收录 2~3 篇你写得最"像你"的笔记，风格学得最准</div></div>';
+  }else{
+    const card=n=>{
+      const cov=plCover(n.id,n.type);const d=(n.date||'').split('-');
+      return '<div class="pl-note'+(n.checked?' on':'')+(n.parsing?' parsing':'')+'" onclick="plToggleNote(\''+n.id+'\')">'
+        +'<span class="pl-cbox">'+(n.checked&&!n.parsing?PL_CHECK_SVG:'')+'</span>'
+        +'<div class="pl-cover" style="background:'+(n.parsing?'var(--cream-2)':cov[1])+'">'+(n.parsing?'⏳':cov[0])+'</div>'
+        +'<div class="pl-ninfo"><div class="pl-ntitle">'+(n.parsing?'正在解析这篇笔记…':plEsc(n.title))+'</div>'
+        +'<div class="pl-nmeta">'+(n.parsing?'下载正文并读取互动数据'
+          :(n.type?'<span class="pl-ntype">'+plEsc(n.type)+'</span>':'')+'<span>赞 '+plEsc(String(n.likes||0))+'</span>'+(d.length===3?'<span>'+Number(d[1])+' 月 '+Number(d[2])+' 日</span>':''))
+        +'</div></div>'
+        +(n.parsing?'':'<button class="pl-ndel" onclick="event.stopPropagation();plDelNote(\''+n.id+'\')" aria-label="移除"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 6l12 12M18 6L6 18"/></svg></button>')
+        +'</div>';
+    };
+    box.innerHTML=parsing.map(card).join('')+list.map(card).join('');
+  }
+  const bar=$('#plNotesBar');
+  if(_plNotes.length){
+    bar.style.display='flex';
+    const sel=list.filter(n=>n.checked).length;
+    $('#plBarCount').textContent='已收录 '+_plNotes.length+' / 10 篇';
+    $('#plBarSel').textContent='已勾选 '+sel+' 篇做参考'+(sel?'':'（至少 1 篇）');
+    const allOn=list.length>0&&sel===list.length;
+    $('#plAllBox').classList.toggle('on',allOn);
+    $('#plAllBox').innerHTML=allOn?PL_CHECK_SVG:'';
+  }else{bar.style.display='none';}
+}
+function plToggleNote(id){const n=_plNotes.find(x=>x.id===id);if(!n||n.parsing)return;n.checked=!n.checked;plRenderNotes();plSaveSel();}
+function plToggleAll(){const list=_plNotes.filter(n=>!n.parsing);const anyOn=list.some(n=>n.checked);list.forEach(n=>n.checked=!anyOn);plRenderNotes();plSaveSel();}
+async function plDelNote(id){
+  _plNotes=_plNotes.filter(x=>x.id!==id);plRenderNotes();plSaveSel();
+  toast('已从笔记库移除');
+  try{await fetch('/api/polish/notes/'+id+'?account='+CUR_ACC,{method:'DELETE'})}catch(e){}
+}
+async function plAddNote(){
+  const inp=$('#plUrl');const url=(inp.value||'').trim();
+  if(!url){toast('先粘贴一篇小红书笔记链接，或点「收录一篇示例笔记」');inp.focus();return;}
+  if(!plIsXhsUrl(url)){toast('看起来不是小红书链接，检查一下再试');inp.focus();return;}
+  if(_plNotes.length>=10){toast('最多收录 10 篇，可以先删掉不用的');return;}
+  if(_plNotes.some(n=>n.url===url)){toast('这篇已经收录过了');return;}
+  try{
+    const j=await fetch('/api/polish/parse',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url,accountId:CUR_ACC})}).then(r=>r.json());
+    if(!j.success)throw new Error(j.error||'提交失败');
+    if(j.data.note){plAcceptNote(j.data.note);toast('已收录示例笔记 ✓');return;}
+    _plNotes.push({id:'pending-'+j.data.taskId,taskId:j.data.taskId,url,title:'',type:'',likes:'',date:'',checked:false,parsing:true});
+    inp.value='';plRenderNotes();
+    plPollParse(j.data.taskId);
+  }catch(e){toast('提交解析失败：'+(e.message||e));}
+}
+function plAcceptNote(note){
+  _plNotes.unshift(Object.assign({},note,{checked:true}));
+  plRenderNotes();plSaveSel();
+}
+async function plAddMockNote(){
+  if(_plNotes.length>=10){toast('最多收录 10 篇，可以先删掉不用的');return;}
+  const n=_plNotes.filter(x=>!x.parsing).length;
+  try{
+    const j=await fetch('/api/polish/parse',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:'mock://'+n,accountId:CUR_ACC,mock:true})}).then(r=>r.json());
+    if(!j.success||!j.data.note)throw new Error(j.error||'收录失败');
+    plAcceptNote(j.data.note);
+    toast('已收录示例笔记 ✓（风格统一，可直接试优化）');
+  }catch(e){toast('收录示例失败：'+(e.message||e));}
+}
+function plPollParse(taskId){
+  let n=0;
+  const timer=setInterval(async()=>{
+    n++;
+    if(n>140){clearInterval(timer);_plNotes=_plNotes.filter(x=>x.taskId!==taskId);plRenderNotes();toast('解析超时（约 6 分钟），请稍后重试');return;}
+    try{
+      const j=await fetch('/api/task/'+taskId).then(r=>r.json());
+      if(!j.success)return;
+      const d=j.data;
+      if(d.status==='running')return;
+      clearInterval(timer);
+      _plNotes=_plNotes.filter(x=>x.taskId!==taskId);
+      if(d.status==='done'&&d.result&&d.result.note){
+        _plNotes.unshift(Object.assign({},d.result.note,{checked:true}));
+        toast('解析完成，已存入笔记库 ✓');
+      }else{
+        toast((d.error||'解析失败')+'；被平台拦截时可用「收录一篇示例笔记」先试优化');
+      }
+      plRenderNotes();plSaveSel();
+    }catch(e){}
+  },2500);
+}
+function plSwitchInput(m){
+  $('#plTabPaste').classList.toggle('on',m==='paste');$('#plTabFile').classList.toggle('on',m==='file');
+  $('#plPanePaste').classList.toggle('on',m==='paste');$('#plPaneFile').classList.toggle('on',m==='file');
+}
+function plSegPick(btn){[...btn.parentElement.children].forEach(b=>b.classList.toggle('on',b===btn));}
+function plUpdateCounts(){
+  const d=$('#plDraft').value||'';
+  $('#plCharCount').textContent=d.replace(/\s/g,'').length+' 字';
+}
+function plHandleFiles(files){
+  const f=files&&files[0];if(!f)return;
+  const rd=new FileReader();
+  rd.onload=()=>{
+    _plFileContent=String(rd.result||'');
+    $('#plFileChip').style.display='flex';$('#plFcName').textContent=f.name;
+    $('#plFcMeta').textContent=Math.max(1,Math.round(f.size/1024))+' KB · '+_plFileContent.replace(/\s/g,'').length+' 字';
+    $('#plFileDrop').style.display='none';
+  };
+  rd.readAsText(f);
+}
+function plClearFile(){_plFileContent=null;$('#plFileChip').style.display='none';$('#plFileDrop').style.display='';}
+function plSaveTask(){try{localStorage.setItem('wb:'+CUR_ACC+':pl_task',JSON.stringify(_plTask))}catch(e){}}
+function plStart(){
+  if(_plRunning)return;
+  const sel=_plNotes.filter(n=>n.checked&&!n.parsing);
+  const pasteMode=$('#plTabPaste').classList.contains('on');
+  const draft=(pasteMode?$('#plDraft').value:(_plFileContent||'')).trim();
+  if(!sel.length){toast('先收录并勾选至少 1 篇笔记做风格参考');return;}
+  if(draft.replace(/\s/g,'').length<30){toast(pasteMode?'先粘贴要优化的初稿':'先选择一个 .txt / .md 文件');return;}
+  _plRunning=true;
+  $('#plStartBtn').disabled=true;$('#plStartTxt').textContent='优化中…';
+  $('#plRunning').classList.add('on');
+  $('#plRtSteps').innerHTML=PL_STEPS.map((s,i)=>'<div class="rt-step" id="plSt'+i+'"><span class="st-ic">'+(i+1)+'</span>'+s+'</div>').join('');
+  PL_STEPS.forEach((s,i)=>{setTimeout(()=>{const p=$('#plSt'+i);if(p&&!p.classList.contains('done'))p.classList.add('doing');},300+i*3500);});
+  fetch('/api/polish',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({noteIds:sel.map(n=>n.id),draft,strength:plSegVal('plStrength')||'align',length:plSegVal('plLength')||'keep',accountId:CUR_ACC})})
+    .then(r=>r.json()).then(j=>{
+      if(!j.success){plFail(j.error||'提交失败');return;}
+      _plTask={taskId:j.data.taskId,startedAt:Date.now()};
+      plSaveTask();plPollPolish();
+    }).catch(e=>plFail('网络错误：'+e.message));
+}
+function plFail(msg){
+  _plRunning=false;_plTask=null;plSaveTask();
+  if(_plPollTimer){clearInterval(_plPollTimer);_plPollTimer=null;}
+  $('#plStartBtn').disabled=false;$('#plStartTxt').textContent='开始优化';
+  $('#plRunning').classList.remove('on');
+  PL_STEPS.forEach((_,i)=>{const p=$('#plSt'+i);if(p)p.classList.remove('doing');});
+  toast(msg);
+}
+function plPollPolish(){
+  if(_plPollTimer)clearInterval(_plPollTimer);
+  _plPollTimer=setInterval(async()=>{
+    if(!_plTask)return plFail('任务已失效');
+    try{
+      const j=await fetch('/api/task/'+_plTask.taskId).then(r=>r.json());
+      if(!j.success)return plFail('任务已失效（后端可能重启）');
+      const d=j.data;
+      if(d.step)$('#plRtLive').textContent=d.step;
+      if(d.status==='running')return;
+      clearInterval(_plPollTimer);_plPollTimer=null;
+      if(d.status==='failed')return plFail(d.error||'优化失败，请重试');
+      _plRunning=false;_plTask=null;plSaveTask();
+      $('#plStartBtn').disabled=false;$('#plStartTxt').textContent='开始优化';
+      PL_STEPS.forEach((_,i)=>{const el=$('#plSt'+i);if(el){el.classList.remove('doing');el.classList.add('done');el.querySelector('.st-ic').textContent='✓';}});
+      $('#plRtLive').textContent='';
+      setTimeout(()=>$('#plRunning').classList.remove('on'),800);
+      await plLoadRuns();
+      toast('优化完成 ✓');
+      if(d.result&&d.result.meta)plOpenDrawer(d.result.meta.id);
+    }catch(e){/* 单次轮询失败忽略 */}
+  },2500);
+}
+async function plLoadRuns(){
+  try{
+    const j=await fetch('/api/polish/runs?account='+CUR_ACC).then(r=>r.json());
+    if(j.success){_plRuns=j.data.runs||[];plRenderRuns();}
+  }catch(e){}
+}
+function plRenderRuns(){
+  const g=$('#plGrid');if(!g)return;
+  $('#plRunCount').textContent=_plRuns.length;
+  if(!_plRuns.length){g.innerHTML='<div style="padding:44px;text-align:center;color:var(--ink-3);grid-column:1/-1;font-size:13px">还没有优化结果。左边收录笔记、右边放初稿，点「开始优化」✨</div>';return;}
+  g.innerHTML=_plRuns.map((r,idx)=>{
+    const t=new Date(r.createdAt);
+    const date=isNaN(t.getTime())?'':t.toLocaleString('zh-CN',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
+    const chips=(r.chips||[]).slice(0,3).map(c=>'<span class="pl-chip">'+plEsc(c)+'</span>').join('');
+    return '<article class="card" style="--cc:var(--lav);animation-delay:'+idx*60+'ms">'
+      +'<div class="c-title">'+plEsc(r.draftExcerpt?r.draftExcerpt.slice(0,26)+'…':'未命名初稿')+'</div>'
+      +'<div class="pc-rec-stats" style="gap:10px">'+(typeof r.consistency==='number'?'<span class="pl-run-score"><b>'+r.consistency+'</b><span class="of">% 一致度</span></span>':'')+'<span class="cmeta">📝 '+(r.chars||0)+' 字</span></div>'
+      +(chips?'<div class="pl-chips" style="margin-top:8px">'+chips+'</div>':'')
+      +'<div class="pc-rec-metas"><span class="cmeta">📅 '+date+'</span><span class="cmeta">📚 参考 '+(r.noteCount||'-')+' 篇 · '+(PL_STRENGTH_LAB[r.strength]||'风格对齐')+'</span></div>'
+      +'<div class="c-foot"><button class="mini pri" onclick="plOpenDrawer(\''+r.id+'\')">查看结果</button>'
+      +'<button class="mini ghost" onclick="plDelRun(\''+r.id+'\')">删除</button></div></article>';
+  }).join('');
+}
+async function plDelRun(id){
+  if(_plRun&&_plRun.id===id)plCloseDrawer();
+  try{await fetch('/api/polish/runs/'+id+'?account='+CUR_ACC,{method:'DELETE'})}catch(e){}
+  await plLoadRuns();toast('已删除该条优化结果');
+}
+let _plDrawerOpener=null;
+async function plOpenDrawer(id){
+  if(!id)return;
+  try{
+    const j=await fetch('/api/polish/runs/'+id+'?account='+CUR_ACC).then(r=>r.json());
+    if(!j.success)throw new Error(j.error||'读取失败');
+    const d=j.data;_plRun=Object.assign({},d,{id});
+    const m=d.meta||{};
+    const t=new Date(m.createdAt||'');
+    $('#plDrDate').textContent=isNaN(t.getTime())?'':t.toLocaleString('zh-CN',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
+    $('#plDrTitle').textContent=m.draftExcerpt?m.draftExcerpt.slice(0,24)+'…':'优化结果';
+    $('#plDrMetas').innerHTML='<span class="cmeta">📚 参考 '+(m.noteCount||'-')+' 篇笔记</span><span class="cmeta">⚡ '+(PL_STRENGTH_LAB[m.strength]||'风格对齐')+'</span><span class="cmeta">📝 '+(m.chars||String(d.text||'').replace(/\s/g,'').length)+' 字</span>';
+    const chips=(d.chips||[]).map(c=>'<span class="pl-chip">'+plEsc(c)+'</span>').join('');
+    $('#plDrBody').innerHTML='<div class="pl-style"><div class="pl-style-hd">🎯 从你的 '+(m.noteCount||'-')+' 篇笔记里学到的风格画像</div>'
+      +(chips?'<div class="pl-chips">'+chips+'</div>':'')
+      +'<div class="pl-stats">'
+      +'<div class="pl-stat"><b>'+(m.noteCount||'-')+'</b><span>参考笔记</span></div>'
+      +(typeof d.consistency==='number'?'<div class="pl-stat"><b>'+d.consistency+'<i>%</i></b><span>风格一致度</span></div>':'')
+      +(typeof d.changes==='number'?'<div class="pl-stat"><b>'+d.changes+'<i>处</i></b><span>改写点</span></div>':'')
+      +'</div></div>'
+      +'<div class="pl-out" style="margin-top:14px"><div class="pl-out-hd">'
+      +'<div class="pl-out-t">✨ 优化后的稿子</div>'
+      +'<button class="pl-mini" id="plCmpBtn" onclick="plCompare(this)">👁 对照原文</button>'
+      +'<button class="pl-mini" onclick="plCopy()">📋 复制</button>'
+      +'<button class="pl-mini" onclick="plDownload()">下载 .md</button>'
+      +'</div><pre class="pl-text" id="plText">'+plEsc(d.text)+'</pre></div>';
+    _plDrawerOpener=document.activeElement;
+    $('#plDrawer').classList.add('open');
+    const cb=$('#plDrawer .dr-close');if(cb)cb.focus();
+  }catch(e){toast('打开结果失败：'+(e.message||e));}
+}
+function plCloseDrawer(){$('#plDrawer').classList.remove('open');_plRun=null;if(_plDrawerOpener&&_plDrawerOpener.focus){try{_plDrawerOpener.focus()}catch(e){}}}
+function plCompare(btn){
+  const t=$('#plText');if(!t||!_plRun)return;
+  const showingDraft=btn.classList.toggle('on');
+  t.textContent=showingDraft?_plRun.draft:_plRun.text;
+  btn.textContent=showingDraft?'👁 看优化版':'👁 对照原文';
+}
+function plCopy(){
+  const u=_plRun&&_plRun.text;if(!u){toast('还没有可复制的结果');return;}
+  const done=()=>toast('优化稿已复制');
+  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(u).then(done).catch(()=>toast('复制失败，请手动选择复制'));
+  else{const ta=document.createElement('textarea');ta.value=u;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');done();}catch(e){toast('复制失败');}ta.remove();}
+}
+function plDownload(){
+  const u=_plRun&&_plRun.text;if(!u){toast('还没有可下载的结果');return;}
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([u],{type:'text/markdown;charset=utf-8'}));
+  a.download='笔记优化-'+new Date().toISOString().slice(0,10)+'.md';a.click();URL.revokeObjectURL(a.href);
+}
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('#plDrawer')&&$('#plDrawer').classList.contains('open'))plCloseDrawer();});
+/* 初始化：载入笔记库与历史；有未完成的优化任务则恢复轮询 */
+function plInit(){
+  plLoadNotes();plLoadRuns();
+  try{
+    const t=JSON.parse(localStorage.getItem('wb:'+CUR_ACC+':pl_task')||'null');
+    if(t&&t.taskId){
+      _plTask=t;_plRunning=true;
+      $('#plStartBtn').disabled=true;$('#plStartTxt').textContent='优化中…';
+      $('#plRunning').classList.add('on');
+      $('#plRtSteps').innerHTML=PL_STEPS.map((s,i)=>'<div class="rt-step doing" id="plSt'+i+'"><span class="st-ic">'+(i+1)+'</span>'+s+'</div>').join('');
+      plPollPolish();
+    }
+  }catch(e){}
+}
+plInit();
+
 /* ===== 手机访问（局域网）弹窗 ===== */
 let _lanUrls=[];
 async function openLanModal(){
