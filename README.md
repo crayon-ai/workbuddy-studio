@@ -43,7 +43,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\workbuddy-daemon.ps1
 
 - 安全：随机 token 门禁（`data/lan-token.txt`，长期有效），同 WiFi 他人无法直接访问。
 - 本机使用不受任何影响；想彻底关掉局域网模式：启动前设 `WB_HOST=127.0.0.1`。
-- 注意：数据存在各设备浏览器 localStorage，手机端与电脑端不互通；电脑换 WiFi 后 IP 可能变化，重新扫码即可。
+- **手机与电脑数据自动同步**：数据统一存在这台电脑的 `data/sync.json`（不上云），手机端改动秒级互通；电脑换 WiFi 后 IP 可能变化，重新扫码即可。
 
 服务日志：`logs/server.log`（应用，任何平台任何启动方式都落盘）/ `logs/launchd.log`（macOS 守护层）。
 
@@ -100,7 +100,13 @@ docs/superpowers/     设计 spec + 实现计划
 
 - 浏览器 → `localhost:7788` → Fastify 后端 → `@anthropic-ai/claude-agent-sdk` 的 `query()` 调用项目自带 skill。
 - skill 文本里引用的 `analyze_image`/`parse_link` 等工具，agent 用原生能力（vision / Bash+curl）智能替代，**无需配置任何 MCP server**。
-- 业务数据全在浏览器 localStorage，后端无状态、重启不丢前端数据。
+- 业务数据的**唯一真源是后端的 `data/sync.json`**（手机/电脑自动同步，详见「手机访问」节）；浏览器 localStorage 只作缓存与离线兜底，清缓存/换浏览器不丢数据。后端不可达时前端自动降级为纯本地模式，恢复后自动补推。
+
+## 数据同步（设计备忘）
+
+- 前端所有写入（`lsS`/`lsD`/账号清单等）统一挂脏标记，防抖 800ms POST `/api/sync`；启动时拉取水合，回到页面（visibilitychange）时拉取刷新，关页面前 sendBeacon 尽力推送。
+- 合并粒度：账号×栏目级「后到推送覆盖」；账号清单按 id 并集；删除账号走墓碑（防迟到的旧数据复活）。冲突时间戳由服务端盖章，不受设备时钟影响。
+- `data/sync.json` 原子落盘（tmp+rename）并保留 `.bak`/`.bak2` 双滚动备份，主文件损坏自动回退。
 
 ## 开发
 

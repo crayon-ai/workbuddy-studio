@@ -14,6 +14,7 @@ import { deepReviewRoutes } from "./routes/deep-review.js";
 import { scriptRoutes } from "./routes/script.js";
 import { taskRoutes } from "./routes/task.js";
 import { healthzRoutes } from "./routes/healthz.js";
+import { syncRoutes } from "./routes/sync.js";
 
 export interface BuildAppOpts {
   /** API key 落地的 .env 路径，默认 ./.env（相对 server 工作目录） */
@@ -43,6 +44,7 @@ export async function buildApp(opts: BuildAppOpts = {}): Promise<FastifyInstance
   await app.register(scriptRoutes, routeOpts);
   await app.register(taskRoutes);
   await app.register(healthzRoutes);
+  await app.register(syncRoutes, routeOpts);
   await app.register(lanRoutes, routeOpts);
   return app;
 }

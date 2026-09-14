@@ -63,7 +63,8 @@
 - **门禁机制**：本机访问免鉴权；其他设备必须带 token——`data/lan-token.txt`（首启自动生成，长期有效）。首次通过 `/?t=<token>` 进入会种 HttpOnly cookie（一年），之后直接访问即可。无凭证的局域网请求一律 401（API 返回 `WB_LAN_TOKEN_REQUIRED`，页面返回引导页）。
 - **用户入口**：电脑端工作台侧边栏「设置 → 手机访问」弹窗，展示二维码 + 链接 + 步骤指引，`GET /api/lan-info` 提供。
 - 手机端可「添加到主屏幕」当 App 用（PWA：`/manifest.webmanifest` + `assets/icon-*`）。
-- 注意：数据存在各设备浏览器的 localStorage，手机端与电脑端数据不互通；电脑换 WiFi/重启后局域网 IP 可能变化，重新扫码即可。
+- **数据同步**：业务数据唯一真源是后端 `data/sync.json`（`GET/POST /api/sync`，见 `server/src/sync-store.ts`），手机端与电脑端自动同步；浏览器 localStorage 只是缓存/离线兜底。后端不可达时前端自动降级纯本地模式（左下角离线横幅），恢复后自动补推。
+- 电脑换 WiFi/重启后局域网 IP 可能变化，重新扫码即可。
 - Windows 首次启动若弹防火墙放行询问，选「允许」。
 
 ## 验收（确认跑通了）
@@ -82,7 +83,7 @@
 - **skill 加载**：后端用 `@anthropic-ai/claude-agent-sdk` 的 `query()`，`settingSources:["project"]` + `cwd=项目根` → 自动加载 `.claude/skills/` 下的 skill。两个 skill：`baokuan-chaijie`（爆款拆解）、`xhs-title-psych`（标题）。
 - **skill 里的 `analyze_image` / `parse_link` 等工具不用配**：agent 会用原生能力智能替代——图片走模型 vision（用 Read 读图）、链接解析走 Bash+curl。
 - **skill 产物**：拆解结果写到临时目录的 `AI拆解/AI爆款拆解-*.md`，后端读取解析后返回前端。
-- **数据**：所有业务数据在前端 localStorage（选题/待办/日历/复盘/拆解历史），后端无状态。
+- **数据**：业务数据唯一真源在服务端 `data/sync.json`（原子落盘 + `.bak`/`.bak2` 滚动备份；前端启动水合、写后防抖推送、回到页面拉取刷新）；localStorage 仅作缓存与离线兜底。改动前端任何数据写入时**必须**走 `lsS`/`lsD`/`saveAccounts` 等既有入口（已挂同步钩子），不要绕过它们直接写 localStorage。
 
 ## 故障排查
 
