@@ -1264,6 +1264,10 @@ textarea.ks-ks::placeholder{color:var(--ink-3)}
 .tmat-plat{font-size:11px;color:var(--ink-3);font-weight:600;display:flex;align-items:center;gap:5px}
 .tmat-plat .pdot{width:7px;height:7px;border-radius:50%;display:inline-block}
 .tmat-go{color:var(--ink-3);flex-shrink:0}
+.tmat-row{position:relative;margin-bottom:9px}
+.tmat-row .tmat-card{margin-bottom:0;padding-right:44px}
+.tmat-del{position:absolute;top:50%;right:9px;transform:translateY(-50%);width:26px;height:26px;border:none;border-radius:8px;background:rgba(58,50,44,.06);color:var(--ink-3);font-size:15px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .18s var(--ease)}
+.tmat-del:hover{background:rgba(232,90,68,.14);color:var(--coral)}
 .tmat-empty{padding:30px;text-align:center;color:var(--ink-3);font-size:13px;background:var(--cream-2);border-radius:var(--radius);border:1.5px dashed var(--line-2)}
 
 /* ===== 数据分析 ===== */
@@ -4213,17 +4217,30 @@ function submitLinkMat(){
 function openTopicMat(idx){
   const t=TOPICS[idx];
   $('#topicMatTitle').textContent=t.t;
-  const mats=(t.mats||[]).map(ref=>MATS[ref]).filter(Boolean);
-  $('#topicMatCount').textContent=mats.length+' 条关联素材 · 点击卡片查看原文';
-  $('#topicMatBody').innerHTML=mats.length?mats.map(m=>`
-    <a class="tmat-card" href="${m.url}" target="_blank" rel="noopener" style="--pc:${m.pcol}">
-      <span class="tmat-ava" style="background:${m.pcol}">${m.ava}</span>
-      <span class="tmat-info"><span class="tmat-title">${m.title}</span><span class="tmat-plat"><span class="pdot" style="background:${m.pcol}"></span>${m.pn}${m.date?' · '+m.date:''}</span></span>
-      <span class="tmat-go"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M9 7h8v8"/></svg></span>
-    </a>`).join(''):'<div class="tmat-empty">这个选题还没关联素材，去素材库点「关联选题」积累吧～</div>';
+  const rows=(t.mats||[]).map(ref=>({ref,m:MATS[ref]})).filter(x=>x.m);
+  $('#topicMatCount').textContent=rows.length+' 条关联素材 · 点卡片看原文，点 × 移除';
+  $('#topicMatBody').innerHTML=rows.length?rows.map(({ref,m})=>`
+    <div class="tmat-row">
+      <a class="tmat-card" href="${m.url}" target="_blank" rel="noopener" style="--pc:${m.pcol}">
+        <span class="tmat-ava" style="background:${m.pcol}">${m.ava}</span>
+        <span class="tmat-info"><span class="tmat-title">${m.title}</span><span class="tmat-plat"><span class="pdot" style="background:${m.pcol}"></span>${m.pn}${m.date?' · '+m.date:''}</span></span>
+        <span class="tmat-go"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M9 7h8v8"/></svg></span>
+      </a>
+      <button class="tmat-del" onclick="unlinkTopicMat(${idx},${ref})" title="从该选题移除这条素材" aria-label="移除">×</button>
+    </div>`).join(''):'<div class="tmat-empty">这个选题还没关联素材，去素材库点「关联选题」积累吧～</div>';
   $('#topicMatModal').classList.add('open');
 }
 function closeTopicMat(e){if(e&&e.target!==e.currentTarget)return;$('#topicMatModal').classList.remove('open');}
+function unlinkTopicMat(ti,mi){
+  const t=TOPICS[ti];if(!t||!Array.isArray(t.mats))return;
+  const m=MATS[mi];
+  if(!confirm('从该选题移除这条素材？\n'+((m&&m.title)||'').slice(0,30)+'\n\n素材本身会保留在素材库，之后可重新关联。'))return;
+  t.mats=t.mats.filter(x=>x!==mi);
+  saveState();
+  openTopicMat(ti);
+  renderTopic();
+  toast('已从选题移除（素材库保留）');
+}
 /* ===== 选题池：优先级 ===== */
 const PRI_META={high:{lab:'高',cls:'high',dot:'var(--coral)'},mid:{lab:'中',cls:'mid',dot:'var(--honey)'},low:{lab:'低',cls:'low',dot:'var(--matcha)'}};
 const priOf=t=>PRI_META[t.priority]?t.priority:'mid';
@@ -5797,13 +5814,13 @@ function renderTopicCatFormSel(cur){
   sel.innerHTML='<option value="">未分类</option>'+cats.map(c=>'<option value="'+tcEsc(c)+'">'+tcEsc(c)+'</option>').join('')+'<option value="__new__">＋ 新增类别…</option>';
   sel.value=cats.includes(cur)?cur:'';
 }
-/** 筛选下拉：全部 + 未分类 + 类别 */
+/** 筛选下拉：全部 + 类别 */
 function renderTopicCatFilter(){
   const sel=$('#topicCatFilter');if(!sel)return;
   const cur=sel.value||'all';
   const cats=loadTopicCats();
-  sel.innerHTML='<option value="all">全部类别</option><option value="__none__">未分类</option>'+cats.map(c=>'<option value="'+tcEsc(c)+'">'+tcEsc(c)+'</option>').join('')+'<option value="__manage__">⚙ 管理类别…</option>';
-  sel.value=cats.includes(cur)||cur==='all'||cur==='__none__'?cur:'all';
+  sel.innerHTML='<option value="all">全部类别</option>'+cats.map(c=>'<option value="'+tcEsc(c)+'">'+tcEsc(c)+'</option>').join('')+'<option value="__manage__">⚙ 管理类别…</option>';
+  sel.value=cats.includes(cur)||cur==='all'?cur:'all';
   sel.classList.toggle('on',sel.value!=='all');
 }
 function tcEsc(x){return String(x).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;')}
