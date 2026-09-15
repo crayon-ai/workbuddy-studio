@@ -6510,7 +6510,7 @@ function plRenderRuns(){
     const chips=(r.chips||[]).slice(0,3).map(c=>'<span class="pl-chip">'+plEsc(c)+'</span>').join('');
     return '<article class="card" style="--cc:var(--lav);animation-delay:'+idx*60+'ms">'
       +'<div class="c-title">'+plEsc(r.draftExcerpt?r.draftExcerpt.slice(0,26)+'…':'未命名初稿')+'</div>'
-      +'<div class="pc-rec-stats" style="gap:10px">'+(typeof r.consistency==='number'?'<span class="pl-run-score"><b>'+r.consistency+'</b><span class="of">% 一致度</span></span>':'')+'<span class="cmeta">📝 '+(r.chars||0)+' 字</span></div>'
+      +'<div class="pc-rec-stats" style="gap:10px">'+'<span class="cmeta">📝 '+(r.chars||0)+' 字</span></div>'
       +(chips?'<div class="pl-chips" style="margin-top:8px">'+chips+'</div>':'')
       +'<div class="pc-rec-metas"><span class="cmeta">📅 '+date+'</span><span class="cmeta">📚 参考 '+(r.noteCount||'-')+' 篇 · '+(PL_STRENGTH_LAB[r.strength]||'风格对齐')+'</span></div>'
       +'<div class="c-foot"><button class="mini pri" onclick="plOpenDrawer(\''+r.id+'\')">查看结果</button>'
@@ -6539,7 +6539,6 @@ async function plOpenDrawer(id){
       +(chips?'<div class="pl-chips">'+chips+'</div>':'')
       +'<div class="pl-stats">'
       +'<div class="pl-stat"><b>'+(m.noteCount||'-')+'</b><span>参考笔记</span></div>'
-      +(typeof d.consistency==='number'?'<div class="pl-stat"><b>'+d.consistency+'<i>%</i></b><span>风格一致度</span></div>':'')
       +(typeof d.changes==='number'?'<div class="pl-stat"><b>'+d.changes+'<i>处</i></b><span>改写点</span></div>':'')
       +'</div></div>'
       +'<div class="pl-out" style="margin-top:14px"><div class="pl-out-hd">'
