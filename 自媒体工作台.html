@@ -1369,6 +1369,10 @@ textarea.ks-ks::placeholder{color:var(--ink-3)}
 .pl-stat b{display:block;font-family:var(--serif);font-size:21px;font-weight:800;color:var(--lav-d);line-height:1.2}
 .pl-stat b i{font-style:normal;font-size:11px;margin-left:1px}
 .pl-stat span{display:block;font-size:10.5px;color:var(--ink-3);font-weight:600;margin-top:2px}
+.pl-info{display:flex;flex-wrap:wrap;gap:8px;padding:2px 0}
+.pl-info-item{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:7px 13px;display:flex;flex-direction:column;gap:1px;min-width:74px}
+.pl-info-item span{font-size:10px;color:var(--ink-3);font-weight:600}
+.pl-info-item b{font-size:12.5px;color:var(--ink);font-weight:800}
 .pl-run-score{font-family:var(--serif);font-size:20px;font-weight:800;color:var(--lav-d);line-height:1.1}
 .pl-run-score .of{font-size:10px;color:var(--ink-3);font-family:var(--sans);font-weight:600}
 .pl-out{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow-s);overflow:hidden}
@@ -6330,6 +6334,7 @@ let _plRunning=false,_plFileContent=null,_plNotes=[],_plRuns=[],_plRun=null;
 let _plTask=null,_plPollTimer=null;
 const PL_STEPS=['读取勾选的笔记','蒸馏文风特征（口吻 · 句式 · 用词）','按你的习惯润色初稿','风格一致性自检'];
 const PL_STRENGTH_LAB={light:'轻润色',align:'风格对齐',deep:'深度重写'};
+const PL_LENGTH_LAB={keep:'保持原长',short:'精简一点'};
 const PL_CHECK_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2"><path d="M5 12l5 5L20 7"/></svg>';
 const PL_COVERS=[['📝','linear-gradient(135deg,#FFE8D6,#FFD2AC)'],['🎬','linear-gradient(135deg,#EEEBF7,#DBD4F1)'],['📖','linear-gradient(135deg,#E9F1DD,#D2E4BA)'],['✍️','linear-gradient(135deg,#FBE3EA,#F6C4D2)']];
 function plCover(id,type){let h=0;for(const c of String(id))h+=c.charCodeAt(0);return PL_COVERS[(h+(type==='视频'?1:0))%PL_COVERS.length];}
@@ -6524,12 +6529,11 @@ function plRenderRuns(){
   g.innerHTML=_plRuns.map((r,idx)=>{
     const t=new Date(r.createdAt);
     const date=isNaN(t.getTime())?'':t.toLocaleString('zh-CN',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
-    const chips=(r.chips||[]).slice(0,3).map(c=>'<span class="pl-chip">'+plEsc(c)+'</span>').join('');
     return '<article class="card" style="--cc:var(--lav);animation-delay:'+idx*60+'ms">'
       +'<div class="c-title">'+plEsc(r.draftExcerpt?r.draftExcerpt.slice(0,26)+'…':'未命名初稿')+'</div>'
       +'<div class="pc-rec-stats" style="gap:10px">'+'<span class="cmeta">📝 '+(r.chars||0)+' 字</span></div>'
-      +(chips?'<div class="pl-chips" style="margin-top:8px">'+chips+'</div>':'')
-      +'<div class="pc-rec-metas"><span class="cmeta">📅 '+date+'</span><span class="cmeta">📚 参考 '+(r.noteCount||'-')+' 篇 · '+(PL_STRENGTH_LAB[r.strength]||'风格对齐')+'</span></div>'
+      +'<div class="pc-rec-metas"><span class="cmeta">📅 '+date+'</span></div>'
+      +'<div class="pc-rec-metas" style="margin-top:4px;gap:8px"><span class="cmeta">📚 参考 '+(r.noteCount||'-')+' 篇</span><span class="cmeta">⚡ '+(PL_STRENGTH_LAB[r.strength]||'风格对齐')+'</span><span class="cmeta">📏 '+(PL_LENGTH_LAB[r.length]||'保持原长')+'</span></div>'
       +'<div class="c-foot"><button class="mini pri" onclick="plOpenDrawer(\''+r.id+'\')">查看结果</button>'
       +'<button class="mini ghost" onclick="plDelRun(\''+r.id+'\')">删除</button></div></article>';
   }).join('');
@@ -6540,6 +6544,12 @@ async function plDelRun(id){
   await plLoadRuns();toast('已删除该条优化结果');
 }
 let _plDrawerOpener=null;
+/* 抽屉打开时，点抽屉外任意区域自动关闭 */
+document.addEventListener('mousedown',e=>{
+  const dr=$('#plDrawer');if(!dr||!dr.classList.contains('open'))return;
+  if(dr.contains(e.target))return;
+  plCloseDrawer();
+},true);
 async function plOpenDrawer(id){
   if(!id)return;
   try{
@@ -6550,15 +6560,14 @@ async function plOpenDrawer(id){
     const t=new Date(m.createdAt||'');
     $('#plDrDate').textContent=isNaN(t.getTime())?'':t.toLocaleString('zh-CN',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
     $('#plDrTitle').textContent=m.draftExcerpt?m.draftExcerpt.slice(0,24)+'…':'优化结果';
-    $('#plDrMetas').innerHTML='<span class="cmeta">📚 参考 '+(m.noteCount||'-')+' 篇笔记</span><span class="cmeta">⚡ '+(PL_STRENGTH_LAB[m.strength]||'风格对齐')+'</span><span class="cmeta">📝 '+(m.chars||String(d.text||'').replace(/\s/g,'').length)+' 字</span>';
-    const chips=(d.chips||[]).map(c=>'<span class="pl-chip">'+plEsc(c)+'</span>').join('');
-    $('#plDrBody').innerHTML='<div class="pl-style"><div class="pl-style-hd">🎯 从你的 '+(m.noteCount||'-')+' 篇笔记里学到的风格画像</div>'
-      +(chips?'<div class="pl-chips">'+chips+'</div>':'')
-      +'<div class="pl-stats">'
-      +'<div class="pl-stat"><b>'+(m.noteCount||'-')+'</b><span>参考笔记</span></div>'
-      +(typeof d.changes==='number'?'<div class="pl-stat"><b>'+d.changes+'<i>处</i></b><span>改写点</span></div>':'')
-      +'</div></div>'
-      +'<div class="pl-out" style="margin-top:14px"><div class="pl-out-hd">'
+    $('#plDrMetas').innerHTML='<div class="pl-info">'
+      +'<div class="pl-info-item"><span>📚 参考笔记</span><b>'+(m.noteCount||'-')+' 篇</b></div>'
+      +'<div class="pl-info-item"><span>⚡ 优化强度</span><b>'+(PL_STRENGTH_LAB[m.strength]||'风格对齐')+'</b></div>'
+      +'<div class="pl-info-item"><span>📏 篇幅</span><b>'+(PL_LENGTH_LAB[m.length]||'保持原长')+'</b></div>'
+      +'<div class="pl-info-item"><span>📝 字数</span><b>'+(m.chars||String(d.text||'').replace(/\s/g,'').length)+' 字</b></div>'
+      +(typeof d.changes==='number'?'<div class="pl-info-item"><span>✍️ 改写点</span><b>'+d.changes+' 处</b></div>':'')
+      +'</div>';
+    $('#plDrBody').innerHTML='<div class="pl-out"><div class="pl-out-hd">'
       +'<div class="pl-out-t">✨ 优化后的稿子</div>'
       +'<button class="pl-mini" id="plCmpBtn" onclick="plCompare(this)">👁 对照原文</button>'
       +'<button class="pl-mini" onclick="plCopy()">📋 复制</button>'

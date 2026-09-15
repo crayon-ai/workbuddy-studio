@@ -266,6 +266,7 @@ interface RunMeta {
   chars: number;
   noteCount: number;
   strength: string;
+  length: string;
 }
 
 function readRunMeta(root: string, id: string): RunMeta | null {
@@ -592,6 +593,7 @@ async function runPolish(
     chars: parsed.text.replace(/\s/g, "").length,
     noteCount: picked.length,
     strength: input.strength,
+    length: input.length,
   };
   writeFileSync(path.join(workDir, "meta.json"), JSON.stringify(meta, null, 2), "utf8");
   taskLog("polish", taskId, `完成：${meta.chars} 字，一致度 ${meta.consistency ?? "-"}`, t0);
