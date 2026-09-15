@@ -35,9 +35,24 @@ const BILI_JSON = JSON.stringify({
   },
 });
 
-const BING_HTML = `<html><li class="b_algo"><h2><a href="https://zhuanlan.zhihu.com/p/1">知乎文章标题</a></h2><p>这是摘要文本内容</p></li></html>`;
+// 真实线上结构：h2 带 class 属性，标题含 <strong> 高亮，摘要在 b_caption 内含实体
+const BING_HTML = `<html><ol><li class="b_algo" data-id iid="SERP.5342"><link rel="stylesheet" href="/rp/x.css"/><h2 class=""><a target="_blank" href="https://zhuanlan.zhihu.com/p/1" h="ID=SERP,5129.2">知乎<strong>关键词</strong>文章标题</a></h2><div class="b_caption"><p class="b_lineclamp2" data-rslinkclamp-iid="">2026年5月20日&ensp;&#0183;&ensp;这是摘要文本内容</p></div></li></ol></html>`;
 
-const SOGOU_HTML = `<html><div class="tit"><a href="https://mp.weixin.qq.com/s/abc">公众号文章标题</a></div><p class="txt-info">公众号摘要</p></html>`;
+// 真实线上结构：结果在 <li id="sogou_vr_*_box_N"> 内，文章是 /link?url= 相对跳转链
+// （href 含 &amp; 实体），摘要 p.txt-info，作者 span.all-time-y2，时间藏于 timeConvert
+const sogouTs = Math.floor(Date.now() / 1000) - 5 * 86400; // 5 天前（relDays 断言稳定）
+const SOGOU_HTML = `<html><body>
+<nav><a href="http://www.sogou.com/web?query=x">网页</a><a href="https://pic.sogou.com/pics?query=x">图片</a></nav>
+<ul>
+<li id="sogou_vr_11002601_box_0" d="ab1"><div class="txt-box">
+<h3><a target="_blank" href="/link?url=dn9a_-gY295K0Rci&amp;type=2&amp;query=%E5%85%B3%E9%94%AE%E8%AF%8D" uigs="article_title_0">公众号<em><!--red_beg-->关键词<!--red_end--></em>文章标题</a></h3>
+<p class="txt-info" id="sogou_vr_11002601_summary_0">公众号<em>关键词</em>摘要</p>
+<div class="s-p"><span class="all-time-y2">作者公众号A</span><span class="s2"><script>document.write(timeConvert('${sogouTs}'))</script></span></div>
+</div></li>
+<li id="sogou_vr_11002601_box_1" d="ab2"><div class="txt-box">
+<h3><a target="_blank" href="https://mp.weixin.qq.com/s/abc" uigs="article_title_1">绝对链接文章</a></h3>
+</div></li>
+</ul></body></html>`;
 
 const HN_JSON = JSON.stringify({
   hits: [
@@ -79,8 +94,21 @@ describe("fetchSources（后端直连 5 源，并行 + 降级）", () => {
     expect(bili.url).toBe("https://www.bilibili.com/video/BV1test");
 
     const bing = items.find((i) => i.pf === "bing")!;
+    expect(bing.title).toBe("知乎关键词文章标题"); // h2 带属性 + <strong> 高亮
     expect(bing.url).toBe("https://zhuanlan.zhihu.com/p/1");
-    expect(bing.summary).toBe("这是摘要文本内容");
+    expect(bing.summary).toBe("2026年5月20日 · 这是摘要文本内容"); // &ensp;/&#0183; 实体解码
+
+    const sogouItems = items.filter((i) => i.pf === "weixin");
+    expect(sogouItems.map((i) => i.title)).toEqual([
+      "公众号关键词文章标题",
+      "绝对链接文章",
+    ]); // 导航链接（网页/图片）不进入结果
+    const wx = sogouItems[0];
+    expect(wx.author).toBe("作者公众号A");
+    expect(wx.summary).toBe("公众号关键词摘要");
+    expect(wx.pub).toBe("5 天前"); // timeConvert 时间戳 → 相对时间
+    expect(wx.url).toBe("https://weixin.sogou.com/link?url=dn9a_-gY295K0Rci&type=2&query=%E5%85%B3%E9%94%AE%E8%AF%8D"); // 相对链补全 + &amp; 解码
+    expect(sogouItems[1].url).toBe("https://mp.weixin.qq.com/s/abc"); // 绝对链原样保留
 
     const hn = items.find((i) => i.pf === "hn")!;
     expect(hn.url).toBe("https://example.com/project");
