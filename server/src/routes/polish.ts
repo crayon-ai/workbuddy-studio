@@ -120,6 +120,29 @@ export const polishRoutes: FastifyPluginCallback<PolishRoutesOpts> = (app, opts,
     return { success: true, data: { notes: listNotes(polishRoot(opts.projectRoot, account)) }, error: null };
   });
 
+  /** 查看单篇收录笔记的完整语料（正文 + 图片内容/口播逐字稿小节） */
+  app.get("/api/polish/notes/:id/content", async (req) => {
+    const { id } = (req.params as { id: string }) ?? {};
+    const { account } = (req.query as { account?: string }) ?? {};
+    if (!/^[A-Za-z0-9_-]{1,64}$/.test(id || "")) {
+      return { success: false, data: null, error: "笔记 id 无效" };
+    }
+    const dir = path.join(notesDir(opts.projectRoot, account), id);
+    const bodyPath = path.join(dir, "正文.md");
+    if (!existsSync(bodyPath)) return { success: false, data: null, error: "笔记不存在" };
+    const meta = readNoteMeta(path.join(dir, ".."), id);
+    return {
+      success: true,
+      data: {
+        title: meta?.title || readFileSync(bodyPath, "utf8").split("\n")[0] || "未命名笔记",
+        type: meta?.type || "",
+        date: meta?.date || "",
+        content: readFileSync(bodyPath, "utf8"),
+      },
+      error: null,
+    };
+  });
+
   /** 删除一篇收录的笔记（连同目录） */
   app.delete("/api/polish/notes/:id", async (req) => {
     const { id } = (req.params as { id: string }) ?? {};

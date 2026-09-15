@@ -1336,6 +1336,8 @@ textarea.ks-ks::placeholder{color:var(--ink-3)}
 .pl-ntitle{font-size:12.5px;font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pl-nmeta{font-size:10.5px;color:var(--ink-3);margin-top:2px;display:flex;align-items:center;gap:5px}
 .pl-ntype{padding:1px 6px;border-radius:var(--pill);background:var(--cream-2);font-weight:700}
+.pl-nview{width:26px;height:26px;border-radius:8px;border:none;background:transparent;color:var(--ink-3);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s var(--ease)}
+.pl-nview:hover{background:var(--lav-bg);color:var(--lav-d)}
 .pl-ndel{width:26px;height:26px;border-radius:8px;border:none;background:transparent;color:var(--ink-3);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;opacity:0;transition:all .15s var(--ease)}
 .pl-note:hover .pl-ndel{opacity:1}
 .pl-ndel:hover{background:var(--rose-bg);color:var(--rose)}
@@ -2717,6 +2719,20 @@ body.sb-lock{overflow:hidden}
     <div class="dr-body" id="pcDrBody"></div>
   </div>
 </aside>
+
+<!-- 笔记内容预览弹窗（收录的语料原文） -->
+<div class="modal-mask" id="plNoteModal" onclick="plCloseNoteModal(event)">
+  <div class="modal" onclick="event.stopPropagation()" style="max-width:520px">
+    <div class="modal-head">
+      <div><div class="modal-eyebrow">📚 收录的笔记语料</div><div class="modal-title" id="plNmTitle"></div></div>
+      <button class="modal-close" onclick="plCloseNoteModal()">✕</button>
+    </div>
+    <div class="modal-sub" id="plNmMeta"></div>
+    <div class="modal-body" style="max-height:60vh;overflow-y:auto">
+      <pre class="pl-text" id="plNmBody" style="border-radius:12px"></pre>
+    </div>
+  </div>
+</div>
 
 <div id="toast" style="position:fixed;left:50%;bottom:32px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:11px 22px;border-radius:18px;font-size:13px;font-weight:600;opacity:0;pointer-events:none;transition:all .3s var(--ease);z-index:99;box-shadow:var(--shadow-l);max-width:min(86vw,560px);white-space:normal;text-align:center;line-height:1.6;word-break:break-word"></div>
 
@@ -6348,7 +6364,8 @@ function plRenderNotes(){
         +'<div class="pl-nmeta">'+(n.parsing?'下载并解析笔记内容'
           :((n.type?'<span class="pl-ntype">'+plEsc(n.type)+'</span>':'')+(d.length===3?'<span>'+Number(d[1])+' 月 '+Number(d[2])+' 日</span>':'')))
         +'</div></div>'
-        +(n.parsing?'':'<button class="pl-ndel" onclick="event.stopPropagation();plDelNote(\''+n.id+'\')" aria-label="移除"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 6l12 12M18 6L6 18"/></svg></button>')
+        +(n.parsing?'':'<button class="pl-nview" onclick="event.stopPropagation();plOpenNote(\''+n.id+'\')" aria-label="查看内容" title="查看收录的完整内容"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg></button>'
+          +'<button class="pl-ndel" onclick="event.stopPropagation();plDelNote(\''+n.id+'\')" aria-label="移除"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 6l12 12M18 6L6 18"/></svg></button>')
         +'</div>';
     };
     box.innerHTML=parsing.map(card).join('')+list.map(card).join('');
@@ -6572,6 +6589,19 @@ function plDownload(){
   a.download='笔记优化-'+new Date().toISOString().slice(0,10)+'.md';a.click();URL.revokeObjectURL(a.href);
 }
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('#plDrawer')&&$('#plDrawer').classList.contains('open'))plCloseDrawer();});
+async function plOpenNote(id){
+  try{
+    const j=await fetch('/api/polish/notes/'+id+'/content?account='+CUR_ACC).then(r=>r.json());
+    if(!j.success)throw new Error(j.error||'读取失败');
+    $('#plNmTitle').textContent=j.data.title||'未命名笔记';
+    const d=(j.data.date||'').split('-');
+    $('#plNmMeta').textContent=(j.data.type?j.data.type+' · ':'')+(d.length===3?Number(d[1])+' 月 '+Number(d[2])+' 日 发布':'')+' · 这就是 AI 蒸馏时读到的完整语料';
+    $('#plNmBody').textContent=j.data.content;
+    document.body.appendChild($('#plNoteModal'));
+    $('#plNoteModal').classList.add('open');
+  }catch(e){toast('查看内容失败：'+(e.message||e));}
+}
+function plCloseNoteModal(e){if(e&&e.target!==e.currentTarget)return;$('#plNoteModal').classList.remove('open');}
 /* 初始化：载入笔记库与历史；有未完成的优化任务则恢复轮询 */
 function plInit(){
   plLoadNotes();plLoadRuns();
