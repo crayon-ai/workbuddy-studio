@@ -1563,7 +1563,8 @@ body.sb-lock{overflow:hidden}
         <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7V4h16v3M9 20h6M12 4v16"/></svg></span>
         <span class="txt">笔记标题生成</span>
       </div>
-      <div class="sb-item" data-view="precheck">
+      <!-- 笔记内容检查：临时下线前台入口（后台 /api/precheck 与本视图完整保留，恢复时去掉 display:none 即可） -->
+      <div class="sb-item" data-view="precheck" style="display:none">
         <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 11l3 3 8-8"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2h9"/></svg></span>
         <span class="txt">笔记内容检查</span><span class="tag-new">新</span>
       </div>
