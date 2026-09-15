@@ -1736,6 +1736,35 @@ body.sb-lock{overflow:hidden}
         </div>
       </div>
 
+      <!-- 选题素材移除确认弹窗 -->
+      <div class="modal-mask" id="matDelModal" onclick="closeMatDel(event)">
+        <div class="modal" onclick="event.stopPropagation()" style="max-width:400px">
+          <div class="modal-head">
+            <div>
+              <div class="modal-eyebrow">🗑️ 移除素材</div>
+              <div class="modal-title">从该选题移除这条素材？</div>
+            </div>
+            <button class="modal-close" onclick="closeMatDel()" aria-label="关闭"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+          </div>
+          <div class="modal-sub">素材本身会保留在素材库，之后可随时重新关联</div>
+          <div class="modal-body">
+            <input type="hidden" id="matDelTopic">
+            <input type="hidden" id="matDelRef">
+            <div class="todo-confirm-card">
+              <span class="tmat-ava" id="matDelAva" style="width:42px;height:42px;font-size:16px">🔗</span>
+              <div style="flex:1;min-width:0">
+                <div style="font-size:13.5px;font-weight:700;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" id="matDelTitle">—</div>
+                <div style="font-size:11px;color:var(--ink-3);font-weight:600;margin-top:3px" id="matDelMeta">—</div>
+              </div>
+            </div>
+            <div class="tf-foot">
+              <button class="btn" onclick="closeMatDel()">先留着</button>
+              <button class="btn btn-coral" onclick="submitMatDel()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 6l12 12M18 6L6 18"/></svg>确认移除</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- 转选题录入弹窗 -->
       <!-- 笔记复盘弹窗 -->
       <div class="modal-mask" id="profileModal" onclick="closeProfile(event)">
@@ -4232,11 +4261,26 @@ function openTopicMat(idx){
 }
 function closeTopicMat(e){if(e&&e.target!==e.currentTarget)return;$('#topicMatModal').classList.remove('open');}
 function unlinkTopicMat(ti,mi){
-  const t=TOPICS[ti];if(!t||!Array.isArray(t.mats))return;
-  const m=MATS[mi];
-  if(!confirm('从该选题移除这条素材？\n'+((m&&m.title)||'').slice(0,30)+'\n\n素材本身会保留在素材库，之后可重新关联。'))return;
+  const t=TOPICS[ti],m=MATS[mi];
+  if(!t||!m||!Array.isArray(t.mats))return;
+  $('#matDelTopic').value=ti;
+  $('#matDelRef').value=mi;
+  const ava=$('#matDelAva');
+  ava.textContent=m.ava||'🔗';
+  ava.style.background=m.pcol||'var(--coral)';
+  $('#matDelTitle').textContent=m.title||'(未命名素材)';
+  $('#matDelMeta').textContent=(m.pn||'')+(m.date?' · '+m.date:'')+' · 选题「'+(t.t||'未命名')+'」';
+  $('#matDelModal').classList.add('open');
+}
+function closeMatDel(e){if(e&&e.target!==e.currentTarget)return;$('#matDelModal').classList.remove('open');}
+function submitMatDel(){
+  const ti=parseInt($('#matDelTopic').value,10);
+  const mi=parseInt($('#matDelRef').value,10);
+  const t=TOPICS[ti];
+  if(!t||!Array.isArray(t.mats)){closeMatDel();return;}
   t.mats=t.mats.filter(x=>x!==mi);
   saveState();
+  closeMatDel();
   openTopicMat(ti);
   renderTopic();
   toast('已从选题移除（素材库保留）');
@@ -6510,7 +6554,7 @@ function saveProfile(){
 }
 
 /* ===== 初始化 ===== */
-['topicMatModal','topicFormModal','reviewModal','profileModal','planFormModal','todoFormModal','todoConfirmModal','themeModal','backupModal'].forEach(function(id){var m=document.getElementById(id);if(m&&m.parentNode!==document.body)document.body.appendChild(m);});
+['topicMatModal','matDelModal','topicFormModal','reviewModal','profileModal','planFormModal','todoFormModal','todoConfirmModal','themeModal','backupModal'].forEach(function(id){var m=document.getElementById(id);if(m&&m.parentNode!==document.body)document.body.appendChild(m);});
 renderSbThemeDots();
 const hv=(location.hash||'').replace('#','');
 if(hv&&$('#v-'+hv))switchView(hv);
