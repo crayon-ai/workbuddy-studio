@@ -4,7 +4,7 @@ import { existsSync, mkdirSync, renameSync } from "node:fs";
 /** 5 个 skill 产物模块（与 data/ 下的目录名一致）。 */
 export const DATA_MODULES = ["inspirations", "teardowns", "deep-reviews", "personalized", "prechecks"] as const;
 /** 3.0 新增：脚本工坊产物 + 笔记优化产物（只出现在 accounts/ 新布局，无 2.0 旧目录） */
-export type DataModule = (typeof DATA_MODULES)[number] | "scripts" | "polish";
+export type DataModule = (typeof DATA_MODULES)[number] | "scripts" | "polish" | "materials";
 
 /** 账号 id 只允许安全字符做目录名，其余一律回落 default（防路径穿越/非法目录名）。 */
 export function accountSlug(accountId: unknown): string {

@@ -1877,7 +1877,7 @@ body.sb-lock{overflow:hidden}
               <div class="ph-sub">收藏别人的优质内容作为创作养分——AI 自动摘要、提炼值得学习的点，写稿时随时调用，不再看完就忘。</div>
             </div>
             <div class="ph-actions">
-              <button class="btn" onclick="toast('粘贴链接，AI 自动摘要中…')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M10 13a5 5 0 007 0l3-3a5 5 0 00-7-7l-1 1"/><path d="M14 11a5 5 0 00-7 0l-3 3a5 5 0 007 7l1-1"/></svg>添加素材链接</button>
+              <button class="btn" onclick="matOpenLinkModal()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M10 13a5 5 0 007 0l3-3a5 5 0 00-7-7l-1 1"/><path d="M14 11a5 5 0 00-7 0l-3 3a5 5 0 007 7l1-1"/></svg>添加素材链接</button>
             </div>
           </div>
         </div>
@@ -2742,6 +2742,25 @@ body.sb-lock{overflow:hidden}
   </div>
 </aside>
 
+<!-- 添加素材链接弹窗 -->
+<div class="modal-mask" id="matLinkModal" onclick="matCloseLinkModal(event)">
+  <div class="modal" onclick="event.stopPropagation()" style="max-width:460px">
+    <div class="modal-head">
+      <div><div class="modal-eyebrow">🔗 添加素材</div><div class="modal-title">粘贴笔记链接，AI 自动解析成素材卡</div></div>
+      <button class="modal-close" onclick="matCloseLinkModal()">✕</button>
+    </div>
+    <div class="modal-sub">支持小红书、抖音笔记链接 · 解析出标题/作者/摘要和值得学习的点</div>
+    <div class="modal-body">
+      <input id="matLinkInput" class="opt-input" style="width:100%" placeholder="https://www.xiaohongshu.com/explore/… 或 https://v.douyin.com/…" onkeydown="if(event.key==='Enter')matParseLink()">
+      <div id="matLinkStatus" style="display:none;margin-top:12px;font-size:12.5px;color:var(--ink-2);line-height:1.8"></div>
+      <div style="display:flex;gap:8px;margin-top:14px">
+        <button class="btn btn-ghost" style="flex:1;height:44px;border:1px solid var(--line)" onclick="matCloseLinkModal()">取消</button>
+        <button class="btn btn-coral" id="matLinkGo" style="flex:2;height:44px" onclick="matParseLink()">解析并收藏</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- 笔记内容预览弹窗（收录的语料原文） -->
 <div class="modal-mask" id="plNoteModal" onclick="plCloseNoteModal(event)">
   <div class="modal" onclick="event.stopPropagation()" style="max-width:520px">
@@ -3162,7 +3181,9 @@ function delAcc(id){
   if(CUR_ACC===id){saveAccounts();switchAccount(ACCOUNTS[0].id,true);toast('账号已删除，已切换到「'+ACCOUNTS[0].name+'」');}
   else{saveAccounts();renderAccRows();}
 }
-/** 停掉全部轮询（后端任务继续跑，切回来时可凭 running_task 恢复进度） */
+/** 停掉随视图走的轮询（后端任务继续跑，切回来时可凭 running_task 恢复进度）。
+ *  内容检查/笔记优化的轮询不在此列：前者完成后要按原账号入账（见 pcPoll 的 acc 守卫），
+ *  后者由 plSwitchAccount 自行停表并依赖服务端落盘。 */
 function stopAllPolling(){
   [_inspPollTimer,_hitPollTimer,_titlePollTimer,_rvPollTimer].forEach(t=>{if(t)clearInterval(t)});
   _inspPollTimer=_hitPollTimer=_titlePollTimer=_rvPollTimer=null;
@@ -3197,6 +3218,7 @@ function switchAccount(id,silent){
   stopAllPolling();
   CUR_ACC=id;saveAccounts();
   reloadAllData();renderAllViews();
+  pcSwitchAccount();plSwitchAccount(); /* 内容检查/笔记优化：前台全部换成本账号数据，后台任务不受影响 */
   $$('.modal-mask.open').forEach(m=>m.classList.remove('open'));
   if(_runningInspTask)pollInspiration(_runningInspTask.taskId);
   if(_runningTask)pollTeardown(_runningTask.taskId,_runningTask.url);
@@ -4377,6 +4399,61 @@ const DEFAULT_MATS=[
    points:['「自然语言调度 Excel 公式」是小白也能上手的自动化入口，门槛极低','5 个实战模板（周报/对账/盘点/预测/清洗）可直接复用，实用性强','强调「2 小时→10 分钟」的量化提效，适合做干货教程型爆款']}
 ];
 let MATS=loadMats();
+/* ===== 添加素材链接（真实解析：xhs/抖音 → 素材卡片） ===== */
+let _matParsing=false,_matPollTimer=null;
+function matOpenLinkModal(){
+  document.body.appendChild($('#matLinkModal'));
+  $('#matLinkStatus').style.display='none';
+  $('#matLinkGo').disabled=false;$('#matLinkGo').textContent='解析并收藏';
+  $('#matLinkModal').classList.add('open');
+  setTimeout(()=>$('#matLinkInput').focus(),80);
+}
+function matCloseLinkModal(e){if(e&&e.target!==e.currentTarget)return;$('#matLinkModal').classList.remove('open');if(_matPollTimer){clearInterval(_matPollTimer);_matPollTimer=null;}_matParsing=false;}
+function matLinkStep(msg,cls){
+  const st=$('#matLinkStatus');st.style.display='block';st.style.color=cls||'var(--ink-2)';st.textContent=msg;
+}
+function matIsSupportedUrl(u){return /^https?:\/\/[^\s]*(xiaohongshu\.com|xhslink\.com|douyin\.com)/i.test(u||'')}
+async function matParseLink(){
+  if(_matParsing)return;
+  const inp=$('#matLinkInput');const url=(inp.value||'').trim();
+  if(!url){toast('先粘贴一条笔记链接');inp.focus();return;}
+  if(!matIsSupportedUrl(url)){matLinkStep('目前只支持小红书和抖音链接，检查一下再试','var(--coral-d)');return;}
+  _matParsing=true;const go=$('#matLinkGo');go.disabled=true;go.textContent='解析中…';
+  matLinkStep('正在提交解析…');
+  try{
+    const j=await fetch('/api/material/parse',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url,accountId:CUR_ACC})}).then(r=>r.json());
+    if(!j.success)throw new Error(j.error||'提交失败');
+    const taskId=j.data.taskId;
+    let n=0;
+    _matPollTimer=setInterval(async()=>{
+      n++;
+      if(n>140){clearInterval(_matPollTimer);_matPollTimer=null;_matParsing=false;go.disabled=false;go.textContent='解析并收藏';matLinkStep('解析超时（约 6 分钟），请稍后重试','var(--coral-d)');return;}
+      try{
+        const t=await fetch('/api/task/'+taskId).then(r=>r.json());
+        if(!t.success)return;
+        const d=t.data;
+        if(d.step)matLinkStep(d.step);
+        if(d.status==='running')return;
+        clearInterval(_matPollTimer);_matPollTimer=null;_matParsing=false;
+        go.disabled=false;go.textContent='解析并收藏';
+        if(d.status==='done'&&d.result&&d.result.material){
+          const m=d.result.material;
+          const meta=PF_META[m.plat]||{name:m.plat==='dy'?'抖音':'小红书',color:'#888'};
+          MATS.unshift({author:m.author||'未知作者',plat:m.plat,pn:meta.name,pcol:meta.color,ava:(m.author||'素').replace(/^@/,'').slice(0,1)||'素',url,title:m.title||'未命名素材',like:String(m.like??'-'),fav:String(m.fav??'-'),date:m.date||'',summary:m.summary||'',points:Array.isArray(m.points)&&m.points.length?m.points:['内容完整，可作参考']});
+          saveMats();renderMat();
+          $('#matLinkModal').classList.remove('open');
+          inp.value='';
+          toast('已存入素材库：「'+(m.title||'').slice(0,20)+'」');
+        }else{
+          matLinkStep(d.error||'解析失败，请换一条链接重试','var(--coral-d)');
+        }
+      }catch(e){}
+    },2500);
+  }catch(e){
+    _matParsing=false;go.disabled=false;go.textContent='解析并收藏';
+    matLinkStep('提交失败：'+(e.message||e),'var(--coral-d)');
+  }
+}
 function loadMats(){try{const r=JSON.parse(lsG('mats')||'null');return Array.isArray(r)&&r.length?r:[]}catch(e){return []}}
 function saveMats(){try{lsS('mats',JSON.stringify(MATS))}catch(e){}}
 function delMat(idx){
@@ -4494,6 +4571,7 @@ function hitCardHtml(h,idx,esc){
 }
 function delHit(idx){
   const h=HITS[idx];if(!h)return;
+  if(!confirm('确定删除这条拆解记录「'+((h.meta&&h.meta.title)||h.url||'').slice(0,30)+'」吗？删除后不可恢复。'))return;
   if(RPT_HIT&&RPT_HIT.id===h.id)closeReportDrawer();
   HITS.splice(idx,1);saveHits();renderHit();
   toast('已删除拆解记录：'+((h.meta&&h.meta.title)||h.url||''));
@@ -4864,7 +4942,7 @@ function pcClearFile(){
   _pcFileContent=null;
 }
 function pcStart(){
-  if(_pcRunning)return;
+  if(_pcRunning){toast('已有自检任务在进行中（可能属于其他账号），请等它完成');return;}
   const pasteMode=$('#pcTabPaste').classList.contains('on');
   const content=(pasteMode?$('#pcContent').value:(_pcFileContent||'')).trim();
   if(!content){toast(pasteMode?'先粘贴内容，或加载一个示例':'先选择一个 .txt / .md 文件');return;}
@@ -4885,7 +4963,7 @@ function pcStart(){
   });
   fetch('/api/precheck',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({content,title,accountId:CUR_ACC})}).then(r=>r.json()).then(j=>{
     if(!j.success){pcFail(j.error||'提交失败');return;}
-    _pcTask={taskId:j.data.taskId,startedAt:Date.now()};
+    _pcTask={taskId:j.data.taskId,startedAt:Date.now(),acc:CUR_ACC};
     pcSaveTask();
     pcPoll(j.data.taskId);
   }).catch(e=>pcFail('网络错误：'+e.message));
@@ -4910,60 +4988,62 @@ function pcFail(msg){
 }
 function pcPoll(taskId){
   let n=0;
+  const acc=CUR_ACC; /* 任务归属账号：完成后按它入账；界面只在仍是当前账号时刷新（切账号后任务照跑、数据照存，但不打扰新账号界面） */
   if(_pcPollTimer)clearInterval(_pcPollTimer);
   _pcPollTimer=setInterval(async()=>{
     n++;
-    if(n>240){pcFail('自检超时（10 分钟），请重试或查看 logs/server.log');return;}
+    const same=acc===CUR_ACC;
+    if(n>240){clearInterval(_pcPollTimer);_pcRunning=false;_pcTask=null;pcSaveTask();if(same)pcFail('自检超时（10 分钟），请重试或查看 logs/server.log');return;}
     try{
       const r=await fetch('/api/task/'+taskId);const j=await r.json();
-      if(!j.success){pcFail('任务已失效（后端可能重启）');return;}
+      if(!j.success){clearInterval(_pcPollTimer);_pcRunning=false;_pcTask=null;pcSaveTask();if(same)pcFail('任务已失效（后端可能重启）');return;}
       const d=j.data;
-      if(d.step)$('#pcRtLive').textContent=d.step;
+      if(d.step&&same)$('#pcRtLive').textContent=d.step;
       if(d.status==='running'){/* 等待 */}
       else if(d.status==='done'){
         clearInterval(_pcPollTimer);
         _pcRunning=false;_pcTask=null;pcSaveTask();
-        $('#pcStartBtn').disabled=false;$('#pcStartTxt').textContent='开始自检';
+        if(same){$('#pcStartBtn').disabled=false;$('#pcStartTxt').textContent='开始自检';}
         const R=(d.result&&d.result.data)||null;
-        if(!R){$('#pcRunning').classList.remove('on');pcFail('自检结果为空，请重试');return;}
+        if(!R){if(same){$('#pcRunning').classList.remove('on');pcFail('自检结果为空，请重试');}return;}
         /* 清单全部打勾，稍候收起；报告收进「已自检的内容」并自动打开抽屉 */
-        PC_STEPS.forEach((_,i)=>{const el=$('#pcRt'+i);if(el){el.classList.remove('doing');el.classList.add('done');el.querySelector('.st-ic').textContent='✓';}});
-        $('#pcRtLive').textContent='';
+        if(same)PC_STEPS.forEach((_,i)=>{const el=$('#pcRt'+i);if(el){el.classList.remove('doing');el.classList.add('done');el.querySelector('.st-ic').textContent='✓';}});
+        if(same)$('#pcRtLive').textContent='';
         _pcCache[taskId]=R;
-        PC_HITS.unshift({id:taskId,title:R.title||'未命名内容',total:R.total,grade:R.grade||'C',gradeLabel:R.gradeLabel||'',date:new Date().toLocaleString('zh-CN',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}),acc:CUR_ACC});
-        pcSaveHits();pcRenderCards();
-        setTimeout(()=>$('#pcRunning').classList.remove('on'),900);
-        pcOpenDrawer(taskId);
-        toast('自检完成 · 评分仅供参考，不构成实际的约束');
+        PC_HITS.unshift({id:taskId,title:R.title||'未命名内容',total:R.total,grade:R.grade||'C',gradeLabel:R.gradeLabel||'',date:new Date().toLocaleString('zh-CN',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}),acc});
+        pcSaveHits();
+        if(same){pcRenderCards();setTimeout(()=>$('#pcRunning').classList.remove('on'),900);pcOpenDrawer(taskId);toast('自检完成 · 评分仅供参考，不构成实际的约束');}
+        else if($('#pcStartTxt').textContent!=='开始自检'){$('#pcStartBtn').disabled=false;$('#pcStartTxt').textContent='开始自检';} /* 后台任务完成：解除其他账号界面的置灰 */
       }
-      else if(d.status==='failed'){pcFail(d.error||'未知错误');}
+      else if(d.status==='failed'){clearInterval(_pcPollTimer);_pcRunning=false;_pcTask=null;pcSaveTask();if(same)pcFail(d.error||'未知错误');}
     }catch(e){/* 单次轮询失败忽略，下一轮重试 */}
   },2500);
   /* 恢复场景兜底：轮询期间后端重启导致幽灵等待时，按任务真实状态收敛 */
   setTimeout(async()=>{
     try{
+      const same=acc===CUR_ACC;
       const r=await fetch('/api/task/'+taskId);const j=await r.json();
       if(j.success&&j.data.status==='done'){
         clearInterval(_pcPollTimer);
         _pcRunning=false;_pcTask=null;pcSaveTask();
-        $('#pcStartBtn').disabled=false;$('#pcStartTxt').textContent='开始自检';
+        if(same){$('#pcStartBtn').disabled=false;$('#pcStartTxt').textContent='开始自检';}
         const R=(j.data.result&&j.data.result.data)||null;
-        if(!R){$('#pcRunning').classList.remove('on');pcFail('自检结果为空，请重试');return;}
-        PC_STEPS.forEach((_,i)=>{const el=$('#pcRt'+i);if(el){el.classList.remove('doing');el.classList.add('done');el.querySelector('.st-ic').textContent='✓';}});
+        if(!R){if(same){$('#pcRunning').classList.remove('on');pcFail('自检结果为空，请重试');}return;}
+        if(same)PC_STEPS.forEach((_,i)=>{const el=$('#pcRt'+i);if(el){el.classList.remove('doing');el.classList.add('done');el.querySelector('.st-ic').textContent='✓';}});
         _pcCache[taskId]=R;
-        PC_HITS.unshift({id:taskId,title:R.title||'未命名内容',total:R.total,grade:R.grade||'C',gradeLabel:R.gradeLabel||'',date:new Date().toLocaleString('zh-CN',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}),acc:CUR_ACC});
-        pcSaveHits();pcRenderCards();
-        setTimeout(()=>$('#pcRunning').classList.remove('on'),900);
-        pcOpenDrawer(taskId);
+        PC_HITS.unshift({id:taskId,title:R.title||'未命名内容',total:R.total,grade:R.grade||'C',gradeLabel:R.gradeLabel||'',date:new Date().toLocaleString('zh-CN',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}),acc});
+        pcSaveHits();
+        if(same){pcRenderCards();setTimeout(()=>$('#pcRunning').classList.remove('on'),900);pcOpenDrawer(taskId);}
       }
     }catch(e){}
   },800);
 }
 function pcRenderCards(){
   const g=$('#pcGrid');if(!g)return;
-  $('#pcCount').textContent=PC_HITS.length;
-  if(!PC_HITS.length){g.innerHTML='<div style="padding:44px;text-align:center;color:var(--ink-3);grid-column:1/-1;font-size:13px">还没有自检过的内容。粘入一篇笔记或逐字稿，点上方「开始自检」；完成后报告会收进这里 📋</div>';return;}
-  g.innerHTML=PC_HITS.map((h,idx)=>{
+  const mine=PC_HITS.filter(h=>(h.acc||'default')===CUR_ACC); /* 自检历史按账号隔离展示（旧数据无 acc 字段的归默认账号） */
+  $('#pcCount').textContent=mine.length;
+  if(!mine.length){g.innerHTML='<div style="padding:44px;text-align:center;color:var(--ink-3);grid-column:1/-1;font-size:13px">还没有自检过的内容。粘入一篇笔记或逐字稿，点上方「开始自检」；完成后报告会收进这里 📋</div>';return;}
+  g.innerHTML=mine.map((h,idx)=>{
     const gi=h.grade||'C';
     return '<article class="card" style="--cc:var(--lav);animation-delay:'+idx*60+'ms">'
       +'<div class="c-title">'+pcEsc(h.title)+'</div>'
@@ -4979,6 +5059,7 @@ function pcRenderCards(){
 function pcDelHit(id){
   const i=PC_HITS.findIndex(x=>x.id===id);if(i<0)return;
   const h=PC_HITS[i];
+  if(!confirm('确定删除这条自检记录「'+(h.title||'').slice(0,30)+'」吗？删除后不可恢复。'))return;
   if(_pcDrawerHit===id)pcCloseDrawer();
   PC_HITS.splice(i,1);pcSaveHits();pcRenderCards();
   toast('已删除自检记录：'+(h.title||'').slice(0,18)+'…（报告文件仍保留在磁盘）');
@@ -5092,13 +5173,32 @@ function pcFillDrawer(R){
 $('#pcContent').value=PC_SAMPLES.a.content;
 pcUpdateCount();
 pcRenderCards();
-/* 刷新恢复：上一次自检还在跑就恢复运行态并继续轮询 */
+/* 刷新恢复：上一次自检还在跑就恢复运行态并继续轮询（任务槽带 acc，只恢复当前账号自己的） */
+function pcResumeRunning(){
+  const t=pcLoadTask();
+  if(t&&t.taskId&&(!t.acc||t.acc===CUR_ACC)){
+    _pcRunning=true;
+    $('#pcStartBtn').disabled=true;$('#pcStartTxt').textContent='自检中…';
+    pcShowRunning(Date.now()-(t.startedAt||Date.now()));
+    pcPoll(t.taskId);
+  }
+}
 _pcTask=pcLoadTask();
-if(_pcTask&&_pcTask.taskId){
-  _pcRunning=true;
-  $('#pcStartBtn').disabled=true;$('#pcStartTxt').textContent='自检中…';
-  pcShowRunning(Date.now()-(_pcTask.startedAt||Date.now()));
-  pcPoll(_pcTask.taskId);
+if(_pcTask&&_pcTask.taskId)pcResumeRunning();
+/* 切换账号：输入区/列表/抽屉全部换成本账号的；其他账号的任务在后台继续跑、完成后按原账号入账，不碰界面 */
+function pcSwitchAccount(){
+  pcCloseDrawer();
+  $('#pcContent').value=PC_SAMPLES.a.content;pcUpdateCount();
+  $('#pcTitle').value='';
+  pcClearFile();
+  $('#pcRunning').classList.remove('on');
+  const t=pcLoadTask();
+  const ownRunning=!!(t&&t.taskId&&(!t.acc||t.acc===CUR_ACC));
+  if(ownRunning){$('#pcStartBtn').disabled=true;$('#pcStartTxt').textContent='自检中…';}
+  else if(_pcRunning){$('#pcStartBtn').disabled=true;$('#pcStartTxt').textContent='其他账号自检中…';}
+  else{$('#pcStartBtn').disabled=false;$('#pcStartTxt').textContent='开始自检';}
+  pcRenderCards();
+  if(ownRunning)pcResumeRunning();
 }
 
 /* ===== 标题生成 ===== */
@@ -6407,6 +6507,8 @@ function plRenderNotes(){
 function plToggleNote(id){const n=_plNotes.find(x=>x.id===id);if(!n||n.parsing)return;n.checked=!n.checked;plRenderNotes();plSaveSel();}
 function plToggleAll(){const list=_plNotes.filter(n=>!n.parsing);const anyOn=list.some(n=>n.checked);list.forEach(n=>n.checked=!anyOn);plRenderNotes();plSaveSel();}
 async function plDelNote(id){
+  const n=_plNotes.find(x=>x.id===id);
+  if(!confirm('确定从笔记库移除「'+((n&&n.title)||'这篇笔记').slice(0,30)+'」吗？会同时删除电脑上的原文，不可恢复。'))return;
   _plNotes=_plNotes.filter(x=>x.id!==id);plRenderNotes();plSaveSel();
   toast('已从笔记库移除');
   try{await fetch('/api/polish/notes/'+id+'?account='+CUR_ACC,{method:'DELETE'})}catch(e){}
@@ -6432,15 +6534,18 @@ function plAcceptNote(note){
 }
 function plPollParse(taskId){
   let n=0;
+  const acc=CUR_ACC; /* 归属账号：解析结果由服务端按账号落盘；切走账号后不再动界面 */
   const timer=setInterval(async()=>{
     n++;
-    if(n>140){clearInterval(timer);_plNotes=_plNotes.filter(x=>x.taskId!==taskId);plRenderNotes();toast('解析超时（约 6 分钟），请稍后重试');return;}
+    const same=acc===CUR_ACC;
+    if(n>140){clearInterval(timer);if(!same)return;_plNotes=_plNotes.filter(x=>x.taskId!==taskId);plRenderNotes();toast('解析超时（约 6 分钟），请稍后重试');return;}
     try{
       const j=await fetch('/api/task/'+taskId).then(r=>r.json());
       if(!j.success)return;
       const d=j.data;
       if(d.status==='running')return;
       clearInterval(timer);
+      if(!same)return; /* 换了账号：笔记已存在服务端，切回原账号时列表自然可见 */
       _plNotes=_plNotes.filter(x=>x.taskId!==taskId);
       if(d.status==='done'&&d.result&&d.result.note){
         _plNotes.unshift(Object.assign({},d.result.note,{checked:true}));
@@ -6502,16 +6607,19 @@ function plFail(msg){
   toast(msg);
 }
 function plPollPolish(){
+  const acc=CUR_ACC; /* 归属账号：优化结果由服务端按账号落盘；切走账号后完成时不动界面 */
   if(_plPollTimer)clearInterval(_plPollTimer);
   _plPollTimer=setInterval(async()=>{
-    if(!_plTask)return plFail('任务已失效');
+    const same=acc===CUR_ACC;
+    if(!_plTask){if(same)return plFail('任务已失效');clearInterval(_plPollTimer);if(_plPollTimer)_plPollTimer=null;return;}
     try{
       const j=await fetch('/api/task/'+_plTask.taskId).then(r=>r.json());
-      if(!j.success)return plFail('任务已失效（后端可能重启）');
+      if(!j.success){if(same)return plFail('任务已失效（后端可能重启）');clearInterval(_plPollTimer);_plPollTimer=null;return;}
       const d=j.data;
-      if(d.step)$('#plRtLive').textContent=d.step;
+      if(d.step&&same)$('#plRtLive').textContent=d.step;
       if(d.status==='running')return;
       clearInterval(_plPollTimer);_plPollTimer=null;
+      if(!same)return; /* 换了账号：结果已落盘服务端，切回原账号时列表自然可见，不弹提示不打扰 */
       if(d.status==='failed')return plFail(d.error||'优化失败，请重试');
       _plRunning=false;_plTask=null;plSaveTask();
       $('#plStartBtn').disabled=false;$('#plStartTxt').textContent='开始优化';
@@ -6546,6 +6654,7 @@ function plRenderRuns(){
   }).join('');
 }
 async function plDelRun(id){
+  if(!confirm('确定删除这条优化结果吗？会同时删除电脑上的结果文件，不可恢复。'))return;
   if(_plRun&&_plRun.id===id)plCloseDrawer();
   try{await fetch('/api/polish/runs/'+id+'?account='+CUR_ACC,{method:'DELETE'})}catch(e){}
   await plLoadRuns();toast('已删除该条优化结果');
@@ -6631,6 +6740,21 @@ function plInit(){
   }catch(e){}
 }
 plInit();
+/* 切换账号：笔记库/初稿/结果列表全部换成本账号的；原账号的后台任务由服务端继续跑并落盘，不丢也不打扰界面 */
+function plSwitchAccount(){
+  if(_plPollTimer){clearInterval(_plPollTimer);_plPollTimer=null;}
+  _plRunning=false;_plTask=null;_plNotes=[];_plRuns=[];
+  if(_plRun)plCloseDrawer();
+  _plFileContent=null;
+  const d=$('#plDraft');if(d){d.value='';}
+  plUpdateCounts();
+  const fc=$('#plFileChip');if(fc)fc.style.display='none';
+  $('#plRunning').classList.remove('on');
+  $('#plStartBtn').disabled=false;$('#plStartTxt').textContent='开始优化';
+  PL_STEPS.forEach((_,i)=>{const p=$('#plSt'+i);if(p)p.classList.remove('doing');});
+  plRenderNotes();plRenderRuns();
+  plInit(); /* 重新加载本账号的笔记库/结果，并恢复本账号自己的进行中任务（若有） */
+}
 
 /* ===== 手机访问（局域网）弹窗 ===== */
 let _lanUrls=[];
