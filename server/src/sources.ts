@@ -55,9 +55,35 @@ async function getText(url: string, referer?: string): Promise<string> {
   return res.text();
 }
 
-/** 剥离 <em> 等标签，还原纯文本标题。 */
+/** 常见 HTML 实体解码（必应摘要的 &ensp;/&#0183;、搜狗链接的 &amp; 等）。 */
+function decodeEntities(s: string): string {
+  return s
+    .replace(/&#x([0-9a-f]+);/gi, (_, h) => String.fromCodePoint(parseInt(h, 16)))
+    .replace(/&#(\d+);/g, (_, d) => {
+      try {
+        return String.fromCodePoint(Number(d));
+      } catch {
+        return _;
+      }
+    })
+    .replace(/&(nbsp|ensp|emsp|thinsp);/gi, " ")
+    .replace(/&middot;/gi, "·")
+    .replace(/&hellip;/gi, "…")
+    .replace(/&mdash;/gi, "—")
+    .replace(/&ndash;/gi, "–")
+    .replace(/&ldquo;/gi, "“")
+    .replace(/&rdquo;/gi, "”")
+    .replace(/&lsquo;/gi, "‘")
+    .replace(/&rsquo;/gi, "’")
+    .replace(/&quot;/gi, '"')
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&amp;/gi, "&");
+}
+
+/** 剥离 <em>/<strong>/HTML 注释等标签，解码实体，压缩空白，还原纯文本标题。 */
 function stripTags(s: string): string {
-  return s.replace(/<[^>]+>/g, "").trim();
+  return decodeEntities(s.replace(/<[^>]+>/g, "")).replace(/\s+/g, " ").trim();
 }
 
 /** 秒级时间戳 → 相对时间（"N 天前" / "今天"）。 */
@@ -101,15 +127,19 @@ async function fetchBing(kw: string): Promise<SourceItem[]> {
   const out: SourceItem[] = [];
   const algoRe = /<li class="b_algo"[\s\S]*?<\/li>/g;
   for (const block of html.match(algoRe) ?? []) {
-    const a = block.match(/<h2><a[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/);
+    // 线上 h2 带属性（如 <h2 class="">），不能假定 <h2><a 紧邻
+    const a = block.match(/<h2[^>]*>\s*<a[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/);
     if (!a) continue;
-    const p = block.match(/<p[^>]*>([\s\S]*?)<\/p>/);
+    // 摘要优先取 b_caption 容器内的段落，取不到再退回块内任意 <p>
+    const p =
+      block.match(/<div class="b_caption"[^>]*>[\s\S]*?<p[^>]*>([\s\S]*?)<\/p>/) ??
+      block.match(/<p[^>]*>([\s\S]*?)<\/p>/);
     out.push({
       pf: "bing",
       pfn: "全网",
       title: stripTags(a[2]),
       author: "",
-      url: a[1],
+      url: decodeEntities(a[1]),
       summary: p ? stripTags(p[1]) : "",
       heat: "",
       pub: "",
@@ -118,25 +148,33 @@ async function fetchBing(kw: string): Promise<SourceItem[]> {
   return out;
 }
 
-/** 源 3：搜狗微信公众号搜索（HTML）。提取含 weixin 链接的标题。 */
+/** 源 3：搜狗微信公众号搜索（HTML）。
+ *  每条结果是一个 <li id="sogou_vr_*_box_N">：h3 内是文章跳转链（/link?url=… 相对路径，
+ *  302 到 mp.weixin.qq.com，需补全域名），p.txt-info 是摘要，span.all-time-y2 是公众号名。
+ *  站内导航链接（资讯/网页/知乎等）不在结果 li 内，按块解析天然排除。 */
 async function fetchSogouWeixin(kw: string): Promise<SourceItem[]> {
   const html = await getText(`https://weixin.sogou.com/weixin?type=2&query=${kw}&ie=utf8`);
   const out: SourceItem[] = [];
-  const aRe = /<a[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/g;
-  let m: RegExpExecArray | null;
-  while ((m = aRe.exec(html)) !== null) {
-    const href = m[1];
-    const title = stripTags(m[2]);
-    if (!title || !/weixin|mp\.weixin|sogou/.test(href)) continue;
+  const liRe = /<li[^>]*id="sogou_vr[^"]*box_\d+"[^>]*>([\s\S]*?)<\/li>/g;
+  for (const [, body] of html.matchAll(liRe)) {
+    const a = body.match(/<h3[^>]*>\s*<a[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/);
+    if (!a) continue;
+    const href = decodeEntities(a[1]);
+    // 只收文章链：/link?url=… 跳转链或 mp.weixin 绝对链，防误收站内链接
+    if (!/^\/link\?url=|^https?:\/\/[^/]*weixin\./.test(href)) continue;
+    const p = body.match(/<p class="txt-info"[^>]*>([\s\S]*?)<\/p>/);
+    const author = body.match(/<span class="all-time-y2">([^<]*)<\/span>/);
+    // 发布时间藏在 timeConvert('秒级时间戳') 里
+    const ts = body.match(/timeConvert\('(\d+)'\)/);
     out.push({
       pf: "weixin",
       pfn: "微信",
-      title,
-      author: "",
-      url: href,
-      summary: "",
+      title: stripTags(a[2]),
+      author: author ? stripTags(author[1]) : "",
+      url: href.startsWith("/") ? `https://weixin.sogou.com${href}` : href,
+      summary: p ? stripTags(p[1]) : "",
       heat: "",
-      pub: "",
+      pub: ts ? relDays(Number(ts[1])) : "",
     });
   }
   return out;
