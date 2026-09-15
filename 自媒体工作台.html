@@ -1369,6 +1369,22 @@ textarea.ks-ks::placeholder{color:var(--ink-3)}
 .pl-stat b{display:block;font-family:var(--serif);font-size:21px;font-weight:800;color:var(--lav-d);line-height:1.2}
 .pl-stat b i{font-style:normal;font-size:11px;margin-left:1px}
 .pl-stat span{display:block;font-size:10.5px;color:var(--ink-3);font-weight:600;margin-top:2px}
+/* 笔记优化一屏布局（方案B）：压缩纵向空间 + 结果横向滑动条 */
+#v-polish .wrap{padding:14px 24px 18px}
+#v-polish .page-hd{margin-bottom:8px}
+#v-polish .ph-eyebrow{margin-bottom:2px}
+#v-polish .ph-title{font-size:22px}
+#v-polish .ph-sub{margin-top:2px;font-size:12px}
+#v-polish .input-card{padding:13px 15px}
+#v-polish .pl-card-hd{margin-bottom:9px}
+#v-polish .content-area{min-height:108px}
+#v-polish .pl-notes{max-height:142px;margin-top:8px}
+#v-polish .opt-row{margin-top:9px;padding-top:9px;gap:10px}
+#v-polish .in-actions{margin-top:10px}
+#v-polish .pl-grid{margin-bottom:8px}
+#v-polish .section-h{margin:0 0 6px}
+.pl-strip{display:flex;gap:12px;overflow-x:auto;padding:2px 2px 4px;-webkit-overflow-scrolling:touch;scrollbar-width:thin}
+.pl-strip .card{flex:0 0 344px;animation-delay:0ms}
 .pl-info{display:flex;flex-wrap:wrap;gap:8px;padding:2px 0}
 .pl-info-item{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:7px 13px;display:flex;flex-direction:column;gap:1px;min-width:74px}
 .pl-info-item span{font-size:10px;color:var(--ink-3);font-weight:600}
@@ -1422,7 +1438,9 @@ body.sb-lock{overflow:hidden}
 @media (max-width:860px){
   .grid,.grid-3,.mode-grid,.note-grid,.pl-grid{grid-template-columns:1fr}
   .pl-grid{align-items:start}
-  .pl-notes{max-height:300px}
+  #v-polish .content-area{min-height:120px}
+  #v-polish .pl-notes{max-height:240px}
+  .pl-strip .card{flex-basis:300px}
   .hero{padding:24px 22px}
   .hero-avatar,.hero-avatar .ha-img{width:88px;height:88px}
   .hero-line{font-size:19px}
@@ -2193,11 +2211,11 @@ body.sb-lock{overflow:hidden}
           <div class="rt-hint">完成后结果出现在下方，可复制或下载 .md</div>
         </div>
 
-        <div class="section-h" style="margin-top:8px">
+        <div class="section-h">
           <h2><span class="dotbar" style="background:var(--lav)"></span>优化结果</h2>
           <span class="more">共 <b id="plRunCount" style="color:var(--lav-d)">0</b> 次 · 点「查看结果」阅读</span>
         </div>
-        <div class="grid" id="plGrid"></div>
+        <div class="pl-strip" id="plGrid"></div>
 
       </div></div>
     </section>
@@ -6525,7 +6543,7 @@ async function plLoadRuns(){
 function plRenderRuns(){
   const g=$('#plGrid');if(!g)return;
   $('#plRunCount').textContent=_plRuns.length;
-  if(!_plRuns.length){g.innerHTML='<div style="padding:44px;text-align:center;color:var(--ink-3);grid-column:1/-1;font-size:13px">还没有优化结果。左边收录笔记、右边放初稿，点「开始优化」✨</div>';return;}
+  if(!_plRuns.length){g.innerHTML='<div style="flex:1;padding:30px 20px;text-align:center;color:var(--ink-3);font-size:13px">还没有优化结果。左边收录笔记、右边放初稿，点「开始优化」✨</div>';return;}
   g.innerHTML=_plRuns.map((r,idx)=>{
     const t=new Date(r.createdAt);
     const date=isNaN(t.getTime())?'':t.toLocaleString('zh-CN',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
