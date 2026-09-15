@@ -1385,6 +1385,11 @@ textarea.ks-ks::placeholder{color:var(--ink-3)}
 #v-polish .section-h{margin:0 0 6px}
 .pl-strip{display:flex;gap:12px;overflow-x:auto;padding:2px 2px 4px;-webkit-overflow-scrolling:touch;scrollbar-width:thin}
 .pl-strip .card{flex:0 0 344px;animation-delay:0ms}
+.tp-cat{font-size:10.5px;font-weight:700;color:var(--coral-d);background:var(--coral-bg);padding:2px 9px;border-radius:var(--pill);margin-left:6px;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cat-chip{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:700;color:var(--ink);background:var(--cream-2);border:1px solid var(--line);padding:6px 8px 6px 13px;border-radius:var(--pill)}
+.cat-chip i{font-style:normal;font-size:10px;color:var(--ink-3)}
+.cat-chip button{width:20px;height:20px;border-radius:50%;border:none;background:transparent;color:var(--ink-3);cursor:pointer;font-size:13px;line-height:1;display:flex;align-items:center;justify-content:center}
+.cat-chip button:hover{background:var(--rose-bg);color:var(--rose)}
 .pl-info{display:flex;flex-wrap:wrap;gap:8px;padding:2px 0}
 .pl-info-item{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:7px 13px;display:flex;flex-direction:column;gap:1px;min-width:74px}
 .pl-info-item span{font-size:10px;color:var(--ink-3);font-weight:600}
@@ -1702,6 +1707,7 @@ body.sb-lock{overflow:hidden}
             <option value="mid">中优先级</option>
             <option value="low">低优先级</option>
           </select>
+          <select class="fsel" id="topicCatFilter" aria-label="筛选选题类别"></select>
           <div class="vswitch" id="topicViewSwitch">
             <button data-v="card"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>卡片</button>
             <button data-v="table"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 5h18M3 12h18M3 19h18"/></svg>表格</button>
@@ -1806,6 +1812,10 @@ body.sb-lock{overflow:hidden}
             <div class="tf-field">
               <div class="tf-lbl">选题标题 <span class="req">*</span></div>
               <input class="tf-input" id="tfTitle" placeholder="一句话说清这篇要写什么">
+            </div>
+            <div class="tf-field">
+              <div class="tf-lbl">选题类别</div>
+              <select class="tf-input" id="tfTopicCat" onchange="if(this.value==='__new__'){openCatManager();renderTopicCatFormSel('');}"></select>
             </div>
             <div class="tf-field">
               <div class="tf-lbl">创作角度</div>
@@ -2574,6 +2584,24 @@ body.sb-lock{overflow:hidden}
     <div class="modal-sub">手机和这台电脑连<strong>同一个 WiFi</strong>，扫下方二维码即可打开工作台（已自动授权）</div>
     <div class="modal-body" id="lanBody">
       <div style="text-align:center;color:var(--ink-3);padding:24px 0;font-size:13px">正在获取访问地址…</div>
+    </div>
+  </div>
+</div>
+
+<!-- 选题类别管理弹窗（账号维度自定义标签） -->
+<div class="modal-mask" id="catModal" onclick="closeCatManager(event)">
+  <div class="modal" onclick="event.stopPropagation()" style="max-width:420px">
+    <div class="modal-head">
+      <div><div class="modal-eyebrow">🏷 选题类别</div><div class="modal-title">管理这个账号的选题类别</div></div>
+      <button class="modal-close" onclick="closeCatManager()">✕</button>
+    </div>
+    <div class="modal-sub">按你的创作方向自定义，如「AI教程」「自媒体干货」「Agent工具」；新建选题时下拉选择</div>
+    <div class="modal-body">
+      <div style="display:flex;gap:8px">
+        <input class="opt-input" id="catNewInput" style="flex:1;height:40px" placeholder="输入新类别名（≤10 字）" maxlength="10" onkeydown="if(event.key==='Enter')addTopicCat()">
+        <button class="btn btn-coral" style="height:40px;flex-shrink:0" onclick="addTopicCat()">添加</button>
+      </div>
+      <div id="catChips" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:14px"></div>
     </div>
   </div>
 </div>
@@ -4276,12 +4304,17 @@ document.addEventListener('click',e=>{if(_stageMenu&&!_stageMenu.contains(e.targ
 function topicListOf(){
   const doneOf=t=>{const fl=FLOW[t.type]||FLOW.image;return t.stage>=fl.steps.length-1};
   const pv=$('#topicPriFilter')?$('#topicPriFilter').value:'all';
+  const cv=$('#topicCatFilter')?$('#topicCatFilter').value:'all';
   return TOPICS.filter(t=>{
     if(_stageFilter){
       if(t.type!==_stageFilter.type)return false;
       if(String(t.stage)!==String(_stageFilter.stage))return false;
     }
     if(pv!=='all'&&priOf(t)!==pv)return false;
+    if(cv!=='all'){
+      if(cv==='__none__'){if(t.topicCat)return false;}
+      else if((t.topicCat||'')!==cv)return false;
+    }
     return true;
   }).sort((a,b)=>(doneOf(a)?1:0)-(doneOf(b)?1:0));
 }
@@ -4303,7 +4336,7 @@ function renderTopicGrid(){
     const tcls={image:'',video:'vid',text:'txt'}[t.type]||'';
     return `<article class="card ${doneOf(t)?'topic-done':''}" style="--cc:${t.cc};animation-delay:${origIdx*60}ms">
       <button class="card-del" onclick="delTopic(${origIdx})" title="删除这个选题" aria-label="删除">×</button>
-      <div class="c-head"><span class="c-tag ${fl.cls[t.stage]}">${fl.txt[t.stage]}</span>${priTag(origIdx)}<span class="tp-type ${tcls}" style="margin-left:6px">${ticon} ${tlab}</span><span style="color:var(--ink-3);font-weight:500;margin-left:auto">${t.update}</span></div>
+      <div class="c-head"><span class="c-tag ${fl.cls[t.stage]}">${fl.txt[t.stage]}</span>${priTag(origIdx)}<span class="tp-type ${tcls}" style="margin-left:6px">${ticon} ${tlab}</span>${t.topicCat?`<span class="tp-cat">${t.topicCat}</span>`:''}<span style="color:var(--ink-3);font-weight:500;margin-left:auto">${t.update}</span></div>
       <div class="c-title">${t.t}</div><div class="c-sum">${t.angle}</div>
       <div class="flow">${flow}</div>
       <div class="c-foot">
@@ -4313,9 +4346,11 @@ function renderTopicGrid(){
     </article>`;
   }).join('');
 }
-['topicPriFilter'].forEach(id=>{
+['topicPriFilter','topicCatFilter'].forEach(id=>{
   const el=document.getElementById(id);
   if(el)el.addEventListener('change',()=>{
+    if(id==='topicCatFilter'&&el.value==='__manage__'){el.value=el.dataset.keep||'all';openCatManager();return;}
+    el.dataset.keep=el.value;
     el.classList.toggle('on',el.value!=='all');
     renderTopic();
   });
@@ -4355,6 +4390,7 @@ function renderTopicTable(){
       <td><span class="tt-dots">${dots}</span></td>
       <td><button class="tt-mat" onclick="openTopicMat(${origIdx})">📂 ${t.mats?t.mats.length:0}</button></td>
       <td>${esc(t.cat||'—')}</td>
+      <td>${esc(t.topicCat||'—')}</td>
       <td>${esc(t.plat||'—')}</td>
       <td class="tt-date">${fmtDue(t.due)}</td>
       <td class="tt-date">${esc(t.update||'—')}</td>
@@ -4362,7 +4398,7 @@ function renderTopicTable(){
     </tr>`;
   }).join('');
   wrap.innerHTML=`<table class="topic-table">
-    <thead><tr><th>状态</th><th>优先级</th><th>选题标题</th><th>类型</th><th>进度</th><th>素材</th><th>分类</th><th>平台</th><th>截止</th><th>更新</th><th>操作</th></tr></thead>
+    <thead><tr><th>状态</th><th>优先级</th><th>选题标题</th><th>类型</th><th>进度</th><th>素材</th><th>分类</th><th>类别</th><th>平台</th><th>截止</th><th>更新</th><th>操作</th></tr></thead>
     <tbody>${rows}</tbody>
   </table>`;
 }
@@ -5751,6 +5787,61 @@ function calDayTap(ds,info){
   toast(info);
 }
 /* 转选题录入 */
+/* ===== 选题类别（账号维度自定义标签） ===== */
+function loadTopicCats(){try{const r=JSON.parse(lsG('topic_cats')||'[]');return Array.isArray(r)?r.filter(x=>typeof x==='string'&&x.trim()).slice(0,30):[]}catch(e){return []}}
+function saveTopicCats(c){lsS('topic_cats',JSON.stringify(c))}
+/** 表单下拉：未分类 + 类别 + 新增入口 */
+function renderTopicCatFormSel(cur){
+  const sel=$('#tfTopicCat');if(!sel)return;
+  const cats=loadTopicCats();
+  sel.innerHTML='<option value="">未分类</option>'+cats.map(c=>'<option value="'+tcEsc(c)+'">'+tcEsc(c)+'</option>').join('')+'<option value="__new__">＋ 新增类别…</option>';
+  sel.value=cats.includes(cur)?cur:'';
+}
+/** 筛选下拉：全部 + 未分类 + 类别 */
+function renderTopicCatFilter(){
+  const sel=$('#topicCatFilter');if(!sel)return;
+  const cur=sel.value||'all';
+  const cats=loadTopicCats();
+  sel.innerHTML='<option value="all">全部类别</option><option value="__none__">未分类</option>'+cats.map(c=>'<option value="'+tcEsc(c)+'">'+tcEsc(c)+'</option>').join('')+'<option value="__manage__">⚙ 管理类别…</option>';
+  sel.value=cats.includes(cur)||cur==='all'||cur==='__none__'?cur:'all';
+  sel.classList.toggle('on',sel.value!=='all');
+}
+function tcEsc(x){return String(x).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;')}
+function openCatManager(){
+  renderCatChips();
+  document.body.appendChild($('#catModal'));
+  $('#catModal').classList.add('open');
+  setTimeout(()=>$('#catNewInput').focus(),80);
+}
+function closeCatManager(e){if(e&&e.target!==e.currentTarget)return;$('#catModal').classList.remove('open');renderTopicCatFilter();}
+function renderCatChips(){
+  const cats=loadTopicCats();
+  const box=$('#catChips');
+  box.innerHTML=cats.length?cats.map((c,i)=>{
+    const used=TOPICS.filter(t=>t.topicCat===c).length;
+    return '<span class="cat-chip">'+tcEsc(c)+(used?' <i>'+used+'</i>':'')+'<button title="删除这个类别" onclick="delTopicCat('+i+')">×</button></span>';
+  }).join(''):'<span style="font-size:12px;color:var(--ink-3)">还没有类别，输入名称点「添加」</span>';
+}
+function addTopicCat(){
+  const inp=$('#catNewInput');const v=(inp.value||'').trim();
+  if(!v){toast('先输入类别名称');inp.focus();return;}
+  const cats=loadTopicCats();
+  if(cats.includes(v)){toast('这个类别已经存在');return;}
+  if(cats.length>=30){toast('类别最多 30 个');return;}
+  cats.push(v);saveTopicCats(cats);
+  inp.value='';renderCatChips();renderTopicCatFilter();renderTopicCatFormSel(v);
+  toast('已添加类别「'+v+'」');
+}
+function delTopicCat(i){
+  const cats=loadTopicCats();const c=cats[i];if(!c)return;
+  const used=TOPICS.filter(t=>t.topicCat===c).length;
+  if(used&&!confirm('删除类别「'+c+'」？\n已有 '+used+' 个选题使用它，删除后这些选题会变为「未分类」（选题本身不受影响）。'))return;
+  cats.splice(i,1);saveTopicCats(cats);
+  TOPICS.forEach(t=>{if(t.topicCat===c)t.topicCat='';});saveState();
+  renderCatChips();renderTopicCatFilter();renderTopic();
+  toast('已删除类别「'+c+'」');
+}
+renderTopicCatFilter();
 function openTopicForm(idx,candIdx){
   const insp=(idx!=null&&idx>=0)?INSP[idx]:null;
   _lastInspIdx=(idx!=null&&idx>=0)?idx:null;
@@ -5760,6 +5851,7 @@ function openTopicForm(idx,candIdx){
   $('#tfMTitle').textContent=insp?'把这个灵感变成选题':'规划一个新选题';
   $('#tfTitle').value=title;
   $('#tfCat').value=insp?({op:'观点',method:'方法',eval:'测评'}[insp.cands[candIdx||0].g]||'观点'):'观点';
+  renderTopicCatFormSel('');
   $('#tfAngle').value=insp?insp.s:'';
   $('#tfReader').value='';
   $('#tfSrc').innerHTML=insp?('📌 来自今日灵感 · '+src):'📌 自由创建 · 写你想写';
@@ -5784,7 +5876,8 @@ function submitTopic(){
   const plats=$$('#tfPlat .chip.active').map(c=>c.dataset.v);
   if(!plats.length){toast('请至少选一个发布平台 📢');return;}
   const cc={image:'var(--coral)',video:'var(--lav)',text:'var(--honey)'}[type]||'var(--coral)';
-  TOPICS.unshift({id:'tp'+Date.now(),type,t,cat:$('#tfCat').value,angle:$('#tfAngle').value.trim()||'（待补充核心立意）',reader:$('#tfReader').value.trim(),from:1,stage:1,plat:plats.join('+'),due:$('#tfDate').value,update:'刚刚',cc,mats:[],priority});
+  const tcSel=$('#tfTopicCat');const topicCat=(tcSel&&tcSel.value&&tcSel.value!=='__new__')?tcSel.value:'';
+  TOPICS.unshift({id:'tp'+Date.now(),type,t,topicCat,cat:$('#tfCat').value,angle:$('#tfAngle').value.trim()||'（待补充核心立意）',reader:$('#tfReader').value.trim(),from:1,stage:1,plat:plats.join('+'),due:$('#tfDate').value,update:'刚刚',cc,mats:[],priority});
   if(_lastInspIdx!=null&&INSP[_lastInspIdx]){const tt=INSP[_lastInspIdx].t;const arr=loadInspTopicEd();if(!arr.includes(tt)){arr.push(tt);saveInspTopicEd(arr);}}
   _lastInspIdx=null;
   const badge=$('#sbNav .sb-item[data-view="topic"] .badge');if(badge)badge.textContent=TOPICS.length;
