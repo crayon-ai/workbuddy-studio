@@ -2128,7 +2128,6 @@ body.sb-lock{overflow:hidden}
             </div>
             <div class="pl-add-hint">
               <span>支持 xiaohongshu.com / xhslink.com 链接 · 解析后自动存入笔记库</span>
-              <button class="sample-chip" onclick="plAddMockNote()">＋ 收录一篇示例笔记</button>
             </div>
             <div class="pl-notes" id="plNotes">
               <div class="pl-notes-empty">
@@ -6414,14 +6413,14 @@ async function plDelNote(id){
 }
 async function plAddNote(){
   const inp=$('#plUrl');const url=(inp.value||'').trim();
-  if(!url){toast('先粘贴一篇小红书笔记链接，或点「收录一篇示例笔记」');inp.focus();return;}
+  if(!url){toast('先粘贴一篇小红书笔记链接');inp.focus();return;}
   if(!plIsXhsUrl(url)){toast('看起来不是小红书链接，检查一下再试');inp.focus();return;}
   if(_plNotes.length>=10){toast('最多收录 10 篇，可以先删掉不用的');return;}
   if(_plNotes.some(n=>n.url===url)){toast('这篇已经收录过了');return;}
   try{
     const j=await fetch('/api/polish/parse',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url,accountId:CUR_ACC})}).then(r=>r.json());
     if(!j.success)throw new Error(j.error||'提交失败');
-    if(j.data.note){plAcceptNote(j.data.note);toast('已收录示例笔记 ✓');return;}
+    if(j.data.note){plAcceptNote(j.data.note);return;}
     _plNotes.push({id:'pending-'+j.data.taskId,taskId:j.data.taskId,url,title:'',type:'',likes:'',date:'',checked:false,parsing:true});
     inp.value='';plRenderNotes();
     plPollParse(j.data.taskId);
@@ -6430,16 +6429,6 @@ async function plAddNote(){
 function plAcceptNote(note){
   _plNotes.unshift(Object.assign({},note,{checked:true}));
   plRenderNotes();plSaveSel();
-}
-async function plAddMockNote(){
-  if(_plNotes.length>=10){toast('最多收录 10 篇，可以先删掉不用的');return;}
-  const n=_plNotes.filter(x=>!x.parsing).length;
-  try{
-    const j=await fetch('/api/polish/parse',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:'mock://'+n,accountId:CUR_ACC,mock:true})}).then(r=>r.json());
-    if(!j.success||!j.data.note)throw new Error(j.error||'收录失败');
-    plAcceptNote(j.data.note);
-    toast('已收录示例笔记 ✓（风格统一，可直接试优化）');
-  }catch(e){toast('收录示例失败：'+(e.message||e));}
 }
 function plPollParse(taskId){
   let n=0;
@@ -6457,7 +6446,7 @@ function plPollParse(taskId){
         _plNotes.unshift(Object.assign({},d.result.note,{checked:true}));
         toast('解析完成，已存入笔记库 ✓');
       }else{
-        toast((d.error||'解析失败')+'；被平台拦截时可用「收录一篇示例笔记」先试优化');
+        toast(d.error||'解析失败，请换一篇链接重试');
       }
       plRenderNotes();plSaveSel();
     }catch(e){}
