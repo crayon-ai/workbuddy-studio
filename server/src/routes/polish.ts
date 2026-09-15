@@ -48,9 +48,6 @@ interface NoteMeta {
   url: string;
   title: string;
   type: string;
-  likes: string;
-  favs?: string;
-  comments?: string;
   date: string;
   downloadedAt: string;
 }
@@ -261,9 +258,9 @@ function readRunMeta(root: string, id: string): RunMeta | null {
 
 /** 示例笔记库（mock）：同一位虚构博主的统一风格——口语短句、emoji 点缀、结尾提问，
  *  用于小红书反爬拦截时的降级演示；落盘格式与真实笔记完全一致，可正常蒸馏/润色。 */
-const PL_MOCK_NOTES: Array<{ title: string; type: string; likes: string; date: string; body: string }> = [
+const PL_MOCK_NOTES: Array<{ title: string; type: string; date: string; body: string }> = [
   {
-    title: "真的求你们试试这个15分钟晚餐！！", type: "图文", likes: "2300", date: "2026-08-20",
+    title: "真的求你们试试这个15分钟晚餐！！", type: "图文", date: "2026-08-20",
     body: `真的求你们试试这个15分钟晚餐！！
 下班回家累到不想说话，我现在的救命公式就是：一锅出＋现成酱料。
 
@@ -283,7 +280,7 @@ const PL_MOCK_NOTES: Array<{ title: string; type: string; likes: string; date: s
 图3：洗碗池里只有一个锅，配文划重点「就洗这一个」`,
   },
   {
-    title: "做了3个月自媒体，我悟了这3件事", type: "图文", likes: "1800", date: "2026-08-28",
+    title: "做了3个月自媒体，我悟了这3件事", type: "图文", date: "2026-08-28",
     body: `做了3个月自媒体，我悟了这3件事
 
 一开始我天天憋大招，笔记写得跟论文一样，没人看。
@@ -299,7 +296,7 @@ const PL_MOCK_NOTES: Array<{ title: string; type: string; likes: string; date: s
 #自媒体新手 #起号心得`,
   },
   {
-    title: "打工人极简晚餐公式｜一锅出，巨省事", type: "视频", likes: "956", date: "2026-09-02",
+    title: "打工人极简晚餐公式｜一锅出，巨省事", type: "视频", date: "2026-09-02",
     body: `打工人极简晚餐公式｜一锅出，巨省事
 
 视频里这顿从开火到开吃 12 分钟，我真的没剪辑快进。🍳
@@ -316,7 +313,7 @@ const PL_MOCK_NOTES: Array<{ title: string; type: string; likes: string; date: s
 "真别学菜谱了，听我的，记住一个公式就行——蛋白质、主食、一瓶好酱，完事。你看啊，虾下锅，不用解冻太久，冷冻的直接扔，八分钟。意面一起煮，省一锅。最后这个酱，我真的吹爆，倒进去搅两下就能开吃。锅呢？就洗这一个。真的，谁试谁知道。"`,
   },
   {
-    title: "新手起号最容易犯的5个错，我都踩过", type: "图文", likes: "3100", date: "2026-09-05",
+    title: "新手起号最容易犯的5个错，我都踩过", type: "图文", date: "2026-09-05",
     body: `新手起号最容易犯的5个错，我都踩过
 
 花了 3 个月学费换来的，真的别再踩一遍：
@@ -332,7 +329,7 @@ const PL_MOCK_NOTES: Array<{ title: string; type: string; likes: string; date: s
 #起号避坑`,
   },
   {
-    title: "我的下班充电清单，亲测有效那种", type: "图文", likes: "672", date: "2026-09-08",
+    title: "我的下班充电清单，亲测有效那种", type: "图文", date: "2026-09-08",
     body: `我的下班充电清单，亲测有效那种
 
 不是那种"读书健身早睡"的正确废话，是真的撑过我加班季的：
@@ -347,7 +344,7 @@ const PL_MOCK_NOTES: Array<{ title: string; type: string; likes: string; date: s
 #下班生活 #打工人日常`,
   },
   {
-    title: "周末2小时备菜，工作日彻底躺平", type: "图文", likes: "1200", date: "2026-09-11",
+    title: "周末2小时备菜，工作日彻底躺平", type: "图文", date: "2026-09-11",
     body: `周末 2 小时备菜，工作日彻底躺平
 
 上周试了一次，这周已经离不开真的。🥬
@@ -375,9 +372,6 @@ function writeMockNote(projectRoot: string, accountId: unknown, seq: number, url
     url: url || "mock://demo",
     title: demo.title,
     type: demo.type,
-    likes: demo.likes,
-    favs: String(Math.round(Number(demo.likes) / 3)),
-    comments: String(Math.round(Number(demo.likes) / 12)),
     date: demo.date,
     downloadedAt: new Date().toISOString(),
   };
@@ -410,7 +404,7 @@ async function runParseNote(
     `1. ${workDir}/正文.md —— 第一行是笔记标题；随后是完整正文文字（含小标题、分段、emoji、话题标签行）；若有置顶评论/作者评论补充也附在文末分隔线后。另外：`,
     `   - 图文笔记：${workDir}/images/ 里的每张图片必须用 Read 工具逐张读取（vision），把图中文字与关键视觉内容（清单/步骤/截图要点）整理成「## 图片内容」小节附在文末——图片常承载正文没有的信息，是文风与表达的一部分。图片一张都没下到就省略该小节。`,
     `   - 视频笔记：若 ffmpeg 可用且 http://localhost:2022/health 有响应，则下载视频 → ffmpeg 提取音轨 → 调用 whisper（localhost:2022）生成口播逐字稿，整理成「## 口播逐字稿」小节附在文末（去掉语气词、保留口语原貌）；工具不可用就写「## 口播逐字稿\n（本地未装 ffmpeg/whisper，跳过）」，不算失败。`,
-    `2. ${workDir}/meta.json —— 严格 JSON：{"title":"...","date":"YYYY-MM-DD","type":"图文|视频","likes":"数字","favs":"数字","comments":"数字"}（互动数据取不到就填 "0"，不要省略字段）。`,
+    `2. ${workDir}/meta.json —— 严格 JSON：{"title":"...","date":"YYYY-MM-DD","type":"图文|视频"}（只要内容元信息，不要互动数据）。`,
     `3. 图片如有，下载到 ${workDir}/images/（下载不了可跳过，不算失败）。`,
     "",
     "纪律（必须遵守）：",
@@ -450,9 +444,6 @@ async function runParseNote(
     url,
     title: (raw.title || bodyFirst.replace(/^#+\s*/, "").trim() || "未命名笔记").slice(0, 60),
     type: raw.type === "视频" ? "视频" : "图文",
-    likes: String(raw.likes ?? "0"),
-    favs: String(raw.favs ?? "0"),
-    comments: String(raw.comments ?? "0"),
     date: (raw.date || "").slice(0, 10),
     downloadedAt: new Date().toISOString(),
   };

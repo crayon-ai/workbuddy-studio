@@ -51,8 +51,8 @@ describe("GET /api/polish/notes", () => {
     const dir = path.join(root, "data/accounts/default/polish/notes");
     mkdirSync(path.join(dir, "n1"), { recursive: true });
     mkdirSync(path.join(dir, "n2"), { recursive: true });
-    writeFileSync(path.join(dir, "n1/meta.json"), JSON.stringify({ id: "n1", url: "https://www.xiaohongshu.com/a", title: "旧的一篇", type: "图文", likes: "10", date: "2026-09-01", downloadedAt: "2026-09-01T00:00:00Z" }));
-    writeFileSync(path.join(dir, "n2/meta.json"), JSON.stringify({ id: "n2", url: "https://www.xiaohongshu.com/b", title: "新的一篇", type: "视频", likes: "20", date: "2026-09-02", downloadedAt: "2026-09-02T00:00:00Z" }));
+    writeFileSync(path.join(dir, "n1/meta.json"), JSON.stringify({ id: "n1", url: "https://www.xiaohongshu.com/a", title: "旧的一篇", type: "图文", date: "2026-09-01", downloadedAt: "2026-09-01T00:00:00Z" }));
+    writeFileSync(path.join(dir, "n2/meta.json"), JSON.stringify({ id: "n2", url: "https://www.xiaohongshu.com/b", title: "新的一篇", type: "视频", date: "2026-09-02", downloadedAt: "2026-09-02T00:00:00Z" }));
     const app = await buildApp({ projectRoot: root });
     const res = await app.inject({ method: "GET", url: "/api/polish/notes" });
     const notes = res.json().data.notes;

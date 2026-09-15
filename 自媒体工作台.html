@@ -6345,8 +6345,8 @@ function plRenderNotes(){
         +'<span class="pl-cbox">'+(n.checked&&!n.parsing?PL_CHECK_SVG:'')+'</span>'
         +'<div class="pl-cover" style="background:'+(n.parsing?'var(--cream-2)':cov[1])+'">'+(n.parsing?'⏳':cov[0])+'</div>'
         +'<div class="pl-ninfo"><div class="pl-ntitle">'+(n.parsing?'正在解析这篇笔记…':plEsc(n.title))+'</div>'
-        +'<div class="pl-nmeta">'+(n.parsing?'下载正文并读取互动数据'
-          :(n.type?'<span class="pl-ntype">'+plEsc(n.type)+'</span>':'')+'<span>赞 '+plEsc(String(n.likes||0))+'</span>'+(d.length===3?'<span>'+Number(d[1])+' 月 '+Number(d[2])+' 日</span>':''))
+        +'<div class="pl-nmeta">'+(n.parsing?'下载并解析笔记内容'
+          :((n.type?'<span class="pl-ntype">'+plEsc(n.type)+'</span>':'')+(d.length===3?'<span>'+Number(d[1])+' 月 '+Number(d[2])+' 日</span>':'')))
         +'</div></div>'
         +(n.parsing?'':'<button class="pl-ndel" onclick="event.stopPropagation();plDelNote(\''+n.id+'\')" aria-label="移除"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 6l12 12M18 6L6 18"/></svg></button>')
         +'</div>';
