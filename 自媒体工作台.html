@@ -6581,7 +6581,6 @@ async function plOpenDrawer(id){
       +'<div class="pl-info-item"><span>📚 参考笔记</span><b>'+(m.noteCount||'-')+' 篇</b></div>'
       +'<div class="pl-info-item"><span>⚡ 优化强度</span><b>'+(PL_STRENGTH_LAB[m.strength]||'风格对齐')+'</b></div>'
       +'<div class="pl-info-item"><span>📏 篇幅</span><b>'+(PL_LENGTH_LAB[m.length]||'保持原长')+'</b></div>'
-      +(typeof d.changes==='number'?'<div class="pl-info-item"><span>✍️ 改写点</span><b>'+d.changes+' 处</b></div>':'')
       +'</div>';
     $('#plDrBody').innerHTML='<div class="pl-out"><div class="pl-out-hd">'
       +'<div class="pl-out-t">✨ 优化后的稿子</div>'
