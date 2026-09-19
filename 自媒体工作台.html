@@ -26,6 +26,8 @@
   --honey:#E8A93C; --honey-bg:#FAEACB;
   --rose:#E894A8; --rose-bg:#FBE3EA;
   --sky:#8FB6C9; --sky-bg:#E4EEF2;
+  --teal:#6FAEA0; --teal-d:#4F9184; --teal-bg:#E1EFEA;
+  --plum:#B57FB1; --plum-d:#9C63A0; --plum-bg:#F3E4F2;
   --p-xhs:#FF5C7A; --p-x:#3A3A3A; --p-douyin:#2A2A2A; --p-bili:#F88EAA; --p-wx:#62B870; --p-ph:#DA552F; --p-gzh:#F0883E;
   --radius-s:10px; --radius:16px; --radius-l:22px; --pill:999px;
   --shadow-s:0 1px 2px rgba(122,90,50,.04),0 4px 14px rgba(122,90,50,.05);
@@ -62,6 +64,8 @@ body[data-theme="midnight"]{
   --honey:#D98E3F; --honey-bg:#4A3418;
   --rose:#CE9271; --rose-bg:#483226;
   --sky:#9BAA9E; --sky-bg:#333D33;
+  --teal:#9DB3A4; --teal-d:#B7CCBB; --teal-bg:#2E3A31;
+  --plum:#C7A3B8; --plum-d:#DBBFCE; --plum-bg:#40303C;
   --shadow-s:0 2px 6px rgba(0,0,0,.35);
   --shadow:0 6px 20px rgba(0,0,0,.45);
   --shadow-l:0 8px 28px rgba(0,0,0,.55);
@@ -88,6 +92,8 @@ body[data-theme="peach"]{
   --honey:#FFB86B; --honey-bg:#FFEBD1;
   --rose:#FA9FC0; --rose-bg:#FEE4EE;
   --sky:#8CC3DE; --sky-bg:#E0F1F8;
+  --teal:#6FC2B0; --teal-d:#3FA894; --teal-bg:#DFF5EF;
+  --plum:#D873C2; --plum-d:#C052A8; --plum-bg:#FBE4F5;
   --radius-s:14px; --radius:22px; --radius-l:30px;
   --shadow-s:0 2px 5px rgba(232,106,71,.06),0 6px 18px rgba(232,106,71,.08);
   --shadow:0 4px 12px rgba(232,106,71,.09),0 22px 48px rgba(232,106,71,.16);
@@ -114,6 +120,8 @@ body[data-theme="matcha"]{
   --honey:#B5955C; --honey-bg:#F0E9D8;
   --rose:#A5797F; --rose-bg:#EEE2E4;
   --sky:#6E8B94; --sky-bg:#E2EAEC;
+  --teal:#6E9486; --teal-d:#527A6C; --teal-bg:#E0E9E4;
+  --plum:#8E7A94; --plum-d:#6F5D75; --plum-bg:#EAE2EC;
   --radius-s:6px; --radius:10px; --radius-l:14px; --pill:6px;
   --shadow-s:0 1px 3px rgba(51,58,46,.05);
   --shadow:0 4px 18px rgba(51,58,46,.08);
@@ -142,6 +150,8 @@ body[data-theme="minimal"]{
   --honey:#A07C2E; --honey-bg:#F2EAD8;
   --rose:#9C5F55; --rose-bg:#EFE6E3;
   --sky:#5E6E78; --sky-bg:#E6EBED;
+  --teal:#4E7A70; --teal-d:#39615A; --teal-bg:#E5EEEB;
+  --plum:#7A6478; --plum-d:#5E4A5C; --plum-bg:#EDE6EC;
   --radius-s:8px; --radius:12px; --radius-l:16px;
   --shadow-s:0 1px 2px rgba(20,20,20,.04);
   --shadow:0 1px 3px rgba(20,20,20,.05),0 8px 24px rgba(20,20,20,.06);
@@ -231,8 +241,7 @@ button{font-family:inherit;border:none;background:none;cursor:pointer;color:inhe
 .ks-tchip.on{border-color:var(--coral);background:var(--coral-bg)}
 .ks-tchip .nm{font-size:12.5px;font-weight:700;color:var(--ink);max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ks-tchip.on .nm{color:var(--coral-d)}
-.ks-tchip .st{font-size:10px;font-weight:600;color:var(--ink-3);padding:1px 8px;border-radius:var(--pill);background:var(--cream-2)}
-.ks-tchip .cnt{font-size:10.5px;color:var(--ink-3);font-weight:600}
+.ks-tchip .st{font-size:10px;font-weight:600;padding:1px 8px;border-radius:var(--pill);background:var(--cream-2);color:var(--ink-3)}
 .ks-meta{margin-left:auto;font-size:11px;color:var(--ink-3);font-weight:500;flex-shrink:0}
 .ks-cols{display:grid;grid-template-columns:390px 1fr;gap:16px;align-items:start}
 @media (max-width:1080px){.ks-cols{grid-template-columns:1fr}}
@@ -461,6 +470,17 @@ textarea.ks-ks::placeholder{color:var(--ink-3)}
 .c-tag{font-size:10.5px;font-weight:700;padding:3px 10px;border-radius:var(--pill);display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
 .c-tag.new{background:var(--honey-bg);color:var(--honey)} .c-tag.fit{background:var(--matcha-bg);color:var(--matcha-d)} .c-tag.lav{background:var(--lav-bg);color:var(--lav-d)} .c-tag.coral{background:var(--coral-bg);color:var(--coral-d)} .c-tag.gry{background:var(--cream-2);color:var(--ink-3)}
 .c-tag.t-draft{background:var(--honey-bg);color:var(--honey)} .c-tag.t-revise{background:var(--sky-bg);color:var(--sky)} .c-tag.t-final{background:var(--coral-bg);color:var(--coral-d)} .c-tag.t-card{background:var(--lav-bg);color:var(--lav-d)} .c-tag.t-publish{background:var(--matcha-bg);color:var(--matcha-d)}
+/* 阶段专属色（stg-*）：进行中=浅底软标签，里程碑（定稿/发布）=实色章式标签；选题池与脚本工坊共用 */
+.st.stg-idea,.c-tag.stg-idea{background:var(--sky-bg);color:var(--sky)}
+.st.stg-outline,.c-tag.stg-outline{background:var(--lav-bg);color:var(--lav-d)}
+.st.stg-draft,.c-tag.stg-draft{background:var(--honey-bg);color:var(--honey)}
+.st.stg-script,.c-tag.stg-script{background:var(--coral-bg);color:var(--coral-d)}
+.st.stg-shoot,.c-tag.stg-shoot{background:var(--rose-bg);color:var(--rose)}
+.st.stg-edit,.c-tag.stg-edit{background:var(--teal-bg);color:var(--teal-d)}
+.st.stg-proof,.c-tag.stg-proof{background:var(--cream-3);color:var(--ink)}
+.st.stg-card,.c-tag.stg-card{background:var(--plum-bg);color:var(--plum-d)}
+.st.stg-final,.c-tag.stg-final{background:var(--coral-d);color:var(--on-grad)}
+.st.stg-publish,.c-tag.stg-publish{background:var(--matcha-d);color:var(--on-grad)}
 .c-title{font-size:15.5px;font-weight:700;line-height:1.5;color:var(--ink);letter-spacing:-.005em}
 .c-sum{font-size:12.5px;color:var(--ink-2);line-height:1.7}
 .c-foot{display:flex;gap:7px;align-items:center;padding-top:13px;border-top:1px dashed var(--line)}
@@ -1998,9 +2018,8 @@ body.sb-lock{overflow:hidden}
                 </div>
                 <div>
                   <div class="ks-wzlabel"><span class="no">2</span>方向与思路</div>
-                  <div class="ks-optrows">
-                    <div class="ks-optrow"><span class="ks-optk">🎭 风格</span><div class="ks-segctl" id="ksStyle"></div></div>
-                    <div class="ks-optrow"><span class="ks-optk">🎬 形式</span><div class="ks-segctl" id="ksForm"></div></div>
+                    <div class="ks-optrows">
+                      <div class="ks-optrow"><span class="ks-optk">🎬 形式</span><div class="ks-segctl" id="ksForm"></div></div>
                     <div class="ks-optrow"><span class="ks-optk">⏱ 时长</span><div class="ks-segctl" id="ksLen"></div></div>
                   </div>
                 </div>
@@ -3309,7 +3328,6 @@ const KS_FORMULAS={
  f7:{id:'f7',name:'账单实证型',icon:'💰',c:'var(--rose-d)',b:'var(--rose-bg)',struct:[['结果前置','总价/总时长数字直接开场'],['分项清单','每一项：价格 + 一句话做法'],['情绪转折','账单之外的故事，全片记忆点'],['金句收口','一句态度 + 一个提问']]},
  f8:{id:'f8',name:'情绪共鸣型',icon:'💗',c:'var(--coral-d)',b:'var(--rose-bg)',struct:[['痛点共鸣','「你是不是也…」，一句话圈住目标人群'],['场景堆叠','叠 2-3 个具体场景，越具体越戳'],['观点输出','亮态度，一句话给立场'],['互动提问','把话题抛给评论区收尾']]}
 };
-const KS_STYLES=['真诚分享','干货教程','情绪共鸣'];
 const KS_FORMS=['口播视频','图文脚本'];
 const KS_LENS=['30秒','60秒','不限'];
 const KS_SEGCOLORS=['var(--coral)','var(--matcha)','var(--lav)','var(--honey)','var(--sky)','var(--rose)'];
@@ -3343,7 +3361,7 @@ function ksTid(){
 function ksTopic(){const id=ksTid();return TOPICS.find(t=>t.id===id)}
 function ksData(){
   const id=ksTid();if(!id)return null;
-  if(!SD.topics[id])SD.topics[id]={mouth:'',style:'真诚分享',form:'口播视频',len:'60秒',refs:[],scripts:[],runningTear:null,runningGen:null};
+  if(!SD.topics[id])SD.topics[id]={mouth:'',form:'口播视频',len:'60秒',refs:[],scripts:[],runningTear:null,runningGen:null};
   if(!Array.isArray(SD.topics[id].refs))SD.topics[id].refs=[];
   if(!Array.isArray(SD.topics[id].scripts))SD.topics[id].scripts=[];
   return SD.topics[id];
@@ -3358,9 +3376,8 @@ function renderScript(){
   const bar=$('#ksTopics');if(!bar)return; // 视图不存在时静默返回
   const act=ksActiveTopics();
   bar.innerHTML=act.length?act.map(t=>{
-    const d=SD.topics[t.id]||{};
     const fl=FLOW[t.type]||FLOW.image;
-    return `<button class="ks-tchip${t.id===ksTid()?' on':''}" onclick="ksPickTopic('${t.id}')"><span class="nm">${ksEsc(t.t)}</span><span class="st">${ksEsc(fl.txt[t.stage]||'')}</span><span class="cnt">脚本${(d.scripts||[]).length}</span></button>`;
+    return `<button class="ks-tchip${t.id===ksTid()?' on':''}" onclick="ksPickTopic('${t.id}')"><span class="nm">${ksEsc(t.t)}</span><span class="st ${fl.cls[t.stage]||''}">${ksEsc(fl.txt[t.stage]||'')}</span></button>`;
   }).join(''):'<span style="font-size:12px;color:var(--ink-3);align-self:center">没有进行中的选题（已发布的不会出现在这里），去「选题池」新建一个 →</span>';
   const t=ksTopic();
   if(!t){
@@ -3373,12 +3390,11 @@ function renderScript(){
   $('#ksMeta').textContent='素材 '+ksMats().length+' 条（已拆解 '+ksMats().filter(m=>ksTearOf(m)).length+'）· 我的脚本 '+d.scripts.length;
   $('#ksWzTopic').textContent='为「'+t.t+'」创作';
   if(document.activeElement!==$('#ksMouth'))$('#ksMouth').value=d.mouth||'';
-  renderKsStyle();renderKsMats();renderKsRefs();renderKsMy();renderKsBadge();
+  renderKsOpts();renderKsMats();renderKsRefs();renderKsMy();renderKsBadge();
 }
-function renderKsStyle(){
+function renderKsOpts(){
   const d=ksData();if(!d)return;
   const row=(id,opts,cur)=>{$('#'+id).innerHTML=opts.map(o=>`<button class="${o===cur?'on':''}" onclick="ksPickOpt(this,'${id}')">${o}</button>`).join('')};
-  row('ksStyle',KS_STYLES,d.style||'真诚分享');
   row('ksForm',KS_FORMS,d.form||'口播视频');
   row('ksLen',KS_LENS,d.len||'60秒');
 }
@@ -3462,8 +3478,7 @@ function ksPickOpt(btn,id){
   Array.from(btn.parentElement.children).forEach(c=>c.classList.remove('on'));
   btn.classList.add('on');
   const d=ksData();if(!d)return;
-  if(id==='ksStyle')d.style=btn.textContent;
-  else if(id==='ksForm')d.form=btn.textContent;
+  if(id==='ksForm')d.form=btn.textContent;
   else d.len=btn.textContent;
   saveSD();
 }
@@ -3570,7 +3585,7 @@ function ksGen(){
     const refs=(m0&&t0&&t0.script)?[{title:m0.title,author:m0.author,track:t0.track,formula:KS_FORMULAS[t0.fId]?KS_FORMULAS[t0.fId].name:'',why:t0.why||'',script:t0.script}]:[];
     d.runningGen={taskId:null,step:'已提交，正在按参考结构重写口水话…'};
     saveSD();
-    fetch('/api/script/gen',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({topic:t.t,mouth,style:d.style,form:d.form,len:d.len,refs,accountId:CUR_ACC})})
+    fetch('/api/script/gen',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({topic:t.t,mouth,form:d.form,len:d.len,refs,accountId:CUR_ACC})})
       .then(r=>r.json()).then(j=>{
         if(!j.success){toast(j.error||'提交失败');d.runningGen=null;saveSD();return;}
         d.runningGen={taskId:j.data.taskId,step:'已提交，正在按参考结构重写口水话…'};
@@ -3795,7 +3810,7 @@ function seedKsDemo(){
       const old=SD.tears[u];
       if(!(old&&old.fId))SD.tears[u]={...tear,at:Date.now()}; // 旧格式已在加载时丢弃，这里直接补新形态
     }
-    if(!SD.topics[KS_DEMO_TOPIC.id])SD.topics[KS_DEMO_TOPIC.id]={mouth:KS_DEMO_MOUTH,style:'真诚分享',form:'口播视频',len:'60秒',refs:[urls[1]],scripts:[],runningTear:null,runningGen:null};
+    if(!SD.topics[KS_DEMO_TOPIC.id])SD.topics[KS_DEMO_TOPIC.id]={mouth:KS_DEMO_MOUTH,form:'口播视频',len:'60秒',refs:[urls[1]],scripts:[],runningTear:null,runningGen:null};
     saveMats();saveState();saveSD();
     lsS('ksdemo','v2');
   }catch(e){}
@@ -4197,9 +4212,9 @@ let _inspPollTimer=null;
 
 /* ===== 选题池 ===== */
 const FLOW={
-  image:{steps:['灵感','初稿','定稿','图文','发布'],txt:['灵感','初稿中','已定稿','做图文','已发布'],cls:['t-draft','t-draft','t-final','t-card','t-publish']},
-  text:{steps:['灵感','初稿','定稿','校对','发布'],txt:['灵感','初稿中','已定稿','校对中','已发布'],cls:['t-draft','t-draft','t-final','t-final','t-publish']},
-  video:{steps:['灵感','大纲','脚本','拍摄','剪辑','发布'],txt:['灵感','大纲中','脚本中','拍摄中','剪辑中','已发布'],cls:['t-draft','t-draft','t-draft','t-card','t-final','t-publish']}
+  image:{steps:['灵感','初稿','定稿','图文','发布'],txt:['灵感','初稿中','已定稿','做图文','已发布'],cls:['stg-idea','stg-draft','stg-final','stg-card','stg-publish']},
+  text:{steps:['灵感','初稿','定稿','校对','发布'],txt:['灵感','初稿中','已定稿','校对中','已发布'],cls:['stg-idea','stg-draft','stg-final','stg-proof','stg-publish']},
+  video:{steps:['灵感','大纲','脚本','拍摄','剪辑','发布'],txt:['灵感','大纲中','脚本中','拍摄中','剪辑中','已发布'],cls:['stg-idea','stg-outline','stg-script','stg-shoot','stg-edit','stg-publish']}
 };
 const TOPICS=[];
 let CAL_TASKS={};
@@ -6211,7 +6226,7 @@ function openReview(idx){
   const n=NOTES[idx],m=n.meta||{};
   const num=s=>{const v=parseInt(String(s||'').replace(/[^\d]/g,''),10);return isNaN(v)?0:v;};
   $('#rvTitle').textContent=m.title||'(未命名)';
-  $('#rvMeta').textContent=[m.author,m.date?('📅 '+m.date):'',m.url].filter(Boolean).join(' · ');
+  $('#rvMeta').textContent=[m.author,m.date?('📅 '+m.date):''].filter(Boolean).join(' · ');
   const items=[
     {cls:'like',ic:RV_ICONS.like,lab:'点赞',val:m.likes},
     {cls:'fav',ic:RV_ICONS.fav,lab:'收藏',val:m.favs},
