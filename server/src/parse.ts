@@ -1,3 +1,5 @@
+import type { SourceItem } from "./sources.js";
+
 export interface Title {
   t: string;
   mech?: string;
@@ -139,6 +141,51 @@ export interface Insp {
   why: string[];
   m: [string, number, string][];
   cands: { g: string; t: string }[];
+}
+
+/**
+ * 用原始素材（fetchSources 产物，每条必带 url）回填灵感条目缺失的 url。
+ * agent 整理 inspirations.md 时偶发漏抄 url 字段——按标题确定性匹配回填，
+ * 不再依赖 agent 抄写。已有 url 的条目不动。
+ */
+export function backfillInspUrls(insp: Insp[], items: SourceItem[]): Insp[] {
+  return insp.map((x) => (x.url ? x : { ...x, url: findSourceUrl(x, items) }));
+}
+
+/** 标题归一化：NFKC + 小写 + 去 HTML 实体/空白/标点，只留文字与数字。 */
+function normTitle(s: string): string {
+  return s
+    .normalize("NFKC")
+    .toLowerCase()
+    .replace(/&[a-z#0-9]+;/gi, "")
+    .replace(/[\s\p{P}\p{S}]+/gu, "");
+}
+
+/**
+ * 分级匹配找唯一 url：精确标题（同 pf 优先）→ 标题互含（同 pf → 同作者 → 全局）。
+ * 保守策略：某一级的候选 url 不唯一（同标题不同链接）视为歧义，不回填。
+ */
+function findSourceUrl(x: Insp, items: SourceItem[]): string | undefined {
+  const nt = normTitle(x.t);
+  if (!nt) return undefined;
+  const exact = (i: SourceItem) => normTitle(i.title) === nt;
+  // 较短一侧不足 10 字符时互含极易误配（如只写 "DeepSeek"），放弃
+  const contains = (i: SourceItem) => {
+    const it = normTitle(i.title);
+    return it.length >= 10 && nt.length >= 10 && (it.includes(nt) || nt.includes(it));
+  };
+  const tiers = [
+    items.filter((i) => i.pf === x.pf && exact(i)),
+    items.filter(exact),
+    items.filter((i) => i.pf === x.pf && contains(i)),
+    items.filter((i) => !!x.author && i.author === x.author && contains(i)),
+    items.filter(contains),
+  ];
+  for (const tier of tiers) {
+    const urls = [...new Set(tier.map((i) => i.url))];
+    if (urls.length === 1) return urls[0];
+  }
+  return undefined;
 }
 
 /**

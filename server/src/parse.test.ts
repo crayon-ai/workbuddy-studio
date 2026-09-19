@@ -1,5 +1,13 @@
 import { describe, it, expect } from "vitest";
-import { parseTitles, parseTeardown, parseProfile, parseDeepReview } from "./parse.js";
+import {
+  parseTitles,
+  parseTeardown,
+  parseProfile,
+  parseDeepReview,
+  backfillInspUrls,
+  type Insp,
+} from "./parse.js";
+import type { SourceItem } from "./sources.js";
 
 describe("parseTitles", () => {
   it("解析 ```json 代码块里的数组", () => {
@@ -242,5 +250,62 @@ describe("parseDeepReview（深度复盘报告解析）", () => {
   it("## 节无内容（标题后无换行）时 section 值为空串", () => {
     const r = parseDeepReview({ "AI深度复盘-x.md": "# t\n\n## 差距归因" });
     expect(r!.sections["差距归因"]).toBe("");
+  });
+});
+
+describe("backfillInspUrls", () => {
+  const items: SourceItem[] = [
+    { pf: "bili", pfn: "B站", title: "DeepSeek V4.1 实测：277 Token/s，快得有点吓人", author: "神烦老狗", url: "https://b23.tv/a1", summary: "", heat: "12.9万", pub: "3 天前" },
+    { pf: "weixin", pfn: "微信", title: "DeepSeek 用 1/15 的价格,干掉了编码 AI 的定价权", author: "茶萃Tea", url: "https://mp.weixin.qq.com/s/b2", summary: "", heat: "", pub: "今天" },
+    { pf: "weixin", pfn: "微信", title: "DeepSeek 用 1/15 的价格,干掉了编码 AI 的定价权（转载）", author: "其他人", url: "https://mp.weixin.qq.com/s/b3", summary: "", heat: "", pub: "今天" },
+    { pf: "bili", pfn: "B站", title: "完全不相关的另一条视频", author: "路人", url: "https://b23.tv/a4", summary: "", heat: "", pub: "1 天前" },
+  ];
+
+  const insp = (over: Partial<Insp>): Insp => ({
+    pf: "bili",
+    pfn: "B站",
+    author: "",
+    pub: "",
+    t: "",
+    s: "",
+    why: [],
+    m: [],
+    cands: [],
+    ...over,
+  });
+
+  it("缺 url 时按归一化标题精确匹配回填（标点/空白差异不影响）", () => {
+    const out = backfillInspUrls(
+      [insp({ pf: "weixin", t: "DeepSeek 用 1/15 的价格，干掉了编码 AI 的定价权" })],
+      items
+    );
+    // 精确级只有一个候选（全角逗号归一化后与 b2 相同），b3 是包含级候选不参与
+    expect(out[0].url).toBe("https://mp.weixin.qq.com/s/b2");
+  });
+
+  it("agent 截断长标题时按互含匹配回填", () => {
+    const out = backfillInspUrls(
+      [insp({ pf: "bili", t: "DeepSeek V4.1 实测：277 Token/s" })],
+      items
+    );
+    expect(out[0].url).toBe("https://b23.tv/a1");
+  });
+
+  it("同标题不同 url（歧义）时不回填", () => {
+    const out = backfillInspUrls([insp({ pf: "bili", t: "完全不相关的另一条视频" })], [
+      { ...items[3] },
+      { ...items[3], url: "https://b23.tv/a5", author: "别人搬运" },
+    ]);
+    expect(out[0].url).toBeUndefined();
+  });
+
+  it("互含但较短一侧不足 8 字符的误配风险放弃匹配", () => {
+    const out = backfillInspUrls([insp({ pf: "bili", t: "DeepSeek" })], items);
+    expect(out[0].url).toBeUndefined();
+  });
+
+  it("已有 url 的条目保持不变", () => {
+    const out = backfillInspUrls([insp({ t: "DeepSeek V4.1 实测：277 Token/s，快得有点吓人", url: "https://keep.me" })], items);
+    expect(out[0].url).toBe("https://keep.me");
   });
 });

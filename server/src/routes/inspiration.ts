@@ -1,7 +1,7 @@
 import type { FastifyPluginCallback } from "fastify";
 import { createTask, updateTask, getTask } from "../task-store.js";
 import { runSkill, collectMarkdown } from "../skill-runner.js";
-import { parseInspiration } from "../parse.js";
+import { parseInspiration, backfillInspUrls, type Insp } from "../parse.js";
 import { fetchSources, type SourceItem } from "../sources.js";
 import { getApiKey } from "../config.js";
 import { accountTaskDir, accountSlug } from "../account-dirs.js";
@@ -92,23 +92,23 @@ async function runInspiration(
   });
   log(`skill 结束，耗时 ${((Date.now() - t0) / 1000).toFixed(1)}s，ok=${r.ok}`);
 
-  if (!r.ok) {
+  let insp: Insp[];
+  if (r.ok) {
+    insp = parseInspiration(r.artifacts);
+  } else {
     // agent 偶发完成工作后 CLI 崩溃（exit 1）——先从磁盘恢复已落盘的 inspirations.md
-    const recovered = parseInspiration(collectMarkdown(workDir));
-    if (recovered.length > 0) {
-      log(`skill 失败（${r.error}）但磁盘恢复 ${recovered.length} 条`);
-      updateTask(taskId, {
-        status: "done",
-        result: recovered,
-        step: `完成，抓到 ${recovered.length} 条灵感`,
-        updatedAt: Date.now(),
-      });
+    insp = parseInspiration(collectMarkdown(workDir));
+    if (insp.length === 0) {
+      updateTask(taskId, { status: "failed", error: r.error, updatedAt: Date.now() });
       return;
     }
-    updateTask(taskId, { status: "failed", error: r.error, updatedAt: Date.now() });
-    return;
+    log(`skill 失败（${r.error}）但磁盘恢复 ${insp.length} 条`);
   }
-  const insp = parseInspiration(r.artifacts);
+  // agent 偶发漏抄 url 字段——用原始素材按标题确定性回填
+  const miss0 = insp.filter((x) => !x.url).length;
+  insp = backfillInspUrls(insp, items);
+  const miss1 = insp.filter((x) => !x.url).length;
+  if (miss1 < miss0) log(`url 回填：从原始素材补上 ${miss0 - miss1} 条（仍缺 ${miss1} 条）`);
   log(`完成，抓到 ${insp.length} 条`);
   updateTask(taskId, {
     status: "done",

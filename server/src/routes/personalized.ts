@@ -1,7 +1,7 @@
 import type { FastifyPluginCallback } from "fastify";
 import { createTask, updateTask, getTask } from "../task-store.js";
 import { runSkill, collectMarkdown } from "../skill-runner.js";
-import { parseInspiration, parseProfile, type Profile } from "../parse.js";
+import { parseInspiration, parseProfile, backfillInspUrls, type Profile } from "../parse.js";
 import { fetchBloggerProfile, isXhsProfileUrl, type BloggerProfile } from "../xhs-profile.js";
 import { fetchSources, type SourceItem } from "../sources.js";
 import { getApiKey } from "../config.js";
@@ -179,6 +179,11 @@ async function radarAndParse(
       return;
     }
   }
+  // agent 偶发漏抄 url 字段——用原始素材按标题确定性回填
+  const miss0 = insp.filter((x) => !x.url).length;
+  insp = backfillInspUrls(insp, items);
+  const miss1 = insp.filter((x) => !x.url).length;
+  if (miss1 < miss0) log(taskId, `url 回填：从原始素材补上 ${miss0 - miss1} 条（仍缺 ${miss1} 条）`, t0);
   log(taskId, `完成，抓到 ${insp.length} 条，总耗时 ${((Date.now() - t0) / 1000).toFixed(1)}s`, t0);
   updateTask(taskId, {
     status: "done",
