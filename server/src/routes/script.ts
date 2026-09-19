@@ -5,6 +5,7 @@ import path from "node:path";
 import { createTask, updateTask, getTask } from "../task-store.js";
 import { runSkill, collectMarkdown } from "../skill-runner.js";
 import { parseScriptTear, parseScriptGen, type ScriptTear, type ScriptGen } from "../parse.js";
+import { fetchMaterialRaw } from "../tear-fetch.js";
 import { getApiKey } from "../config.js";
 import { taskLog } from "../log.js";
 import { accountTaskDir, resolveTaskDir, accountSlug } from "../account-dirs.js";
@@ -111,7 +112,7 @@ export interface RefTear {
 }
 
 export const scriptRoutes: FastifyPluginCallback<ScriptRoutesOpts> = (app, opts, done) => {
-  /** 提交素材结构拆解：读原文（正文+图片+视频+评论）→ 识别赛道 + 匹配内置公式 + 原样提取脚本 → structure.md */
+  /** 提交素材结构拆解：读原文（正文+图片+视频逐字稿，不抓评论区）→ 识别赛道 + 匹配内置公式 + 原样提取脚本 → structure.md */
   app.post("/api/script/tear", async (req) => {
     const { url, title, author, accountId, reuseTaskId, formulas } = (req.body ?? {}) as {
       url?: string;
@@ -222,7 +223,9 @@ function resolveFormulaId(raw: string, formulas: Array<{ id: string; name: strin
   return byName ? byName.id : null;
 }
 
-/** 拆解素材：识别赛道 + 匹配一条内置公式 + 原样提取原文脚本（原文抓取/复用逻辑不变）。 */
+/** 拆解素材：识别赛道 + 匹配一条内置公式；原文抓取以「后端直连」为主路径，agent 只做识别与匹配。
+ *  性能分工：下载/转码/whisper 转写是确定性工作，后端并行直连（分钟级 → 秒级）；
+ *  后端抓不到有效内容（反爬等）才回退 agent 全流程兜底。 */
 async function runScriptTear(
   taskId: string,
   mat: { url: string; title?: string; author?: string },
@@ -235,9 +238,29 @@ async function runScriptTear(
   const t0 = Date.now();
   updateTask(taskId, { status: "running", step: "正在读取素材原文…", logs: [], updatedAt: t0 });
   const workDir = scriptDir(projectRoot, account, taskId);
-  const prompt = reuse
-    ? buildTearPromptFromExisting(mat, reuse.dir, workDir, formulas)
-    : buildTearPrompt(mat, formulas, projectRoot, account, workDir);
+  const rawDir = reuse ? reuse.dir : sourceDir(projectRoot, account, mat.url);
+  let fallbackFetch = false;
+
+  if (reuse) {
+    updateTask(taskId, { step: "复用已归档原文，AI 识别与匹配中…", updatedAt: Date.now() });
+  } else {
+    updateTask(taskId, { step: "后端直连抓取原文与媒体…", updatedAt: Date.now() });
+    const fr = await fetchMaterialRaw(mat.url, rawDir, (s) =>
+      updateTask(taskId, { step: s.slice(0, 120), updatedAt: Date.now() })
+    );
+    taskLog("script-tear", taskId, `后端抓取：${fr.note}`, t0);
+    if (fr.ok) {
+      updateTask(taskId, { step: "原文就绪，AI 识别与匹配中…", updatedAt: Date.now() });
+    } else {
+      fallbackFetch = true;
+      taskLog("script-tear", taskId, "后端未获有效内容，回退 agent 全流程抓取", t0);
+      updateTask(taskId, { step: "AI 抓取原文中（兜底全流程）…", updatedAt: Date.now() });
+    }
+  }
+
+  const prompt = fallbackFetch
+    ? buildFallbackFetchPrompt(mat, rawDir, workDir, formulas)
+    : buildAnalyzePrompt(mat, rawDir, workDir, formulas, reuse ? "模式 A：复用已有原文" : "模式 A：原文已由后端抓取归档");
   const r = await runSkill("script-tear", prompt, workDir, { apiKey, projectRoot }, makeProgress(taskId));
 
   const fail = (error: string) => {
@@ -245,18 +268,47 @@ async function runScriptTear(
     updateTask(taskId, { status: "failed", error, updatedAt: Date.now() });
   };
 
+  // agent 不再逐字抄写原文（省掉最慢的大输出段）：structure.md 缺「## 脚本」时由后端从原文库机械拼接
+  appendScriptSection(workDir, rawDir);
+
+  // 拼接完成后从磁盘统一收集产物（r.artifacts 是拼接前的快照，不能直接用）
+  const artifacts = collectMarkdown(workDir);
   if (!r.ok) {
-    const recovered = parseScriptTear(collectMarkdown(workDir));
+    const recovered = parseScriptTear(artifacts);
     if (recovered) return finishTearResult(recovered, formulas, taskId, t0, true);
     fail(r.error || "拆解失败，请重试");
     return;
   }
-  const tear = parseScriptTear(r.artifacts);
+  const tear = parseScriptTear(artifacts);
   if (!tear) {
     fail("未能读取到素材原文（链接失效或平台反爬），无法识别与匹配，请换一条素材或稍后重试");
     return;
   }
   finishTearResult(tear, formulas, taskId, t0, false);
+}
+
+/** 原文脚本来源：视频优先逐字稿，图文用正文；去掉文件头部的 markdown 标题行。 */
+export function chooseScriptText(rawDir: string): string | null {
+  const pick = (name: string, min: number): string | null => {
+    const p = path.join(rawDir, name);
+    if (!existsSync(p)) return null;
+    const txt = readFileSync(p, "utf8").trim();
+    return txt.length >= min ? txt : null;
+  };
+  const src = pick("逐字稿.md", 20) ?? pick("正文.md", 20);
+  if (!src) return null;
+  return src.replace(/^(#[^\n]*\n+)+/, "").trim() || null;
+}
+
+/** structure.md 缺「## 脚本」节时，把原文脚本机械拼接进去（已含则不动，兼容 agent 自带脚本的产物）。 */
+export function appendScriptSection(workDir: string, rawDir: string): void {
+  const p = path.join(workDir, "structure.md");
+  if (!existsSync(p)) return;
+  const md = readFileSync(p, "utf8");
+  if (/^##\s*脚本/m.test(md)) return;
+  const script = chooseScriptText(rawDir);
+  if (!script) return;
+  writeFileSync(p, `${md.replace(/\s+$/, "")}\n\n## 脚本\n\n${script}\n`);
 }
 
 /** 解析结果 → 校验公式在清单内 → 落任务。公式不在清单/脚本为空都算失败，不伪装成功。 */
@@ -322,41 +374,79 @@ async function runScriptGen(
   updateTask(taskId, { status: "done", result: gen, step: "完成", updatedAt: Date.now() });
 }
 
-function buildTearPrompt(
+/** 识别与匹配 prompt（主路径）：原文已备好（复用或后端直连抓取），agent 零网络请求、不抄原文。 */
+function buildAnalyzePrompt(
   mat: { url: string; title?: string; author?: string },
+  rawDir: string,
+  workDir: string,
   formulas: Array<{ id: string; name: string }>,
-  projectRoot: string,
-  account: string,
-  workDir: string
+  modeLabel: string
 ): string {
-  const libraryDir = sourceDir(projectRoot, account, mat.url);
+  return [
+    "请完整执行以下任务：爆款素材的识别与匹配。",
+    "",
+    "重要（分工说明，先读）：",
+    `- 本任务为【${modeLabel}】——素材原文已下载归档，你**禁止任何网络请求**（不 curl、不下载任何东西）。`,
+    "原文脚本（逐字稿/正文全文）由调用方从原文目录直接拼接，你不要抄写原文全文；你只负责：归赛道、匹配公式、给匹配理由，以及（仅在缺少时）识别图片内文字。",
+    "",
+    "素材信息：",
+    `- 链接：${mat.url}`,
+    mat.title ? `- 标题：${mat.title}` : "",
+    mat.author ? `- 作者：${mat.author}` : "",
+    `- 原文目录：${rawDir}（含 正文.md；视频素材另有 逐字稿.md；可能含 图片/ 目录）`,
+    "",
+    "步骤：",
+    "1. 用 Read 读取原文目录下的 正文.md 与 逐字稿.md（存在哪个读哪个，都存在则都读）。",
+    `2. 若原文目录存在 图片/ 目录且没有 图片文字.md：逐张 Read 图片（jpg/png 可直接读；webp/avif 先用 sips 转成 jpg 再读），把图内文字（封面钩子、图卡标题、步骤文字）整理写入 ${rawDir}/图片文字.md——封面一句话钩子往往是整篇最关键的素材；单张识别失败就跳过并在文件里注明，绝不允许编造。若已有 图片文字.md，直接 Read 它。`,
+    `3. 通读全部素材（正文 + 图内文字 + 逐字稿）后，用 Write 写 ${workDir}/structure.md，只包含以下三节，格式严格照此：`,
+    "",
+    "## 赛道",
+    "<一个词，如 美食 / 职场 / AI工具 / 旅行 / 穿搭 / 好物种草 / 情感 / 财经…，从内容本身归纳>",
+    "",
+    "## 公式",
+    "<公式 id，如 f5>",
+    "",
+    "## 匹配理由",
+    "<一句话，对照命中公式的结构特征说清这篇素材怎么就符合它，点出素材里的实际做法，不许空话>",
+    "",
+    "【公式清单】（必须且只能选一个）：",
+    ...formulas.map((f) => `- ${f.id}｜${f.name}`),
+    "",
+    "硬约束：",
+    "- 不要写「## 脚本」节（脚本由调用方拼接），不要抄写原文全文。",
+    "- 公式必须来自清单，不允许自创；如果几条都像，选最接近的一条，并在匹配理由里说明取舍。",
+    "- 若原文目录内容为空或只有占位元信息（无正文内容也无逐字稿），不要写 structure.md，一句话如实说明并停止。",
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
+/** 兜底抓取 prompt（后端直连失败时）：agent 全流程抓全量 + 识别与匹配。同样不抄脚本、不抓评论区。 */
+function buildFallbackFetchPrompt(
+  mat: { url: string; title?: string; author?: string },
+  rawDir: string,
+  workDir: string,
+  formulas: Array<{ id: string; name: string }>
+): string {
   return [
     "请完整执行以下两步（缺一不可）：",
     "",
     "重要（执行方式，先读）：",
-    "- 第一步必须先用 Read 工具读取 .claude/skills/script-tear/SKILL.md 全文，严格按其规定执行。",
-    "- 直接开始执行，不要复述或介绍 skill 会做什么。",
+    "- 用 Bash（curl，带浏览器 UA，-L 跟随跳转）抓取素材，绝不登录任何账号，不使用任何浏览器自动化。",
     `- 完成的唯一标准：${workDir}/structure.md 文件真实存在。`,
     "",
-    "本任务为【模式 B：全新抓取】。素材信息：",
+    "本任务为【模式 B：全新抓取（后端直连失败后的兜底）】。素材信息：",
     `- 链接：${mat.url}`,
     mat.title ? `- 标题：${mat.title}` : "",
     mat.author ? `- 作者：${mat.author}` : "",
-    `- 原文库目录（把抓到的正文/图片文字/逐字稿/评论归档到这里）：${libraryDir}`,
+    `- 原文库目录（把抓到的正文/图片文字/逐字稿归档到这里）：${rawDir}`,
     "",
-    "1. 完整抓取原文（按 SKILL.md 的模式 B：正文 + 图片内文字 + 视频逐字稿 + 评论区，全部归档到原文库目录）。",
-    "   关键钩子常在封面图或口播前几秒——图片必须逐张分析提取文字（webp/avif 先用 ffmpeg 或 sips 转成 jpg 再分析，单图失败跳过不卡死），视频必须转逐字稿。",
-    "   若最终完全拿不到有效内容（平台反爬/失效），不要编造——如实说明失败原因并停止，不写 structure.md。",
-    `2. 读完全部原文后做【识别与匹配】，写入 ${workDir}/structure.md（格式见下）：`,
-    "   - 赛道：给这篇素材归一个赛道，只输出一个词（如 美食 / 职场 / AI工具 / 旅行 / 穿搭 / 好物种草 / 情感 / 财经…），从内容本身归纳；",
-    "   - 公式：从下方公式清单里【必须且只能选一个】，在「## 公式」下输出它的 id（如 f5）；",
-    "   - 匹配理由：一句话讲清为什么命中这条公式（对照它的结构特征，说具体，不许空话）；",
-    "   - 脚本：把原文脚本【原样】抄进「## 脚本」——视频抄逐字稿全文，图文抄正文全文；保留原有分段与换行，不总结、不缩写、不加工、不加任何批注。",
-    "",
-    "【公式清单】（必须且只能从中选一个）：",
-    ...formulas.map((f) => `- ${f.id}｜${f.name}`),
-    "",
-    "structure.md 格式（严格照此）：",
+    "1. 完整抓取原文（抓不到就如实说明失败并停止，不编造）：",
+    "   - 抓正文文字（从页面内嵌 JSON 里提取，小红书看 __INITIAL_STATE__ 的 noteDetailMap），存 原文库目录/正文.md（开头一行标题）。",
+    "   - 图片内文字：下载正文/封面图片到 原文库目录/图片/（webp/avif 先用 ffmpeg 或 sips 转成 jpg），逐张识别图片内文字（封面钩子、图卡标题、步骤文字）整理成 原文库目录/图片文字.md——钩子常在封面图上，图片文字是拆解的必备输入；单张失败跳过并注明，不编造。",
+    "   - 视频逐字稿：下载视频（探索页面 API，B站可走 html5 playurl），ffmpeg 转音频（ffmpeg -i 视频.mp4 -vn -ar 16000 -ac 1 音频.wav），本机 127.0.0.1:2022 有 whisper server（OpenAI 兼容 /v1/audio/transcriptions，必须带 language=zh），转写结果存 原文库目录/逐字稿.md；whisper 不可用则如实说明并跳过。",
+    "   - 评论区不抓取、不翻页、不归档（拆解只需要素材本身的内容）。",
+    `2. 通读全部素材后做【识别与匹配】，用 Write 写 ${workDir}/structure.md，只包含以下三节：`,
     "",
     "## 赛道",
     "<一个词>",
@@ -365,14 +455,15 @@ function buildTearPrompt(
     "<公式 id，如 f5>",
     "",
     "## 匹配理由",
-    "<一句话>",
+    "<一句话，点出素材里的实际做法，不许空话>",
     "",
-    "## 脚本",
-    "<原文脚本全文，原样>",
+    "【公式清单】（必须且只能从中选一个）：",
+    ...formulas.map((f) => `- ${f.id}｜${f.name}`),
     "",
     "硬约束：",
-    "- 公式必须来自清单，不允许自创；如果几条都像，选最接近的一条，并在匹配理由里说明取舍。",
-    "- 脚本必须原样来自素材（逐字稿/正文），禁止改写、缩写、编造；脚本为空就不要写 structure.md。",
+    "- 不要写「## 脚本」节（脚本由调用方从原文库拼接），不要抄写原文全文。",
+    "- 公式必须来自清单，不允许自创；几条都像时选最接近的一条，并在匹配理由里说明取舍。",
+    "- 抓不到有效内容（平台反爬/链接失效）时不要编造，如实说明并停止，不写 structure.md。",
   ]
     .filter(Boolean)
     .join("\n");
@@ -383,56 +474,6 @@ const LEN_BUDGET: Record<string, string> = {
   "60秒": "全篇约 200 字（口播 60 秒），按段落职责分配",
   不限: "不限字数，按内容需要",
 };
-
-function buildTearPromptFromExisting(
-  mat: { url: string; title?: string; author?: string },
-  rawDir: string,
-  workDir: string,
-  formulas: Array<{ id: string; name: string }>
-): string {
-  return [
-    "请完整执行以下两步（缺一不可）：",
-    "",
-    "重要（执行方式，先读）：",
-    "- 第一步必须先用 Read 工具读取 .claude/skills/script-tear/SKILL.md 全文，严格按其规定执行。",
-    "- 直接开始执行，不要复述或介绍 skill 会做什么。",
-    `- 完成的唯一标准：${workDir}/structure.md 文件真实存在。`,
-    "",
-    "本任务为【模式 A：复用已有原文】——素材原文之前已下载归档，**禁止任何网络请求重新下载**。素材信息：",
-    `- 链接：${mat.url}`,
-    mat.title ? `- 标题：${mat.title}` : "",
-    `- 已有原文目录：${rawDir}`,
-    "",
-    `1. 用 Read 读取该目录下的全部素材（正文.md / 图片文字.md 或 逐字稿.md / 评论.md；需要看原图时逐张 Read 图片/ 目录下的图片文件），确认内容非空。`,
-    "   若该目录内容为空或只有占位文件（原文实际未下载成功），才转为一句话说明情况并停止，不写 structure.md，也不要自行联网下载。",
-    `2. 读完全部原文后做【识别与匹配】，写入 ${workDir}/structure.md（格式见下）：`,
-    "   - 赛道：给这篇素材归一个赛道，只输出一个词（如 美食 / 职场 / AI工具 / 旅行 / 穿搭 / 好物种草 / 情感 / 财经…），从内容本身归纳；",
-    "   - 公式：从下方公式清单里【必须且只能选一个】，在「## 公式」下输出它的 id（如 f5）；",
-    "   - 匹配理由：一句话讲清为什么命中这条公式（对照它的结构特征，说具体，不许空话）；",
-    "   - 脚本：把原文脚本【原样】抄进「## 脚本」——视频抄逐字稿全文，图文抄正文全文；保留原有分段与换行，不总结、不缩写、不加工、不加任何批注。",
-    "",
-    "【公式清单】（必须且只能从中选一个）：",
-    ...formulas.map((f) => `- ${f.id}｜${f.name}`),
-    "",
-    "structure.md 格式（严格照此）：",
-    "",
-    "## 赛道",
-    "<一个词>",
-    "",
-    "## 公式",
-    "<公式 id，如 f5>",
-    "",
-    "## 匹配理由",
-    "<一句话>",
-    "",
-    "## 脚本",
-    "<原文脚本全文，原样>",
-    "",
-    "硬约束：",
-    "- 公式必须来自清单，不允许自创；如果几条都像，选最接近的一条，并在匹配理由里说明取舍。",
-    "- 脚本必须原样来自素材（逐字稿/正文），禁止改写、缩写、编造；脚本为空就不要写 structure.md。",
-  ].join("\n");
-}
 
 function buildGenPrompt(
   input: { topic?: string; mouth: string; style?: string; form?: string; len?: string; refs: RefTear[] },

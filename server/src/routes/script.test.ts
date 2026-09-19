@@ -13,8 +13,29 @@ vi.mock("../skill-runner.js", async (importOriginal) => {
   };
 });
 
+// mock 后端直连抓取：默认成功并把 正文.md 写进原文库目录（模拟 tear-fetch 落盘）；
+// 纯函数（平台识别/解析）保留真实实现供单测使用
+vi.mock("../tear-fetch.js", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../tear-fetch.js")>();
+  const fs = await import("node:fs");
+  const path = await import("node:path");
+  return {
+    ...actual,
+    fetchMaterialRaw: vi.fn(async (_url: string, dir: string) => {
+      fs.mkdirSync(dir, { recursive: true });
+      fs.writeFileSync(path.join(dir, "正文.md"), RAW_BODY_MD);
+      return {
+        ok: true,
+        platform: "xhs" as const,
+        gots: { body: true, images: 0, video: false, transcript: false },
+        note: "mock：正文",
+      };
+    }),
+  };
+});
+
 const { buildApp } = await import("../app.js");
-const { rmSync, mkdtempSync, mkdirSync, writeFileSync, existsSync } = await import("node:fs");
+const { rmSync, mkdtempSync, mkdirSync, writeFileSync, existsSync, readFileSync } = await import("node:fs");
 const { tmpdir } = await import("node:os");
 const { join } = await import("node:path");
 
@@ -23,7 +44,17 @@ const FORMULAS = [
   { id: "f2", name: "清单体种草" },
   { id: "f5", name: "保姆级教程" },
 ];
-const STRUCT_MD = [
+// 后端直连抓取落盘的原文正文（fetchMaterialRaw mock 写入原文库）
+const RAW_BODY_MD = [
+  "# 3 碗深夜面条",
+  "",
+  "打工人下班是不是只想瘫着？这 3 碗面，10 分钟出锅，锅都只用洗一个。",
+  "",
+  "第一碗，番茄肥牛面：先炒番茄出沙，肥牛扔进去，水开下面。",
+  "你最想先试哪一碗？评论区告诉我。",
+].join("\n");
+// agent 产物（识别与匹配三节，无脚本——脚本由后端拼接）
+const STRUCT_ANALYZE_MD = [
   "## 赛道",
   "美食",
   "",
@@ -31,7 +62,11 @@ const STRUCT_MD = [
   "f2",
   "",
   "## 匹配理由",
-  "数字痛点开场先立预期，三碗面并列清单直给，结尾提问拉评论 + 收藏钩，命中清单体种草。",
+  "数字痛点开场先立预期，三碗面并列清单直给，结尾提问拉互动 + 收藏钩，命中清单体种草。",
+].join("\n");
+// agent 自带脚本节的完整产物（兼容路径：装配时不再追加）
+const STRUCT_MD = [
+  STRUCT_ANALYZE_MD,
   "",
   "## 脚本",
   "打工人下班是不是只想瘫着？这 3 碗面，10 分钟出锅，锅都只用洗一个。",
@@ -66,6 +101,7 @@ beforeEach(() => {
   delete process.env.ANTHROPIC_AUTH_TOKEN;
   rmSync(envPath, { force: true });
   process.env.ANTHROPIC_API_KEY = "sk-test";
+  vi.clearAllMocks();
 });
 
 describe("POST /api/script/tear", () => {
@@ -89,20 +125,20 @@ describe("POST /api/script/tear", () => {
     await app.close();
   });
 
-  it("拆解完成：识别赛道 + 匹配公式 + 原文脚本，产物落在账号目录", async () => {
+  it("拆解完成：后端抓正文 + agent 识别三节 + 后端拼接脚本，产物落在账号目录", async () => {
     const { runSkill } = await import("../skill-runner.js");
     let capturedPrompt = "";
     vi.mocked(runSkill).mockImplementationOnce(async (_s, prompt: string, workDir: string, _opts, onProgress) => {
       capturedPrompt = prompt;
       // 真实链路里 agent 会持续上报进度（内部走 getTask 更新任务表），模拟以守住该路径
       if (onProgress) {
-        onProgress({ step: "正在读取素材原文…" });
-        onProgress({ detail: "curl https://x.com" });
+        onProgress({ step: "AI 识别与匹配中…" });
+        onProgress({ detail: "Read 正文.md" });
       }
+      // agent 只写识别三节（无脚本），脚本由后端从原文库拼接
       mkdirSync(workDir, { recursive: true });
-      writeFileSync(join(workDir, "structure.md"), STRUCT_MD);
-      writeFileSync(join(workDir, "原文.md"), "# 原文");
-      return { ok: true, text: "done", artifacts: { "structure.md": STRUCT_MD, "原文.md": "# 原文" } };
+      writeFileSync(join(workDir, "structure.md"), STRUCT_ANALYZE_MD);
+      return { ok: true, text: "done", artifacts: { "structure.md": STRUCT_ANALYZE_MD } };
     });
     const projectRoot = mkdtempSync(join(tmpdir(), "wb-script-"));
     const app = await buildApp({ envPath, projectRoot });
@@ -117,12 +153,15 @@ describe("POST /api/script/tear", () => {
     expect(body.data.result.track).toBe("美食");
     expect(body.data.result.fId).toBe("f2");
     expect(body.data.result.why).toContain("清单体");
+    // 脚本来自后端拼接的原文正文（含正文原文文本），而非 agent 抄写
     expect(body.data.result.script).toContain("番茄肥牛面");
-    // prompt 应内嵌公式清单 + 识别与匹配指令
+    expect(body.data.result.script).not.toContain("# 3 碗深夜面条");
+    // prompt 应内嵌公式清单 + 识别与匹配指令 + 不抄脚本约束
+    expect(capturedPrompt).toContain("识别与匹配");
     expect(capturedPrompt).toContain("【公式清单】");
     expect(capturedPrompt).toContain("- f2｜清单体种草");
     expect(capturedPrompt).toContain("必须且只能选一个");
-    expect(capturedPrompt).toContain("## 脚本");
+    expect(capturedPrompt).toContain("不要写「## 脚本」");
     expect(existsSync(join(projectRoot, "data", "accounts", "acc1", "scripts", taskId))).toBe(true);
     rmSync(projectRoot, { recursive: true, force: true });
     await app.close();
@@ -130,7 +169,7 @@ describe("POST /api/script/tear", () => {
 
   it("AI 返回的公式不在清单内 → failed，不伪装成功", async () => {
     const { runSkill } = await import("../skill-runner.js");
-    const badMd = STRUCT_MD.replace("f2", "f99");
+    const badMd = STRUCT_ANALYZE_MD.replace("f2", "f99");
     vi.mocked(runSkill).mockImplementationOnce(async (_s, _p, workDir: string) => {
       mkdirSync(workDir, { recursive: true });
       writeFileSync(join(workDir, "structure.md"), badMd);
@@ -308,8 +347,9 @@ describe("原文复用（跨链路 + 原文库）", () => {
     process.env.ANTHROPIC_API_KEY = "sk-test";
   });
 
-  it("传 reuseTaskId 且爆款原文存在 → prompt 指向已有目录且禁止重新下载", async () => {
+  it("传 reuseTaskId 且爆款原文存在 → prompt 指向已有目录且禁止重新下载，不走后端抓取", async () => {
     const { runSkill } = await import("../skill-runner.js");
+    const { fetchMaterialRaw } = await import("../tear-fetch.js");
     let capturedPrompt = "";
     vi.mocked(runSkill).mockImplementationOnce(async (_s, prompt: string, workDir: string) => {
       capturedPrompt = prompt;
@@ -321,7 +361,7 @@ describe("原文复用（跨链路 + 原文库）", () => {
     // 造一个已有的爆款拆解产物：爆款原文/<标题>/正文.md
     const rawDir = join(projectRoot, "data", "accounts", "default", "teardowns", "td-1", "爆款原文", "测试标题");
     mkdirSync(rawDir, { recursive: true });
-    writeFileSync(join(rawDir, "正文.md"), "# 已有正文");
+    writeFileSync(join(rawDir, "正文.md"), "# 已有正文\n打工人下班是不是只想瘫着？这 3 碗面，10 分钟出锅。");
 
     const app = await buildApp({ envPath, projectRoot });
     const post = await app.inject({
@@ -333,8 +373,10 @@ describe("原文复用（跨链路 + 原文库）", () => {
     expect(body.data.status).toBe("done");
     expect(capturedPrompt).toContain("模式 A：复用已有原文");
     expect(capturedPrompt).toContain(join(rawDir, ""));
-    expect(capturedPrompt).toContain("禁止任何网络请求重新下载");
+    expect(capturedPrompt).toContain("禁止任何网络请求");
     expect(capturedPrompt).not.toContain("模式 B：全新抓取");
+    // 复用路径不应触发后端抓取
+    expect(vi.mocked(fetchMaterialRaw)).not.toHaveBeenCalled();
 
     rmSync(projectRoot, { recursive: true, force: true });
     await app.close();
@@ -353,7 +395,7 @@ describe("原文复用（跨链路 + 原文库）", () => {
     const projectRoot = mkdtempSync(join(tmpdir(), "wb-idx-"));
     const rawDir = join(projectRoot, "data", "accounts", "default", "teardowns", "td-2", "爆款原文", "某笔记");
     mkdirSync(rawDir, { recursive: true });
-    writeFileSync(join(rawDir, "正文.md"), "# 已有正文");
+    writeFileSync(join(rawDir, "正文.md"), "# 某笔记正文\n一个人在大理躺了 7 天，总共花了 2680，账单全部贴给你看。");
     recordTeardownSource(projectRoot, "default", "https://x.com/same-mat", "td-2");
 
     const app = await buildApp({ envPath, projectRoot });
@@ -371,11 +413,19 @@ describe("原文复用（跨链路 + 原文库）", () => {
     await app.close();
   });
 
-  it("无任何可复用原文 → 走全新抓取模式，prompt 指向原文库目录", async () => {
+  it("无任何可复用原文且后端直连失败 → 回退 agent 全新抓取模式", async () => {
     const { runSkill } = await import("../skill-runner.js");
+    const { fetchMaterialRaw } = await import("../tear-fetch.js");
     let capturedPrompt = "";
+    vi.mocked(fetchMaterialRaw).mockImplementationOnce(async () => ({
+      ok: false,
+      platform: "web" as const,
+      gots: { body: false, images: 0, video: false, transcript: false },
+      note: "mock：未获得有效内容",
+    }));
     vi.mocked(runSkill).mockImplementationOnce(async (_s, prompt: string, workDir: string) => {
       capturedPrompt = prompt;
+      // 兜底路径 agent 可自带脚本节（装配时检测到已含则不再追加）
       mkdirSync(workDir, { recursive: true });
       writeFileSync(join(workDir, "structure.md"), STRUCT_MD);
       return { ok: true, text: "done", artifacts: { "structure.md": STRUCT_MD } };
@@ -393,18 +443,27 @@ describe("原文复用（跨链路 + 原文库）", () => {
     expect(capturedPrompt).toContain("原文库目录");
     expect(capturedPrompt).toContain("图片内文字");
     expect(capturedPrompt).toContain("视频逐字稿");
+    expect(capturedPrompt).toContain("评论区不抓取");
     rmSync(projectRoot, { recursive: true, force: true });
     await app.close();
   });
 
-  it("reuseTaskId 指向不存在/别的账号的目录 → 安全回落到全新抓取", async () => {
+  it("reuseTaskId 指向不存在/别的账号的目录 → 安全回落到后端直连抓取", async () => {
     const { runSkill } = await import("../skill-runner.js");
+    const { fetchMaterialRaw } = await import("../tear-fetch.js");
     let capturedPrompt = "";
+    let fetchedUrl = "";
+    vi.mocked(fetchMaterialRaw).mockImplementationOnce(async (url: string, dir: string) => {
+      fetchedUrl = url;
+      mkdirSync(dir, { recursive: true });
+      writeFileSync(join(dir, "正文.md"), RAW_BODY_MD);
+      return { ok: true, platform: "web" as const, gots: { body: true, images: 0, video: false, transcript: false }, note: "mock" };
+    });
     vi.mocked(runSkill).mockImplementationOnce(async (_s, prompt: string, workDir: string) => {
       capturedPrompt = prompt;
       mkdirSync(workDir, { recursive: true });
-      writeFileSync(join(workDir, "structure.md"), STRUCT_MD);
-      return { ok: true, text: "done", artifacts: { "structure.md": STRUCT_MD } };
+      writeFileSync(join(workDir, "structure.md"), STRUCT_ANALYZE_MD);
+      return { ok: true, text: "done", artifacts: { "structure.md": STRUCT_ANALYZE_MD } };
     });
     const projectRoot = mkdtempSync(join(tmpdir(), "wb-fallback-"));
     const app = await buildApp({ envPath, projectRoot });
@@ -415,7 +474,10 @@ describe("原文复用（跨链路 + 原文库）", () => {
     });
     const body = await waitDone(app, JSON.parse(post.body).data.taskId);
     expect(body.data.status).toBe("done");
-    expect(capturedPrompt).toContain("模式 B：全新抓取");
+    expect(fetchedUrl).toBe("https://x.com/gone");
+    expect(capturedPrompt).toContain("模式 A：原文已由后端抓取归档");
+    // 后端从直连抓到的正文拼接脚本
+    expect(body.data.result.script).toContain("番茄肥牛面");
     rmSync(projectRoot, { recursive: true, force: true });
     await app.close();
   });
@@ -458,5 +520,88 @@ describe("parseScriptTear（识别+匹配新格式）", () => {
     const { parseScriptTear } = await import("../parse.js");
     expect(parseScriptTear({ "structure.md": ["## 赛道", "美食", "", "## 公式", "f2", "", "## 匹配理由", "x"].join("\n") })).toBeNull();
     expect(parseScriptTear({ "structure.md": ["## 赛道", "美食", "", "## 匹配理由", "x", "", "## 脚本", "正文"].join("\n") })).toBeNull();
+  });
+});
+
+// ===== 脚本后端拼接（agent 不抄原文） =====
+describe("chooseScriptText / appendScriptSection", () => {
+  it("逐字稿优先于正文；去掉文件头部 markdown 标题行", async () => {
+    const { chooseScriptText } = await import("./script.js");
+    const dir = mkdtempSync(join(tmpdir(), "wb-scriptsrc-"));
+    writeFileSync(join(dir, "正文.md"), "# 正文标题\n\n图文正文内容足够长，用来在没有逐字稿时兜底拼接。");
+    writeFileSync(join(dir, "逐字稿.md"), "# 逐字稿\n\n第一句口播内容。\n第二句口播内容。");
+    const script = chooseScriptText(dir)!;
+    expect(script).toContain("第一句口播内容。");
+    expect(script).not.toContain("# 逐字稿");
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  it("structure.md 缺「## 脚本」→ 从原文库拼接；已含 → 不动；原文库空 → 不动", async () => {
+    const { appendScriptSection } = await import("./script.js");
+    const workDir = mkdtempSync(join(tmpdir(), "wb-wasm-"));
+    const rawDir = mkdtempSync(join(tmpdir(), "wb-wraw-"));
+    // 缺脚本节 → 拼接
+    writeFileSync(join(workDir, "structure.md"), STRUCT_ANALYZE_MD);
+    writeFileSync(join(rawDir, "逐字稿.md"), "# 逐字稿\n\n番茄肥牛面先炒出沙，水开下面，十分钟就能出锅。");
+    appendScriptSection(workDir, rawDir);
+    const appended = readFileSync(join(workDir, "structure.md"), "utf8");
+    expect(appended).toContain("## 脚本");
+    expect(appended).toContain("番茄肥牛面");
+    expect(appended).toContain("## 赛道");
+    // 已含脚本节 → 保持原样（不重复追加）
+    const before = readFileSync(join(workDir, "structure.md"), "utf8");
+    appendScriptSection(workDir, rawDir);
+    expect(readFileSync(join(workDir, "structure.md"), "utf8")).toBe(before);
+    // 原文库无可用内容 → 不动
+    const workDir2 = mkdtempSync(join(tmpdir(), "wb-wasm2-"));
+    const rawDir2 = mkdtempSync(join(tmpdir(), "wb-wraw2-"));
+    writeFileSync(join(workDir2, "structure.md"), STRUCT_ANALYZE_MD);
+    appendScriptSection(workDir2, rawDir2);
+    expect(readFileSync(join(workDir2, "structure.md"), "utf8")).toBe(STRUCT_ANALYZE_MD);
+    for (const d of [workDir, rawDir, workDir2, rawDir2]) rmSync(d, { recursive: true, force: true });
+  });
+});
+
+// ===== tear-fetch 纯函数（平台识别 + 页面 JSON 解析） =====
+describe("tear-fetch 纯函数", () => {
+  it("detectPlatform / bvidOf / xhsNoteId / douyinId", async () => {
+    const tf = await import("../tear-fetch.js");
+    expect(tf.detectPlatform("https://www.bilibili.com/video/BV12DT762EVe")).toBe("bili");
+    expect(tf.detectPlatform("https://www.xiaohongshu.com/explore/abc")).toBe("xhs");
+    expect(tf.detectPlatform("https://v.douyin.com/xxx/")).toBe("douyin");
+    expect(tf.detectPlatform("https://example.com/a")).toBe("web");
+    expect(tf.bvidOf("https://www.bilibili.com/video/BV12DT762EVe/?p=1")).toBe("BV12DT762EVe");
+    expect(tf.bvidOf("https://example.com/")).toBeNull();
+    expect(tf.xhsNoteId("https://www.xiaohongshu.com/discovery/item/65f0a123?xsec_token=abc")).toBe("65f0a123");
+    expect(tf.douyinId("https://www.douyin.com/video/7350123456789012345")).toBe("7350123456789012345");
+  });
+
+  it("parseEmbeddedJson：undefined 值转 null，字符串里的 undefined 不被破坏", async () => {
+    const tf = await import("../tear-fetch.js");
+    const j = tf.parseEmbeddedJson<{ a: unknown; b: unknown[]; d: string }>('{"a":undefined,"b":[undefined,1],"d":"变量是undefined哦"}')!;
+    expect(j.a).toBeNull();
+    expect(j.b[0]).toBeNull();
+    expect(j.b[1]).toBe(1);
+    expect(j.d).toBe("变量是undefined哦");
+    expect(tf.parseEmbeddedJson("not json")).toBeNull();
+  });
+
+  it("t2s：繁体转简体，表外字符原样保留", async () => {
+    const tf = await import("../tear-fetch.js");
+    expect(tf.t2s("我都幫大家整理好了，前後試過上百個Skill")).toBe("我都帮大家整理好了，前后试过上百个Skill");
+    expect(tf.t2s("把效果圖直接轉換成可編輯的原檔")).toBe("把效果图直接转换成可编辑的原檔".replace("檔", "档"));
+    expect(tf.t2s("abc 123。")).toBe("abc 123。");
+  });
+
+  it("extractXhsNote / xhsImageUrls：从 __INITIAL_STATE__ 提取笔记与图片", async () => {
+    const tf = await import("../tear-fetch.js");
+    const html =
+      '<script>window.__INITIAL_STATE__={"note":{"noteDetailMap":{"65f0a123":{"note":{"title":"3 碗深夜面条","desc":"打工人看过来","type":"normal","user":{"nickname":"小食堂"},"interactInfo":{"liked":"1.2万"},"imageList":[{"urlDefault":"https://img.xhs/1.webp"},{"urlDefault":""},{"infoList":[{"url":"https://img.xhs/2a"},{"url":"https://img.xhs/2b"}]}]}}}}}</script>';
+    const note = tf.extractXhsNote(html)!;
+    expect(note.title).toBe("3 碗深夜面条");
+    expect(note.user.nickname).toBe("小食堂");
+    const urls = tf.xhsImageUrls(note);
+    expect(urls).toEqual(["https://img.xhs/1.webp", "https://img.xhs/2b"]);
+    expect(tf.extractXhsNote("<html>没有状态数据</html>")).toBeNull();
   });
 });
