@@ -10,6 +10,7 @@ import { execFile } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { promisify } from "node:util";
+import { fetchXhsNoteViaReader } from "./reader-fetch.js";
 
 const execFileP = promisify(execFile);
 
@@ -362,6 +363,30 @@ async function fetchXhs(url: string): Promise<RawMeta> {
       lastErr = e?.message ?? String(e);
     }
   }
+  if (!note) {
+    // 直连被登录墙/指纹校验拦截 → 云端渲染读取兜底（og 元数据 + 签名视频直链）
+    try {
+      const r = await fetchXhsNoteViaReader(url);
+      const imgUrls = r.imageUrls.slice(0, 12);
+      return {
+        title: r.title,
+        author: r.author,
+        desc: r.desc,
+        metaLines: [
+          "- 平台：小红书（笔记）",
+          `- 作者：${r.author || "?"}`,
+          `- 链接：${url}`,
+          `- 类型：${r.type === "video" ? "视频" : "图文"}`,
+          `- 数据：点赞 ${r.like || "?"} / 收藏 ${r.fav || "?"} / 评论 ${r.comment || "?"}`,
+        ],
+        imageUrls: imgUrls,
+        videoUrl: r.type === "video" ? r.videoUrl : undefined,
+        videoDurationSec: r.videoDurationSec,
+      };
+    } catch (e: any) {
+      lastErr = `${lastErr}；${e?.message ?? e}`;
+    }
+  }
   if (!note) throw new Error(`页面未解析出笔记数据（可能被反爬拦截）：${lastErr}`);
   const interact = note.interactInfo ?? {};
   const stream = note.video?.media?.stream ?? {};
@@ -505,7 +530,13 @@ export async function fetchMaterialRaw(url: string, dir: string, onStep: StepFn 
         try {
           onStep("下载视频…");
           const videoFile = path.join(dir, "视频.mp4");
-          const size = await downloadBin(videoUrl, videoFile, platform === "bili" ? { Referer: "https://www.bilibili.com/" } : {}, 320 * 1024 * 1024);
+          const videoHeaders: Record<string, string> =
+            platform === "bili"
+              ? { Referer: "https://www.bilibili.com/" }
+              : platform === "xhs"
+                ? { Referer: "https://www.xiaohongshu.com/" } // og:video 签名直链校验 referer
+                : {};
+          const size = await downloadBin(videoUrl, videoFile, videoHeaders, 320 * 1024 * 1024);
           gots.video = true;
           transcript = await transcribeVideo(dir, videoFile, meta.videoDurationSec ?? 0, onStep);
           if (transcript) {

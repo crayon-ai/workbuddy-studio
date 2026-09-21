@@ -6,6 +6,7 @@ import { runSkill } from "../skill-runner.js";
 import { getApiKey, parseEnv, getProvider, resolveModelName } from "../config.js";
 import { taskLog } from "../log.js";
 import { accountSlug } from "../account-dirs.js";
+import { fetchXhsNoteViaReader } from "../reader-fetch.js";
 
 export interface MaterialRoutesOpts {
   envPath: string;
@@ -21,7 +22,8 @@ export interface MaterialRoutesOpts {
  *  - 小红书：快速通道（无 Agent）。服务端代码完成 UA 轮换下载 + 内嵌 JSON
  *    提取（确定性、毫秒级），仅「摘要 + 学习点」一次直连 /v1/messages，
  *    端到端 ~15-30s（原 Agent 通道实测 ~260s，大量时间耗在子进程启动和
- *    模型反复数字数上）。
+ *    模型反复数字数上）。直连被平台登录墙拦截时，自动降级「云端渲染读取」
+ *    （reader-fetch：Firecrawl API / ChatCut MCP 桥，无凭证，取 og 元数据）。
  *  - 抖音：保留原 Agent 通道（页面结构与小红书不同，且低频，暂不改）。
  *  ============================================================ */
 export function materialPlat(url: string): "xhs" | "dy" | null {
@@ -204,6 +206,22 @@ async function downloadXhsNote(url: string): Promise<XhsNote> {
     } catch (e: any) {
       errors.push(`${a.name}：${e?.message ?? e}`);
     }
+  }
+  // 直连策略全部失败（小红书已对无凭证直连上强制登录墙/指纹校验）→ 云端渲染读取兜底：
+  // 经 Firecrawl（API key 或 ChatCut 桥）无凭证渲染页面，从 og 元数据取笔记信息。
+  try {
+    const r = await fetchXhsNoteViaReader(url);
+    return {
+      title: r.title,
+      desc: r.desc,
+      author: r.author || "未知作者",
+      timeMs: r.timeMs,
+      type: r.type,
+      like: r.like || "0",
+      fav: r.fav || "0",
+    };
+  } catch (e: any) {
+    errors.push(`云端渲染读取：${e?.message ?? e}`);
   }
   throw new Error(`下载失败（${errors.join("；")}）`);
 }
