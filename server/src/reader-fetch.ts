@@ -5,7 +5,10 @@
  * 两条通道（按优先级）：
  *  1. Firecrawl API 直连 —— server/.env 配了 FIRECRAWL_API_KEY 时启用；
  *  2. ChatCut MCP 桥 —— 本机装了 ChatCut（默认路径或 CHATCUT_MCP_PATH）时启用，
- *     走其 web_browser（Firecrawl 云端渲染）配额，中国出口。
+ *     走其 web_browser（Firecrawl 云端渲染）配额，中国出口；
+ *  3. 智谱 web-reader —— API 底座是智谱（open.bigmodel.cn / api.z.ai）时启用，
+ *     复用用户已配置的同一个 key（交付场景零额外配置）。对小红书渲染有波动
+ *     且限流，内置登录墙检测 + 3 次退避重试。
  *
  * 红线遵守：全程无登录态、无本地浏览器自动化——渲染在云端完成且不携带
  * 任何用户凭证，与 xhs-no-login-guard 的规则一致。
@@ -201,6 +204,53 @@ async function scrapeViaChatcut(url: string): Promise<{ md: string; meta: Record
 }
 
 /**
+ * 通道三：智谱 web-reader（POST /api/paas/v4/reader）。
+ * 仅当 LLM API 底座是智谱时启用，复用 .env 里已有的 ANTHROPIC_AUTH_TOKEN/API_KEY——
+ * 交付场景下接收方本来就要配这把 key，无需任何额外注册。
+ * 返回 null 表示当前配置不适用（非智谱底座/无 key），调用方继续下一通道。
+ */
+async function scrapeViaZhipuReader(url: string): Promise<{ md: string; meta: Record<string, any> } | null> {
+  const base = (process.env.ANTHROPIC_BASE_URL || "").trim();
+  const host = base.replace(/^https?:\/\//, "").split("/")[0];
+  if (!/(^|\.)open\.bigmodel\.cn$|(^|\.)api\.z\.ai$/.test(host)) return null;
+  const key = process.env.ANTHROPIC_AUTH_TOKEN || process.env.ANTHROPIC_API_KEY;
+  if (!key) return null;
+  const endpoint = `https://${host}/api/paas/v4/reader`;
+
+  const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+  let lastErr = "";
+  for (let i = 0; i < 3; i++) {
+    if (i) await sleep(3000 * i); // 限流（429）退避
+    try {
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: { "content-type": "application/json", authorization: `Bearer ${key}` },
+        body: JSON.stringify({ url, timeout: 45, return_format: "markdown", retain_images: true, no_cache: true }),
+        signal: AbortSignal.timeout(60000),
+      });
+      if (res.status === 429) {
+        // 智谱 429 多为「余额不足/无资源包」（error 1113），重试无意义
+        const body = await res.text().catch(() => "");
+        const msg = body.match(/"message":"([^"]+)"/)?.[1] ?? "";
+        lastErr = `429：${msg || "请求被拒"}`;
+        if (/余额|资源包/.test(msg)) break;
+        continue;
+      }
+      if (!res.ok) { lastErr = `HTTP ${res.status} ${await res.text().catch(() => "")}`.slice(0, 120); continue; }
+      const j: any = await res.json();
+      const r = j.reader_result ?? j;
+      const meta = { ...(r.metadata ?? {}), title: r.metadata?.title ?? r.title ?? "" };
+      // 登录墙空壳识别：真笔记页必有 og:title / og:description 元数据
+      if (!meta["og:title"] && !meta["og:description"]) { lastErr = "被登录墙拦截（空壳页）"; continue; }
+      return { md: String(r.content ?? ""), meta };
+    } catch (e: any) {
+      lastErr = e?.message ?? String(e);
+    }
+  }
+  throw new Error(`智谱读取连续失败（${lastErr}）`);
+}
+
+/**
  * 云端渲染读取小红书笔记。全部通道失败时抛错（消息含各通道原因），
  * 调用方按「又一策略失败」处理即可。
  */
@@ -209,6 +259,7 @@ export async function fetchXhsNoteViaReader(url: string): Promise<ReaderNote> {
   const channels: Array<{ name: string; run: () => Promise<{ md: string; meta: Record<string, any> } | null> }> = [
     { name: "Firecrawl API", run: () => scrapeViaFirecrawlApi(url) },
     { name: "ChatCut 云端渲染", run: () => scrapeViaChatcut(url) },
+    { name: "智谱 web-reader", run: () => scrapeViaZhipuReader(url) },
   ];
   for (const ch of channels) {
     try {
