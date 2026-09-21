@@ -1597,7 +1597,8 @@ body.sb-lock{overflow:hidden}
         <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 11l3 3 8-8"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2h9"/></svg></span>
         <span class="txt">笔记内容检查</span><span class="tag-new">新</span>
       </div>
-      <div class="sb-item" data-view="polish">
+      <!-- 笔记优化：临时下线前台入口（视图、后台 /api/polish 与深链接 #polish 均完整保留，恢复时去掉 display:none 即可） -->
+      <div class="sb-item" data-view="polish" style="display:none">
         <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M15 4V2M15 10V8M11.5 6.5h-2M20.5 6.5h-2M17.8 3.7l-1.4 1.4M17.8 9.3l-1.4-1.4"/><path d="M3 21l9.5-9.5"/><path d="M12.5 5.5l2 2"/></svg></span>
         <span class="txt">笔记优化</span><span class="tag-new">新</span>
       </div>
@@ -2024,7 +2025,7 @@ body.sb-lock{overflow:hidden}
                   </div>
                 </div>
                 <div>
-                  <div class="ks-wzlabel"><span class="no">3</span>套用哪个爆款结构（来自左侧提取的钩子与结构）</div>
+                  <div class="ks-wzlabel"><span class="no">3</span>选择参考的爆款素材</div>
                   <div class="ks-refbox" id="ksRefs"></div>
                 </div>
                 <div class="ks-genbar">
