@@ -61,45 +61,6 @@ curl -sL \
 ffmpeg -i "$M3U8_URL" -c copy "$DEST/视频.mp4"
 ```
 
-## 3.5 抓取评论区（若有）
-
-评论区常藏着作者补充的金句、被追问的需求、置顶引导，是拆解的重要素材，务必尝试抓取。
-
-### 小红书
-
-评论**不在首屏 HTML** 里（`noteDetailMap[*].comments.list` 初始为空），由
-`https://edith.xiaohongshu.com/api/sns/web/v2/comment/page` 异步加载，且带 `x-s / x-t` 签名风控。
-**无登录态直接请求会返回 `{"code":-1}` 406**，沙箱一般抓不到。按下面顺序尝试：
-
-1. **先试匿名 API**（偶尔可拿到首屏几条）：
-   ```
-   GET https://edith.xiaohongshu.com/api/sns/web/v2/comment/page?note_id=<id>&cursor=&xsec_token=<token>&image_formats=jpg,webp,avif
-   Headers: Referer=<原帖url>, User-Agent=浏览器UA
-   ```
-   拿到 JSON 后取 `data.comments[]`，字段：`user_info.nickname`、`content`、`like_count`、`sub_comments[]`（作者回复）。
-2. **降级方案（推荐兜底）**：请用户在浏览器登录态下**手动复制评论区文本**，或**对评论区截图**丢给我 → 截图走 `analyze_image` 提取。
-3. **绝不静默跳过**：若最终没拿到评论，明确告诉用户「评论区未能抓取，需手动补充」。
-
-### 公众号 / 其他平台
-
-- 公众号「精选留言」在文章页可见时，`parse_link` 常能带出；带不出则请用户复制或截图。
-- B站/抖音等同理：优先公开 API/页面解析，拿不到就走截图 `analyze_image`。
-
-### 评论.md 模板
-
-```markdown
-# <帖子标题> — 评论区
-
-> 原链接：<url>  ｜ 抓取时间：<date>  ｜ 共 N 条（如可得）
-
-- **用户A**（赞 128）：这条评论内容……
-  - ↳ 作者回复：谢谢，这个点确实……
-- **用户B**（赞 45）：另一条评论……
-- **用户C**：普通评论……
-```
-
-> 置顶/高赞/作者回复优先，尽量按点赞数从高到低。
-
 ## 4. 生成正文.md 模板
 
 ```markdown
@@ -121,7 +82,6 @@ ffmpeg -i "$M3U8_URL" -c copy "$DEST/视频.mp4"
 
 - 图片数量 == 轮播卡片数量
 - 视频能正常播放（`ffprobe` 查时长）
-- 评论区已抓取或已明确标注「需手动补充」
 - 缺失项明确告诉用户，不静默跳过
 
 ## 说明
