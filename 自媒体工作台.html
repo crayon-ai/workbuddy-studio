@@ -1684,9 +1684,9 @@ body.sb-lock{overflow:hidden}
         <div class="mode-grid">
           <div class="mode-card">
             <div class="mc-head"><div class="mc-icon coral"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg></div><div class="mc-title">按我的笔记刷新</div><span class="mc-tag">每日自动</span></div>
-            <div class="mc-desc">录入你的小红书主页链接，AI 分析你的近期笔记（近期权重更高），识别赛道与选题偏好后，自动抓取匹配你的灵感。</div>
-            <div class="kw-row"><input class="kw-input" id="profileUrlInput" placeholder="https://www.xiaohongshu.com/user/profile/…" oninput="saveProfileUrl(this.value)"><button class="btn btn-coral" style="height:42px" onclick="refreshPersonalizedInspiration(this)">刷新个性化灵感</button></div>
-            <div class="kw-hint" style="font-size:11px;color:var(--ink-3);margin-top:6px">只支持小红书主页 · 链接本地保存，下次直接用</div>
+            <div class="mc-desc">录入你的小红书主页分享链接（App 里打开主页 →「分享 → 复制链接」），AI 分析你的近期笔记，识别赛道与选题偏好后，自动抓取匹配你的灵感。</div>
+            <div class="kw-row"><input class="kw-input" id="profileUrlInput" placeholder="粘贴小红书主页分享链接（App：分享 → 复制链接）" oninput="saveProfileUrl(this.value)"><button class="btn btn-coral" style="height:42px" onclick="refreshPersonalizedInspiration(this)">刷新个性化灵感</button></div>
+            <div class="kw-hint" style="font-size:11px;color:var(--ink-3);margin-top:6px">需带分享凭证的链接（App 分享 → 复制链接即带）· 链接本地保存 · 凭证过期后重新分享一次即可</div>
           </div>
           <div class="mode-card">
             <div class="mc-head"><div class="mc-icon lav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg></div><div class="mc-title">输入关键词主动抓取</div><span class="mc-tag alt">主动探索</span></div>
@@ -4130,7 +4130,7 @@ async function refreshPersonalizedInspiration(btn){
   const input=$('#profileUrlInput');
   const url=((input&&input.value)||loadProfileUrl()||'').trim();
   if(!url){toast('请先填入你的小红书主页链接');return;}
-  if(!/^https?:\/\/(www\.)?xiaohongshu\.com\/user\/profile\//.test(url)){toast('暂只支持小红书主页链接');return;}
+  if(!/^https?:\/\/(www\.)?xiaohongshu\.com\/user\/profile\//.test(url)&&!/^https?:\/\/xhslink\.com\//.test(url)){toast('请粘贴小红书主页分享链接（App：分享 → 复制链接）');return;}
   saveProfileUrl(url);
   if(_runningInspTask){toast('已有灵感在抓取中，请等它完成');return;}
   try{

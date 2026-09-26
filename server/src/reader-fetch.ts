@@ -194,7 +194,7 @@ async function scrapeViaChatcut(url: string): Promise<{ md: string; meta: Record
       if (r.error) throw new Error(String(r.error.message ?? r.error));
       const text = (r.result?.content ?? []).filter((c: any) => c.type === "text").map((c: any) => c.text).join("");
       let payload: any;
-      try { payload = JSON.parse(text); } catch { throw new Error("ChatCut 返回内容无法解析为 JSON"); }
+      try { payload = JSON.parse(text); } catch { throw new Error(`ChatCut 返回内容无法解析为 JSON：${text.slice(0, 200)}`); }
       const data = payload?.data ?? payload;
       if (!data?.markdown && !data?.metadata) throw new Error("ChatCut 返回无页面内容");
       assertNotChallenge(data);
@@ -251,10 +251,14 @@ async function scrapeViaZhipuReader(url: string): Promise<{ md: string; meta: Re
 }
 
 /**
- * 云端渲染读取小红书笔记。全部通道失败时抛错（消息含各通道原因），
- * 调用方按「又一策略失败」处理即可。
+ * 云端渲染读取小红书页面（markdown + metadata）。按 Firecrawl API → ChatCut 桥 →
+ * 智谱 web-reader 依次尝试；某通道拿到页面但 accept 校验不过（如登录墙空壳）时继续
+ * 尝试下一通道。全部失败时抛错（消息含各通道原因），调用方按「又一策略失败」处理。
  */
-export async function fetchXhsNoteViaReader(url: string): Promise<ReaderNote> {
+export async function fetchViaReader(
+  url: string,
+  accept?: (md: string, meta: Record<string, any>) => boolean
+): Promise<{ md: string; meta: Record<string, any> }> {
   const errors: string[] = [];
   const channels: Array<{ name: string; run: () => Promise<{ md: string; meta: Record<string, any> } | null> }> = [
     { name: "Firecrawl API", run: () => scrapeViaFirecrawlApi(url) },
@@ -264,13 +268,26 @@ export async function fetchXhsNoteViaReader(url: string): Promise<ReaderNote> {
   for (const ch of channels) {
     try {
       const got = await ch.run();
-      if (!got) { errors.push(`${ch.name}：未配置/未安装，跳过`); continue; }
-      const note = parseReaderPayload(got.md, got.meta);
-      if (note) return note;
-      errors.push(`${ch.name}：页面无笔记数据`);
+      if (!got) {
+        errors.push(`${ch.name}：未配置/未安装，跳过`);
+        continue;
+      }
+      if (accept && !accept(got.md, got.meta)) {
+        errors.push(`${ch.name}：页面无可用内容`);
+        continue;
+      }
+      return got;
     } catch (e: any) {
       errors.push(`${ch.name}：${e?.message ?? e}`);
     }
   }
-  throw new Error(`云端读取全部失败（${errors.join("；")}）`);
+  throw new Error(errors.join("；"));
+}
+
+/** 云端渲染读取小红书笔记。全部通道失败时抛错（消息含各通道原因），调用方按「又一策略失败」处理即可。 */
+export async function fetchXhsNoteViaReader(url: string): Promise<ReaderNote> {
+  const got = await fetchViaReader(url, (md, meta) => parseReaderPayload(md, meta) != null);
+  const note = parseReaderPayload(got.md, got.meta);
+  if (!note) throw new Error("页面无笔记数据"); // accept 已校验，防御性兜底
+  return note;
 }
